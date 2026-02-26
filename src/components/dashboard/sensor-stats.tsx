@@ -4,19 +4,20 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Droplets, Thermometer, Sun, Wind, RefreshCw, Wifi, WifiOff } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
-import { useState, useEffect } from "react";
-import { initializeApp, getApps } from "firebase/app";
-import { getDatabase, ref, onValue } from "firebase/database";
 import { Badge } from "@/components/ui/badge";
 
-// Configuración de Firebase Realtime Database proporcionada
-const firebaseConfig = {
-  databaseURL: "https://studio-3066950614-ac5b0-default-rtdb.firebaseio.com",
-};
+interface SensorValues {
+  humidity_soil: number;
+  temp: number;
+  uv: number;
+  humidity_air: number;
+}
 
-// Inicializar Firebase (solo una vez)
-const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApps()[0];
-const db = getDatabase(app);
+interface SensorStatsProps {
+  sensorValues: SensorValues;
+  isOnline: boolean;
+  lastUpdate: Date | null;
+}
 
 interface SensorData {
   label: string;
@@ -28,43 +29,7 @@ interface SensorData {
   key: string;
 }
 
-export function SensorStats() {
-  const [sensorValues, setSensorValues] = useState({
-    humidity_soil: 0,
-    temp: 0,
-    uv: 0,
-    humidity_air: 0
-  });
-  const [isOnline, setIsOnline] = useState(false);
-  const [lastUpdate, setLastUpdate] = useState<Date | null>(null);
-
-  useEffect(() => {
-    // Referencia a la carpeta principal 'sensores' definida en Wokwi
-    const sensorsRef = ref(db, 'sensores');
-
-    // Escuchar cambios en tiempo real
-    const unsubscribe = onValue(sensorsRef, (snapshot) => {
-      const data = snapshot.val();
-      if (data) {
-        setSensorValues({
-          humidity_soil: data.humedad_suelo || 0,
-          temp: data.temperatura || 0,
-          uv: data.uv || 0,
-          humidity_air: data.humedad_aire || 0
-        });
-        setIsOnline(true);
-        setLastUpdate(new Date());
-      } else {
-        setIsOnline(false);
-      }
-    }, (error) => {
-      console.error("Error leyendo Firebase:", error);
-      setIsOnline(false);
-    });
-
-    return () => unsubscribe();
-  }, []);
-
+export function SensorStats({ sensorValues, isOnline, lastUpdate }: SensorStatsProps) {
   const sensors: SensorData[] = [
     { label: "Humedad Suelo", value: sensorValues.humidity_soil, unit: "%", icon: Droplets, color: "text-blue-500", max: 100, key: "h_soil" },
     { label: "Temperatura", value: sensorValues.temp, unit: "°C", icon: Thermometer, color: "text-orange-500", max: 50, key: "temp" },

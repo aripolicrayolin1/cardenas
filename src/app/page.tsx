@@ -30,6 +30,16 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useState, useEffect } from "react";
+import { initializeApp, getApps } from "firebase/app";
+import { getDatabase, ref, onValue } from "firebase/database";
+
+// Configuración de Firebase Realtime Database
+const firebaseConfig = {
+  databaseURL: "https://studio-3066950614-ac5b0-default-rtdb.firebaseio.com",
+};
+
+const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApps()[0];
+const db = getDatabase(app);
 
 const performanceData = [
   { month: "Ene", health: 85 },
@@ -48,6 +58,15 @@ const chartConfig = {
 };
 
 export default function Home() {
+  const [sensorValues, setSensorValues] = useState({
+    humidity_soil: 0,
+    temp: 0,
+    uv: 0,
+    humidity_air: 0
+  });
+  const [isOnline, setIsOnline] = useState(false);
+  const [lastUpdate, setLastUpdate] = useState<Date | null>(null);
+
   const [notifications, setNotifications] = useState([
     {
       id: 1,
@@ -77,6 +96,24 @@ export default function Home() {
       color: "text-blue-500"
     }
   ]);
+
+  useEffect(() => {
+    const sensorsRef = ref(db, 'sensores');
+    const unsubscribe = onValue(sensorsRef, (snapshot) => {
+      const data = snapshot.val();
+      if (data) {
+        setSensorValues({
+          humidity_soil: data.humedad_suelo || 0,
+          temp: data.temperatura || 0,
+          uv: data.uv || 0,
+          humidity_air: data.humedad_aire || 0
+        });
+        setIsOnline(true);
+        setLastUpdate(new Date());
+      }
+    });
+    return () => unsubscribe();
+  }, []);
 
   return (
     <SidebarProvider>
@@ -123,12 +160,6 @@ export default function Home() {
                         </div>
                       </div>
                     ))}
-                    {notifications.length === 0 && (
-                      <div className="text-center py-12">
-                        <Bell className="h-12 w-12 text-muted-foreground/20 mx-auto mb-4" />
-                        <p className="text-sm text-muted-foreground">No tienes notificaciones pendientes.</p>
-                      </div>
-                    )}
                   </div>
                 </ScrollArea>
               </SheetContent>
@@ -157,15 +188,15 @@ export default function Home() {
             <div className="flex items-center justify-between">
               <h2 className="text-2xl font-bold tracking-tight">Monitoreo IoT</h2>
               <p className="text-sm text-muted-foreground flex items-center gap-1">
-                <Activity className="h-4 w-4 text-primary animate-pulse" /> Actualizado hace 2 min
+                <Activity className="h-4 w-4 text-primary animate-pulse" /> Actualizado: {lastUpdate ? lastUpdate.toLocaleTimeString() : '---'}
               </p>
             </div>
-            <SensorStats />
+            <SensorStats sensorValues={sensorValues} isOnline={isOnline} lastUpdate={lastUpdate} />
           </section>
 
           <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
             <div className="lg:col-span-2 space-y-6">
-              <AIRiskAlert />
+              <AIRiskAlert sensorValues={sensorValues} />
               
               <Card className="border-none shadow-md">
                 <CardHeader>
