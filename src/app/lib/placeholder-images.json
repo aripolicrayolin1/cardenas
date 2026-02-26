@@ -1,0 +1,23 @@
+
+{
+  "placeholderImages": [
+    {
+      "id": "hero-farm",
+      "description": "Aerial view of a green farm field in Hidalgo",
+      "imageUrl": "https://picsum.photos/seed/guardian-farm-1/1200/600",
+      "imageHint": "green farm"
+    },
+    {
+      "id": "crop-healthy",
+      "description": "Healthy corn plant leaves",
+      "imageUrl": "https://picsum.photos/seed/crop-healthy/600/400",
+      "imageHint": "corn leaves"
+    },
+    {
+      "id": "crop-disease",
+      "description": "Plant leaf with fungal spots",
+      "imageUrl": "https://picsum.photos/seed/crop-disease/600/400",
+      "imageHint": "leaf disease"
+    }
+  ]
+}
