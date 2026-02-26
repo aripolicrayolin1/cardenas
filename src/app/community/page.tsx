@@ -15,10 +15,12 @@ import {
   Store, 
   ExternalLink,
   MessageSquare,
-  Filter
+  Filter,
+  Plus
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import Image from "next/image";
+import { useToast } from "@/hooks/use-toast";
 
 const stores = [
   {
@@ -64,6 +66,15 @@ const stores = [
 ];
 
 export default function CommunityPage() {
+  const { toast } = useToast();
+
+  const handleAction = (title: string, message: string) => {
+    toast({
+      title: title,
+      description: message,
+    });
+  };
+
   return (
     <SidebarProvider>
       <SidebarNav />
@@ -82,8 +93,8 @@ export default function CommunityPage() {
                 <h2 className="text-3xl font-bold tracking-tight">Directorio Agropecuario</h2>
                 <p className="text-muted-foreground">Encuentra los insumos recomendados por la IA en tiendas cercanas en Hidalgo.</p>
               </div>
-              <Button className="font-bold">
-                <Store className="mr-2 h-4 w-4" /> Registrar mi Negocio
+              <Button className="font-bold" onClick={() => handleAction("Registro de Negocio", "El formulario de registro estará disponible pronto.")}>
+                <Plus className="mr-2 h-4 w-4" /> Registrar mi Negocio
               </Button>
             </div>
 
@@ -92,7 +103,7 @@ export default function CommunityPage() {
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input placeholder="Buscar por producto o tienda..." className="pl-10 h-12" />
               </div>
-              <Button variant="outline" className="h-12 px-6">
+              <Button variant="outline" className="h-12 px-6" onClick={() => handleAction("Filtros", "La búsqueda por región se habilitará en la siguiente actualización.")}>
                 <Filter className="mr-2 h-4 w-4" /> Filtrar Región
               </Button>
             </div>
@@ -135,10 +146,19 @@ export default function CommunityPage() {
                     </div>
                   </CardContent>
                   <CardFooter className="grid grid-cols-2 gap-2 pt-0">
-                    <Button variant="outline" size="sm" className="w-full">
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      className="w-full"
+                      onClick={() => handleAction("Mensajería", `Iniciando chat con ${store.name}... (Próximamente)`)}
+                    >
                       <MessageSquare className="h-4 w-4 mr-2" /> Mensaje
                     </Button>
-                    <Button size="sm" className="w-full">
+                    <Button 
+                      size="sm" 
+                      className="w-full"
+                      onClick={() => handleAction("Perfil de Comercio", `Cargando detalles de ${store.name}...`)}
+                    >
                       <ExternalLink className="h-4 w-4 mr-2" /> Perfil
                     </Button>
                   </CardFooter>
@@ -153,7 +173,11 @@ export default function CommunityPage() {
                   Nuestra red comunitaria crece cada día. Si conoces una tienda que debería estar aquí, avísanos.
                 </CardDescription>
                 <div className="pt-4">
-                  <Button variant="outline" className="border-accent text-accent-foreground hover:bg-accent/20">
+                  <Button 
+                    variant="outline" 
+                    className="border-accent text-accent-foreground hover:bg-accent/20"
+                    onClick={() => handleAction("Sugerencia Recibida", "Gracias por ayudarnos a crecer la red en Hidalgo.")}
+                  >
                     Sugerir Tienda Local
                   </Button>
                 </div>
