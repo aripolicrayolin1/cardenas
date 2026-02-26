@@ -1,9 +1,8 @@
-
 "use client";
 
 import { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { AlertCircle, ShieldCheck, Zap, Info } from "lucide-react";
+import { AlertCircle, ShieldCheck, Zap, Info, WifiOff } from "lucide-react";
 import { predictivePestDiseaseAlerts, type PredictiveAlertOutput } from "@/ai/flows/predictive-pest-disease-alerts";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -47,18 +46,21 @@ export function AIRiskAlert() {
   }
 
   const isRisk = prediction?.alertNeeded;
+  const isFallback = prediction?.isFallback;
 
   return (
     <Card className={`border-none shadow-md transition-all duration-500 ${isRisk ? 'bg-accent/10 ring-1 ring-accent' : 'bg-primary/5 ring-1 ring-primary/20'}`}>
       <CardHeader className="flex flex-row items-start justify-between pb-2">
         <div className="space-y-1">
           <CardTitle className="text-lg flex items-center gap-2">
-            {isRisk ? (
+            {isFallback ? (
+              <WifiOff className="text-muted-foreground h-5 w-5" />
+            ) : isRisk ? (
               <AlertCircle className="text-destructive h-5 w-5" />
             ) : (
               <ShieldCheck className="text-primary h-5 w-5" />
             )}
-            Análisis Predictivo de IA
+            {isFallback ? 'Análisis de Emergencia (Offline)' : 'Análisis Predictivo de IA'}
           </CardTitle>
           <CardDescription>
             Estado del cultivo de Maíz en Hidalgo
@@ -95,6 +97,12 @@ export function AIRiskAlert() {
           </h4>
           <p className="text-sm italic">{prediction?.recommendation}</p>
         </div>
+
+        {isFallback && (
+          <p className="text-[10px] text-muted-foreground text-center italic">
+            * El servicio de IA está temporalmente ocupado. Mostrando resultados basados en umbrales de sensores locales.
+          </p>
+        )}
       </CardContent>
     </Card>
   );
