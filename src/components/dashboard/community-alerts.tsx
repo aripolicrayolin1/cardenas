@@ -2,7 +2,7 @@
 "use client";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Users, MapPin, Calendar, ArrowRight, Plus, AlertTriangle, X, Info } from "lucide-react";
+import { Users, MapPin, Calendar, ArrowRight, Plus, AlertTriangle, X, Info, Store } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { useState, useEffect } from "react";
@@ -168,6 +168,10 @@ export function CommunityAlerts() {
       {/* Mapa Interactivo de Alertas */}
       <Dialog open={isMapOpen} onOpenChange={setIsMapOpen}>
         <DialogContent className="sm:max-w-2xl p-0 overflow-hidden border-none">
+          <DialogHeader className="sr-only">
+            <DialogTitle>Mapa de Alertas Regionales</DialogTitle>
+            <DialogDescription>Visualización geográfica de brotes detectados en Hidalgo.</DialogDescription>
+          </DialogHeader>
           <div className="relative h-[500px] bg-emerald-50 w-full p-4">
             <div className="absolute top-4 left-4 z-10 bg-white/90 p-3 rounded-lg shadow-md border max-w-[200px]">
                <h3 className="font-bold text-sm text-primary mb-1">Mapa de Riesgo: Hidalgo</h3>
