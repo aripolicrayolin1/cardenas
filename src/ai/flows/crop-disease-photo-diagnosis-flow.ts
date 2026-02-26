@@ -26,7 +26,17 @@ const CropDiagnosisOutputSchema = z.object({
     identifiedProblem: z.string().describe('The name of the identified disease or pest, or "None" if no problem is detected.'),
     severity: z.enum(['Low', 'Medium', 'High', 'Not Applicable']).describe('The severity of the detected problem. "Not Applicable" if no problem is detected.'),
     confidence: z.enum(['Low', 'Medium', 'High']).describe('The confidence level of the diagnosis.'),
-    recommendedActions: z.array(z.string()).describe('A list of recommended actions to address the detected problem. Empty array if no problem is detected.'),
+    recommendedActions: z.array(z.string()).describe('A list of recommended actions to address the detected problem.'),
+    commercialProducts: z.array(z.object({
+      name: z.string().describe('Nombre del producto o principio activo.'),
+      description: z.string().describe('Breve explicación de para qué sirve.'),
+      localStores: z.string().describe('Sugerencia de dónde encontrarlo en la región de Hidalgo (ej: "Agropecuarias en Actopan", "Tiendas especializadas en Pachuca").')
+    })).describe('Productos comerciales recomendados para la venta.'),
+    homeMadeRemedies: z.array(z.object({
+      name: z.string().describe('Nombre del remedio casero.'),
+      ingredients: z.array(z.string()).describe('Lista de ingredientes fáciles de conseguir.'),
+      instructions: z.string().describe('Cómo prepararlo y aplicarlo.')
+    })).describe('Alternativas caseras y naturales de bajo costo.'),
     additionalNotes: z.string().optional().describe('Any additional notes or observations regarding the diagnosis.'),
   }).describe('The detailed diagnosis of the crop.'),
 });
@@ -40,12 +50,17 @@ const cropDiagnosisPrompt = ai.definePrompt({
   name: 'cropDiagnosisPrompt',
   input: {schema: CropDiagnosisInputSchema},
   output: {schema: CropDiagnosisOutputSchema},
-  prompt: `Eres un experto fitopatólogo con amplio conocimiento en enfermedades y plagas de cultivos. Tu tarea es analizar la imagen y la descripción proporcionadas para diagnosticar posibles problemas en el cultivo. Identifica la enfermedad o plaga, estima su severidad, la confianza en el diagnóstico y sugiere acciones correctivas.
+  prompt: `Eres un experto fitopatólogo con amplio conocimiento en enfermedades y plagas de cultivos, especialmente en la región de Hidalgo, México. 
+Tu tarea es analizar la imagen y la descripción para diagnosticar el problema.
 
-Si no se identifica ningún problema, indica que el cultivo parece sano con 'isProblemDetected: false', 'identifiedProblem: "None"', 'severity: "Not Applicable"', y una lista de acciones recomendadas vacía.
+IMPORTANTE:
+1. Si detectas un problema, debes proporcionar:
+   - 'commercialProducts': Lista productos específicos indicando comercios o zonas en Hidalgo donde se suelen conseguir (ej: Actopan, Ixmiquilpan, Pachuca).
+   - 'homeMadeRemedies': Proporciona al menos una alternativa ecológica o casera detallada para agricultores que prefieren no gastar o usar químicos.
+2. Si el cultivo está sano, indica 'isProblemDetected: false' y deja las listas de recomendaciones vacías.
 
-Aquí están los detalles:
-{{#if description}}Descripción del problema: {{{description}}}{{/if}}
+Detalles del caso:
+{{#if description}}Descripción del agricultor: {{{description}}}{{/if}}
 Foto del cultivo: {{media url=photoDataUri}}`,
 });
 
