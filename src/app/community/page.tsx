@@ -34,7 +34,8 @@ const stores = [
   {
     id: 2,
     name: "Semillas y Equipos Hidalgo",
- Semillas e Implementos",
+    location: "Pachuca, Centro",
+    specialty: "Semillas e Implementos",
     rating: 4.5,
     phone: "771-987-6543",
     image: "https://picsum.photos/seed/store2/400/200",
