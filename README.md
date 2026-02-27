@@ -44,3 +44,4 @@ Sistema inteligente de monitoreo y diagnóstico agrícola diseñado específicam
 
 ---
 *Desarrollado con ❤️ para los agricultores de Hidalgo.*
+# agrotech-hidalgo
