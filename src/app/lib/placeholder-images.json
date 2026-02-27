@@ -3,38 +3,38 @@
   "placeholderImages": [
     {
       "id": "hero-farm",
-      "description": "Aerial view of a green farm field in Hidalgo",
-      "imageUrl": "https://picsum.photos/seed/agrotech-farm-hidalgo/1200/600",
-      "imageHint": "green farm"
+      "description": "Vista aérea de campos de cultivo verdes en Hidalgo",
+      "imageUrl": "https://picsum.photos/seed/hidalgo-fields-88/1200/600",
+      "imageHint": "agriculture field"
     },
     {
       "id": "crop-healthy",
-      "description": "Healthy corn plant leaves",
-      "imageUrl": "https://picsum.photos/seed/healthy-corn/600/400",
-      "imageHint": "corn leaves"
+      "description": "Planta de maíz sana y verde",
+      "imageUrl": "https://picsum.photos/seed/healthy-maize-99/600/400",
+      "imageHint": "corn plant"
     },
     {
       "id": "crop-disease",
-      "description": "Plant leaf with fungal spots",
-      "imageUrl": "https://picsum.photos/seed/diseased-leaf/600/400",
-      "imageHint": "leaf disease"
+      "description": "Hoja con plaga o hongo",
+      "imageUrl": "https://picsum.photos/seed/pest-leaf-77/600/400",
+      "imageHint": "leaf pest"
     },
     {
       "id": "expert-agronomist",
-      "description": "Professional agronomist in the field",
-      "imageUrl": "https://picsum.photos/seed/agronomo-campo/600/400",
+      "description": "Ingeniero agrónomo revisando cultivo",
+      "imageUrl": "https://picsum.photos/seed/agronomist-expert-11/600/400",
       "imageHint": "agronomist field"
     },
     {
       "id": "agro-store",
-      "description": "Agricultural supply store interior",
-      "imageUrl": "https://picsum.photos/seed/tienda-agricola/600/400",
+      "description": "Tienda de insumos agrícolas y fertilizantes",
+      "imageUrl": "https://picsum.photos/seed/agro-supply-shop-22/600/400",
       "imageHint": "agriculture store"
     },
     {
       "id": "agro-seeds",
-      "description": "Various types of agricultural seeds",
-      "imageUrl": "https://picsum.photos/seed/semillas-maiz/600/400",
+      "description": "Semillas de maíz de alta calidad",
+      "imageUrl": "https://picsum.photos/seed/corn-seeds-33/600/400",
       "imageHint": "corn seeds"
     }
   ]
