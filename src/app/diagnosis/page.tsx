@@ -23,7 +23,7 @@ import {
   Share2,
   Clock
 } from "lucide-react";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { diagnoseCropDisease, type CropDiagnosisOutput } from "@/ai/flows/crop-disease-photo-diagnosis-flow";
 import Image from "next/image";
 import { Badge } from "@/components/ui/badge";
@@ -56,7 +56,7 @@ export default function DiagnosisPage() {
   const startDiagnosis = async () => {
     if (!selectedImage) return;
     setLoading(true);
-    // Marcamos la hora local del intento justo antes de llamar a la IA
+    // Capturamos la hora local del dispositivo para que sea real (Hidalgo)
     const now = new Date().toLocaleTimeString();
     setLastAttemptTime(now);
 
@@ -116,16 +116,15 @@ export default function DiagnosisPage() {
 
     const expertChatKey = "chat_99";
     const existingChat = localStorage.getItem(expertChatKey);
-    const chatHistory = existingChat ? JSON.parse(existingChat) : [
-      { sender: "system", text: "Hola, soy el Ing. Ricardo. He recibido tu diagnóstico sobre: " + diagnosis.diagnosis.identifiedProblem }
-    ];
+    const chatHistory = existingChat ? JSON.parse(existingChat) : [];
 
     const userMsg = { 
       sender: "user", 
       text: `Hola Ing. Ricardo, mi cultivo tiene: ${diagnosis.diagnosis.identifiedProblem}. ¿Qué me recomienda?` 
     };
     
-    localStorage.setItem(expertChatKey, JSON.stringify([...chatHistory, userMsg]));
+    const newHistory = [...chatHistory, userMsg];
+    localStorage.setItem(expertChatKey, JSON.stringify(newHistory));
 
     toast({
       title: "Mensaje Enviado",
@@ -259,14 +258,14 @@ export default function DiagnosisPage() {
                         </CardTitle>
                         <CardDescription>
                           {diagnosis.diagnosis.isWaiting 
-                            ? `Último intento a las ${lastAttemptTime} (Hora Local)` 
+                            ? `Último intento a las ${lastAttemptTime} (Tu Hora Local)` 
                             : "Diagnóstico generado mediante IA avanzada"}
                         </CardDescription>
                       </div>
                       <Badge variant={diagnosis.diagnosis.confidence === 'High' ? 'default' : 'secondary'}>
                         {diagnosis.diagnosis.isWaiting ? "Reintentando..." : `Confianza: ${diagnosis.diagnosis.confidence}`}
                       </Badge>
-                    </Header>
+                    </CardHeader>
                     <CardContent className="space-y-6">
                       <div>
                         <h4 className="text-sm font-bold text-muted-foreground uppercase tracking-widest mb-3">Identificación</h4>
@@ -277,7 +276,9 @@ export default function DiagnosisPage() {
                            <div className="flex items-center gap-2 mt-2">
                              <Badge variant="outline">Severidad: {diagnosis.diagnosis.severity}</Badge>
                              {diagnosis.diagnosis.isWaiting && (
-                               <span className="text-xs text-orange-600 animate-pulse font-medium">Límite de Google alcanzado. Reintenta en 15 seg.</span>
+                               <span className="text-xs text-orange-600 animate-pulse font-medium flex items-center gap-1">
+                                 <Loader2 className="h-3 w-3 animate-spin" /> Límite de Google. Reintentando...
+                               </span>
                              )}
                            </div>
                         </div>
@@ -377,7 +378,7 @@ export default function DiagnosisPage() {
                       <Button 
                         className="flex-1 font-bold gap-2" 
                         onClick={handleSendRegionalAlert}
-                        disabled={diagnosis.diagnosis.isWaiting}
+                        disabled={diagnosis.diagnosis.isWaiting && !diagnosis.diagnosis.identifiedProblem}
                       >
                         <Share2 className="h-4 w-4" /> Enviar Alerta Regional
                       </Button>
@@ -385,7 +386,7 @@ export default function DiagnosisPage() {
                         variant="outline" 
                         className="flex-1 font-bold gap-2" 
                         onClick={handleContactAgronomist}
-                        disabled={diagnosis.diagnosis.isWaiting}
+                        disabled={diagnosis.diagnosis.isWaiting && !diagnosis.diagnosis.identifiedProblem}
                       >
                         <MessageSquare className="h-4 w-4" /> Contactar Agrónomo
                       </Button>
