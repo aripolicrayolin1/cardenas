@@ -12,7 +12,8 @@ Copia y pega uno por uno:
 
 ```bash
 # Añadir los nuevos cambios (README y .gitignore)
-git add .
+
+
 
 # Confirmar los cambios
 git commit -m "Build: Configuración final y documentación para GitHub"
