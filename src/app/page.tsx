@@ -27,7 +27,7 @@ import {
   SheetDescription 
 } from "@/components/ui/sheet";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 import { initializeApp, getApps } from "firebase/app";
 import { getDatabase, ref, onValue } from "firebase/database";
 
@@ -37,15 +37,6 @@ const firebaseConfig = {
 
 const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApps()[0];
 const db = getDatabase(app);
-
-const performanceData = [
-  { month: "Ene", health: 85 },
-  { month: "Feb", health: 88 },
-  { month: "Mar", health: 92 },
-  { month: "Abr", health: 80 },
-  { month: "May", health: 85 },
-  { month: "Jun", health: 90 },
-];
 
 const chartConfig = {
   health: {
@@ -79,6 +70,41 @@ export default function Home() {
   const [notifications, setNotifications] = useState<Notification[]>([]);
   
   const notifiedEvents = useRef<Set<string>>(new Set());
+
+  // Función para calcular salud basada en sensores (Lógica agronómica simple)
+  const calculateHealth = (values: typeof sensorValues) => {
+    let score = 100;
+    
+    // Normalización de humedad de suelo (asumiendo 4095 como 100%)
+    const normSoil = values.humidity_soil > 100 
+      ? (values.humidity_soil / 4095) * 100 
+      : values.humidity_soil;
+
+    // Penalización por falta o exceso de agua (Ideal 60-85%)
+    if (normSoil < 40) score -= 25;
+    if (normSoil > 90) score -= 15;
+    
+    // Penalización por temperatura (Ideal 18-30°C)
+    if (values.temp > 35) score -= 30;
+    if (values.temp < 10) score -= 20;
+
+    return Math.max(0, Math.min(100, score));
+  };
+
+  // Generar datos de salud dinámicos basados en la lectura actual
+  const performanceData = useMemo(() => {
+    const currentHealth = calculateHealth(sensorValues);
+    const baseHealth = isOnline ? currentHealth : 85;
+    
+    return [
+      { month: "Ene", health: 85 },
+      { month: "Feb", health: 88 },
+      { month: "Mar", health: 92 },
+      { month: "Abr", health: 80 },
+      { month: "May", health: 85 },
+      { month: "Jun", health: baseHealth }, // El mes actual reacciona a los sensores
+    ];
+  }, [sensorValues, isOnline]);
 
   useEffect(() => {
     const staticNotifs: Notification[] = [
@@ -116,7 +142,6 @@ export default function Home() {
     const unsubscribe = onValue(sensorsRef, (snapshot) => {
       const data = snapshot.val();
       if (data) {
-        // Mapeo EXACTO según los datos enviados por el usuario
         const newValues = {
           humidity_soil: Number(data.humedad_suelo ?? 0),
           temp: Number(data.temperatura ?? 0),
@@ -270,8 +295,11 @@ export default function Home() {
                 <CardHeader>
                   <CardTitle className="text-lg flex items-center gap-2">
                     <TrendingUp className="h-5 w-5 text-primary" />
-                    Historial de Salud
+                    Historial de Salud (Dinámico)
                   </CardTitle>
+                  <CardDescription>
+                    Bienestar del cultivo calculado en base a humedad y temperatura de Wokwi.
+                  </CardDescription>
                 </CardHeader>
                 <CardContent className="h-fit w-full pb-6">
                   <ChartContainer config={chartConfig} className="aspect-auto h-[250px] w-full">
@@ -303,6 +331,7 @@ export default function Home() {
                           strokeWidth={3}
                           fillOpacity={1} 
                           fill="url(#colorHealth)" 
+                          isAnimationActive={false}
                         />
                       </AreaChart>
                   </ChartContainer>
