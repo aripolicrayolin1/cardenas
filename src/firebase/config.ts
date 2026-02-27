@@ -2,7 +2,7 @@ import { initializeApp, getApps, getApp } from "firebase/app";
 import { getAuth } from "firebase/auth";
 import { getFirestore } from "firebase/firestore";
 
-// Configuración real obtenida de la consola de Firebase
+// Configuración real obtenida de la consola de Firebase del usuario
 const firebaseConfig = {
   apiKey: "AIzaSyBWD6WwCUJLiKlbSgr0NYGppQtL3HnHpoM",
   authDomain: "studio-3066950614-ac5b0.firebaseapp.com",

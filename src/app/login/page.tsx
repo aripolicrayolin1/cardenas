@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Leaf, LogIn, Mail, AlertCircle, ShieldCheck } from "lucide-react";
+import { Leaf, Mail, AlertCircle, ShieldCheck } from "lucide-react";
 import { auth } from "@/firebase/config";
 import { 
   signInWithPopup, 
@@ -34,7 +34,10 @@ export default function LoginPage() {
     try {
       const result = await signInWithPopup(auth, provider);
       if (result.user) {
-        toast({ title: "Acceso Exitoso", description: `Bienvenido, ${result.user.displayName}` });
+        toast({ 
+          title: "Acceso Exitoso", 
+          description: `Bienvenido, ${result.user.displayName}` 
+        });
         router.push("/");
       }
     } catch (error: any) {
@@ -43,14 +46,18 @@ export default function LoginPage() {
       
       if (error.code === 'auth/popup-blocked') {
         message = "El navegador bloqueó la ventana. Por favor, actívala.";
-      } else if (error.code === 'auth/invalid-api-key') {
-        message = "La API Key de Firebase es incorrecta. Por favor, actualízala en config.ts.";
       } else if (error.code === 'auth/unauthorized-domain') {
-        message = "Este dominio no está autorizado en la consola de Firebase.";
+        message = "Dominio no autorizado. Asegúrate de añadir el dominio actual en la consola de Firebase > Authentication > Ajustes.";
+      } else if (error.code === 'auth/popup-closed-by-user') {
+        message = "Cerraste la ventana antes de terminar el acceso.";
       }
       
       setError(message);
-      toast({ title: "Error de Acceso", description: message, variant: "destructive" });
+      toast({ 
+        title: "Error de Acceso", 
+        description: message, 
+        variant: "destructive" 
+      });
     }
   };
 
@@ -60,17 +67,19 @@ export default function LoginPage() {
     setError(null);
     try {
       await signInWithEmailAndPassword(auth, email, password);
+      toast({ title: "Bienvenido", description: "Has iniciado sesión correctamente." });
       router.push("/");
     } catch (error: any) {
       if (error.code === 'auth/user-not-found' || error.code === 'auth/invalid-credential') {
         try {
           await createUserWithEmailAndPassword(auth, email, password);
+          toast({ title: "Cuenta creada", description: "Te hemos registrado exitosamente." });
           router.push("/");
         } catch (regError: any) {
-          setError(regError.message);
+          setError("Error al crear cuenta: " + regError.message);
         }
       } else {
-        setError(error.message);
+        setError("Error: " + error.message);
       }
     } finally {
       setLoading(false);
@@ -97,8 +106,8 @@ export default function LoginPage() {
             </div>
           </div>
           <CardTitle className="text-3xl font-black tracking-tighter text-primary">AgroTech</CardTitle>
-          <CardDescription className="text-sm font-medium">
-            SISTEMA INTELIGENTE DE MONITOREO HIDALGO
+          <CardDescription className="text-sm font-medium uppercase tracking-widest">
+            Hidalgo • Región Valle del Mezquital
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
@@ -136,18 +145,15 @@ export default function LoginPage() {
           <form onSubmit={handleEmailLogin} className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="email" className="text-xs font-bold uppercase text-muted-foreground">Correo Electrónico</Label>
-              <div className="relative">
-                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input 
-                  id="email" 
-                  type="email" 
-                  placeholder="usuario@ejemplo.com" 
-                  className="pl-10 h-11 border-primary/10" 
-                  required
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                />
-              </div>
+              <Input 
+                id="email" 
+                type="email" 
+                placeholder="usuario@ejemplo.com" 
+                className="h-11 border-primary/10" 
+                required
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+              />
             </div>
             <div className="space-y-2">
               <Label htmlFor="password" title="password" className="text-xs font-bold uppercase text-muted-foreground">Contraseña</Label>
