@@ -1,3 +1,4 @@
+
 "use client";
 
 import { SidebarProvider, SidebarInset, SidebarTrigger } from "@/components/ui/sidebar";
@@ -6,7 +7,7 @@ import { SensorStats } from "@/components/dashboard/sensor-stats";
 import { AIRiskAlert } from "@/components/dashboard/ai-risk-alert";
 import { CommunityAlerts } from "@/components/dashboard/community-alerts";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Activity, Bell, Info, TrendingUp, AlertTriangle, CheckCircle2, Droplets, Thermometer, User, Radio, Zap } from "lucide-react";
+import { Activity, Bell, Info, TrendingUp, AlertTriangle, CheckCircle2, Droplets, Thermometer, User, Radio, Zap, X } from "lucide-react";
 import Image from "next/image";
 import { 
   AreaChart, 
@@ -63,19 +64,16 @@ export default function Home() {
   });
   const [isOnline, setIsOnline] = useState(false);
   const [lastUpdate, setLastUpdate] = useState<Date | null>(null);
-  const [notifications, setNotifications] = useState<Notification[]>([]);
   const [proximityAlert, setProximityAlert] = useState<any | null>(null);
+  const [showRadar, setShowRadar] = useState(true);
   
   const notifiedEvents = useRef<Set<string>>(new Set());
 
-  // Lógica de Geofencing / Radar de Proximidad
   useEffect(() => {
     const checkProximity = () => {
       const savedAlerts = localStorage.getItem("community_alerts");
       if (savedAlerts) {
         const alerts = JSON.parse(savedAlerts);
-        // Simulamos que el usuario está cerca de una alerta (ej: < 10km)
-        // En una app real usaríamos navigator.geolocation.getCurrentPosition
         const nearby = alerts.find((a: any) => a.severity === "Alta");
         if (nearby) {
           setProximityAlert(nearby);
@@ -173,12 +171,17 @@ export default function Home() {
         </header>
 
         <main className="flex-1 space-y-8 p-4 md:p-8 pt-6">
-          {/* RADAR DE PROXIMIDAD (GEOFENCING) */}
-          {proximityAlert && (
-            <Alert className="bg-destructive border-none text-white shadow-2xl animate-bounce">
+          {proximityAlert && showRadar && (
+            <Alert className="bg-destructive border-none text-white shadow-2xl animate-in fade-in slide-in-from-top-4 duration-500 relative">
               <Radio className="h-5 w-5 text-white animate-pulse" />
+              <button 
+                onClick={() => setShowRadar(false)}
+                className="absolute top-4 right-4 text-white/70 hover:text-white transition-colors"
+              >
+                <X className="h-5 w-5" />
+              </button>
               <AlertTitle className="font-black text-lg">⚠️ RADAR DE PLAGAS: AMENAZA CERCANA</AlertTitle>
-              <AlertDescription className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mt-2">
+              <AlertDescription className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mt-2 pr-8">
                 <p className="font-medium">
                   Se ha reportado <span className="underline">{proximityAlert.problem}</span> en <span className="font-black">{proximityAlert.region}</span>. 
                   ¡Tu campo está en el radio de riesgo!
