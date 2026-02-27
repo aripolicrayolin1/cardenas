@@ -6,6 +6,7 @@ import { Droplets, Thermometer, Wind, RefreshCw, Wifi, WifiOff, CloudRain, Snowf
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import { useState, useEffect } from "react";
+import { useTranslation } from "@/hooks/use-translation";
 
 interface SensorValues {
   humidity_soil: number;
@@ -24,16 +25,16 @@ interface SensorStatsProps {
 }
 
 export function SensorStats({ sensorValues, isOnline, lastUpdate }: SensorStatsProps) {
+  const { t } = useTranslation();
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
     setMounted(true);
   }, []);
 
-  // Mapeo dinámico basado en los datos reales del ESP32
   const sensors = [
     { 
-      label: "Humedad Suelo", 
+      label: t('soil_humidity'), 
       displayValue: sensorValues.humidity_soil > 100 
         ? Math.max(0, Math.min(100, (sensorValues.humidity_soil / 4095) * 100)) 
         : sensorValues.humidity_soil,
@@ -44,7 +45,7 @@ export function SensorStats({ sensorValues, isOnline, lastUpdate }: SensorStatsP
       isAnalog: sensorValues.humidity_soil > 100
     },
     { 
-      label: "Humedad Aire", 
+      label: "Hum. Aire", 
       displayValue: sensorValues.humidity_air,
       unit: "%", 
       icon: Wind, 
@@ -52,7 +53,7 @@ export function SensorStats({ sensorValues, isOnline, lastUpdate }: SensorStatsP
       max: 100 
     },
     { 
-      label: "Temperatura", 
+      label: t('air_temp'), 
       displayValue: sensorValues.temp,
       unit: "°C", 
       icon: Thermometer, 

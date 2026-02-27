@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState } from "react";
@@ -6,6 +7,7 @@ import { AlertCircle, ShieldCheck, Zap, Info, WifiOff, Loader2, RefreshCw } from
 import { predictivePestDiseaseAlerts, type PredictiveAlertOutput } from "@/ai/flows/predictive-pest-disease-alerts";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { useTranslation } from "@/hooks/use-translation";
 
 interface AIRiskAlertProps {
   sensorValues: {
@@ -17,6 +19,7 @@ interface AIRiskAlertProps {
 }
 
 export function AIRiskAlert({ sensorValues }: AIRiskAlertProps) {
+  const { t } = useTranslation();
   const [prediction, setPrediction] = useState<PredictiveAlertOutput | null>(null);
   const [loading, setLoading] = useState(false);
 
@@ -60,15 +63,15 @@ export function AIRiskAlert({ sensorValues }: AIRiskAlertProps) {
             ) : (
               <ShieldCheck className="text-primary h-5 w-5" />
             )}
-            Análisis de Riesgo
+            {t('risk_analysis')}
           </CardTitle>
           <CardDescription>
-            Predicción basada en sensores actuales
+            {t('risk_prediction')}
           </CardDescription>
         </div>
         {!prediction && !loading && (
           <Button size="sm" onClick={handleManualScan} className="h-8 gap-2 font-bold shadow-sm">
-            <Zap className="h-3.5 w-3.5" /> Analizar con IA
+            <Zap className="h-3.5 w-3.5" /> {t('analyze_ai')}
           </Button>
         )}
         {prediction && (
@@ -98,7 +101,7 @@ export function AIRiskAlert({ sensorValues }: AIRiskAlertProps) {
             <div className="bg-primary/10 p-3 rounded-lg border border-primary/20">
               <h4 className="font-semibold text-xs mb-1 text-primary flex items-center gap-2">
                 <Info className="h-3 w-3" />
-                Acción Recomendada
+                {t('recommended_action')}
               </h4>
               <p className="text-xs italic">{prediction?.recommendation}</p>
             </div>
@@ -109,7 +112,7 @@ export function AIRiskAlert({ sensorValues }: AIRiskAlertProps) {
           </>
         ) : (
           <div className="py-6 text-center text-xs text-muted-foreground italic border-2 border-dashed rounded-lg bg-muted/5">
-            Haz clic en "Analizar con IA" para obtener una predicción basada en tus sensores.
+            Haz clic en "{t('analyze_ai')}" para obtener una predicción basada en tus sensores.
           </div>
         )}
       </CardContent>

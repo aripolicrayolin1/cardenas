@@ -19,10 +19,18 @@ const translations = {
     soil_humidity: "Humedad Suelo",
     air_temp: "Temperatura",
     risk_analysis: "Análisis de Riesgo",
-    community_network: "Red Comunitaria",
+    community_network: "Red Comunitaria (Local)",
     radar_active: "RADAR ACTIVO",
     hands_free: "Dictar Síntomas",
-    get_solution: "OBTENER SOLUCIÓN"
+    get_solution: "OBTENER SOLUCIÓN",
+    recent_alerts: "Alertas Recientes",
+    report_outbreak: "Reportar Brote Local",
+    pest_identifier: "Identificador de Plagas",
+    new_query: "Nueva Consulta",
+    report_brote: "Reportar Brote",
+    risk_prediction: "Predicción de Riesgo",
+    recommended_action: "Acción Recomendada",
+    analyze_ai: "Analizar con IA"
   },
   hn: {
     dashboard: "Ñut’i Ja’i",
@@ -40,7 +48,15 @@ const translations = {
     community_network: "M’u̱i Munthe",
     radar_active: "SU’U",
     hands_free: "Ma̱ hñä",
-    get_solution: "HYANDI XI’ÑO"
+    get_solution: "HYANDI XI’ÑO",
+    recent_alerts: "Hyandi xi’ño",
+    report_outbreak: "Ma̱ n’u",
+    pest_identifier: "Pa̱di n’u",
+    new_query: "N’ra hyandi",
+    report_brote: "Ma̱ n’u",
+    risk_prediction: "Hyandi n’u n’e",
+    recommended_action: "Hahni ja’i",
+    analyze_ai: "Pa̱di ko IA"
   }
 };
 

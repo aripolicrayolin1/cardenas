@@ -1,3 +1,4 @@
+
 "use client";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -16,6 +17,7 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { useTranslation } from "@/hooks/use-translation";
 
 interface Alert {
   id: string;
@@ -55,6 +57,7 @@ const initialAlerts: Alert[] = [
 ];
 
 export function CommunityAlerts() {
+  const { t } = useTranslation();
   const { toast } = useToast();
   const [alerts, setAlerts] = useState<Alert[]>([]);
   const [isReportOpen, setIsReportOpen] = useState(false);
@@ -162,7 +165,7 @@ export function CommunityAlerts() {
       <CardHeader className="bg-primary text-primary-foreground py-4">
         <CardTitle className="text-lg flex items-center gap-2">
           <Users className="h-5 w-5" />
-          Red Comunitaria (Local)
+          {t('community_network')}
         </CardTitle>
       </CardHeader>
       <CardContent className="p-0 flex-1 overflow-auto">
@@ -202,7 +205,7 @@ export function CommunityAlerts() {
       </CardContent>
       <div className="p-4 bg-muted/20 border-t">
         <Button className="w-full font-semibold shadow-sm" size="sm" onClick={() => setIsReportOpen(true)}>
-          <Plus className="h-4 w-4 mr-2" /> Reportar Brote Local
+          <Plus className="h-4 w-4 mr-2" /> {t('report_outbreak')}
         </Button>
       </div>
 
@@ -234,7 +237,7 @@ export function CommunityAlerts() {
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2 text-destructive">
               <AlertTriangle className="h-5 w-5" />
-              Reportar Brote Local
+              {t('report_outbreak')}
             </DialogTitle>
             <DialogDescription>
               Avisa a otros agricultores. Usaremos tu GPS para fijar el punto exacto.

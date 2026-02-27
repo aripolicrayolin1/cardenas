@@ -180,7 +180,7 @@ export default function Home() {
                 </p>
                 <Link href="/diagnosis">
                   <Button variant="secondary" size="sm" className="font-bold gap-2">
-                    <Zap className="h-4 w-4" /> Inspeccionar ahora
+                    <Zap className="h-4 w-4" /> {t('get_solution')}
                   </Button>
                 </Link>
               </AlertDescription>
