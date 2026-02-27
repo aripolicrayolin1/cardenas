@@ -1,3 +1,4 @@
+
 "use client";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -46,9 +47,10 @@ export function CommunityAlerts() {
   }, [db]);
 
   const alertsQuery = useMemo(() => {
-    if (!alertsCollectionRef) return null;
+    // Solo permitimos la consulta si hay una referencia y el usuario está autenticado
+    if (!alertsCollectionRef || !user) return null;
     return query(alertsCollectionRef, orderBy("createdAt", "desc"), limit(10));
-  }, [alertsCollectionRef]);
+  }, [alertsCollectionRef, user]);
 
   const { data: alerts, loading: alertsLoading } = useCollection(alertsQuery);
 
@@ -101,7 +103,7 @@ export function CommunityAlerts() {
   };
 
   const handleReport = () => {
-    if (!db || !alertsCollectionRef) return;
+    if (!db || !alertsCollectionRef || !user) return;
     if (!newAlert.region || !newAlert.problem) {
       toast({
         title: "Error",
@@ -126,7 +128,7 @@ export function CommunityAlerts() {
       date: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
       lat: finalLat,
       lng: finalLng,
-      userId: user?.uid || "anónimo",
+      userId: user.uid,
       createdAt: serverTimestamp()
     };
 
@@ -165,7 +167,11 @@ export function CommunityAlerts() {
       </CardHeader>
       <CardContent className="p-0 flex-1 overflow-auto">
         <div className="divide-y">
-          {alertsLoading ? (
+          {!user ? (
+            <div className="p-8 text-center text-xs text-muted-foreground italic">
+              Inicia sesión para ver las alertas de la comunidad.
+            </div>
+          ) : alertsLoading ? (
             <div className="p-8 text-center flex flex-col items-center gap-2">
               <Loader2 className="h-6 w-6 animate-spin text-primary" />
               <span className="text-xs text-muted-foreground">Cargando alertas...</span>

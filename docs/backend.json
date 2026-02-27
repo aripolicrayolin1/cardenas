@@ -3,7 +3,7 @@
   "entities": {
     "UserProfile": {
       "title": "Perfil de Usuario",
-      "description": "Información extendida del agricultor.",
+      "description": "Información detallada del agricultor vinculada a su cuenta.",
       "type": "object",
       "properties": {
         "displayName": { "type": "string" },
@@ -16,7 +16,7 @@
     },
     "Farm": {
       "title": "Finca",
-      "description": "Datos de un terreno monitoreado.",
+      "description": "Datos de un terreno monitoreado y gestionado por el usuario.",
       "type": "object",
       "properties": {
         "name": { "type": "string" },
@@ -32,7 +32,7 @@
     },
     "CommunityAlert": {
       "title": "Alerta Comunitaria",
-      "description": "Reporte de plaga o enfermedad compartido por la comunidad.",
+      "description": "Reporte de plaga o enfermedad compartido para la vigilancia regional.",
       "type": "object",
       "properties": {
         "region": { "type": "string" },
@@ -54,15 +54,15 @@
   "firestore": {
     "/users/{userId}": {
       "schema": "UserProfile",
-      "description": "Datos de perfil del usuario"
+      "description": "Datos privados de perfil del usuario"
     },
     "/users/{userId}/farms/{farmId}": {
       "schema": "Farm",
-      "description": "Fincas registradas por el usuario"
+      "description": "Fincas privadas del usuario"
     },
     "/community_alerts/{alertId}": {
       "schema": "CommunityAlert",
-      "description": "Alertas globales compartidas por los agricultores"
+      "description": "Alertas públicas para la comunidad de agricultores"
     }
   }
 }
