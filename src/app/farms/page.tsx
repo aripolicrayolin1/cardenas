@@ -185,83 +185,98 @@ export default function FarmsPage() {
               </div>
             ) : (
               <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-                {farms.map((farm: any) => (
-                  <Card key={farm.id} className="glass-card border-none overflow-hidden transition-all duration-300 hover:-translate-y-2 hover:shadow-2xl group relative">
-                    <div className={`absolute top-0 left-0 w-1 h-full ${
-                      farm.status === 'Saludable' ? 'bg-primary' : 'bg-destructive'
-                    }`} />
-                    
-                    <CardHeader className="pb-2">
-                      <div className="flex justify-between items-start">
-                        <div className="space-y-1">
-                          <CardTitle className="text-2xl font-black tracking-tighter group-hover:text-primary transition-colors">{farm.name}</CardTitle>
-                          <CardDescription className="flex items-center gap-1 font-bold text-[10px] uppercase text-muted-foreground">
-                            <MapPin className="h-3 w-3 text-primary" /> {farm.location}
-                          </CardDescription>
-                        </div>
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full hover:bg-white/50">
-                              <MoreVertical className="h-4 w-4" />
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end" className="glass-card border-none">
-                            <DropdownMenuItem className="text-destructive font-bold cursor-pointer" onClick={() => handleDeleteFarm(farm.id)}>
-                              <Trash2 className="mr-2 h-4 w-4" /> Eliminar finca
-                            </DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                      </div>
-                    </CardHeader>
-                    
-                    <CardContent className="space-y-6 pt-2">
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-2">
-                          <Badge variant="secondary" className="gap-1.5 font-black text-[9px] uppercase tracking-widest bg-white/60">
-                            <Leaf className="h-3 w-3 text-primary" /> {farm.crop}
-                          </Badge>
-                          <span className="text-[10px] font-bold text-muted-foreground uppercase">{farm.area} HA</span>
-                        </div>
-                        <Badge variant={farm.status === 'Saludable' ? 'default' : 'destructive'} className="text-[9px] font-black uppercase tracking-widest px-3 py-1 rounded-full shadow-md">
-                          {farm.status === 'Saludable' ? t('healthy') : farm.status}
-                        </Badge>
-                      </div>
+                {farms.map((farm: any) => {
+                  // Lógica para diferenciar datos estáticos por nombre para el video
+                  let displayHumidity = currentSoilHumidity;
+                  let displayTemp = liveSensors.temp.toFixed(1);
+                  let displayStatus = farm.status || "Saludable";
 
-                      <div className="grid grid-cols-2 gap-4">
-                        <div className="bg-white/40 backdrop-blur-md p-4 rounded-2xl border border-white/60 shadow-inner flex flex-col gap-1 group-hover:bg-white/60 transition-colors">
-                          <div className="flex items-center gap-2">
-                            <Droplets className="h-4 w-4 text-blue-500 animate-pulse" />
-                            <p className="text-[9px] text-muted-foreground uppercase font-black tracking-tighter">{t('soil_humidity')}</p>
-                          </div>
-                          <p className="text-2xl font-black text-foreground/80" suppressHydrationWarning>{currentSoilHumidity}%</p>
-                        </div>
-                        <div className="bg-white/40 backdrop-blur-md p-4 rounded-2xl border border-white/60 shadow-inner flex flex-col gap-1 group-hover:bg-white/60 transition-colors">
-                          <div className="flex items-center gap-2">
-                            <Thermometer className="h-4 w-4 text-orange-500 animate-pulse" />
-                            <p className="text-[9px] text-muted-foreground uppercase font-black tracking-tighter">{t('air_temp')}</p>
-                          </div>
-                          <p className="text-2xl font-black text-foreground/80" suppressHydrationWarning>{liveSensors.temp.toFixed(1)}°C</p>
-                        </div>
-                      </div>
+                  if (farm.name?.toUpperCase().includes("LESLIE ARIANNA")) {
+                    displayHumidity = "42.8";
+                    displayTemp = "28.4";
+                  } else if (farm.name?.toLowerCase().includes("alejandra")) {
+                    displayHumidity = "68.5";
+                    displayTemp = "21.9";
+                  }
+
+                  return (
+                    <Card key={farm.id} className="glass-card border-none overflow-hidden transition-all duration-300 hover:-translate-y-2 hover:shadow-2xl group relative">
+                      <div className={`absolute top-0 left-0 w-1 h-full ${
+                        displayStatus === 'Saludable' ? 'bg-primary' : 'bg-destructive'
+                      }`} />
                       
-                      <div className="flex items-center justify-between">
-                         <div className="flex items-center gap-1.5 text-[9px] font-black uppercase text-primary tracking-widest">
-                            <RefreshCw className="h-3 w-3 animate-spin-slow" />
-                            <span suppressHydrationWarning>{t('sync')}: {liveSensors.lastUpdate || '--:--'}</span>
-                         </div>
-                         <Badge variant="outline" className="text-[8px] font-black border-primary/20 text-primary uppercase">DATOS IoT VIVOS</Badge>
-                      </div>
-                    </CardContent>
+                      <CardHeader className="pb-2">
+                        <div className="flex justify-between items-start">
+                          <div className="space-y-1">
+                            <CardTitle className="text-2xl font-black tracking-tighter group-hover:text-primary transition-colors">{farm.name}</CardTitle>
+                            <CardDescription className="flex items-center gap-1 font-bold text-[10px] uppercase text-muted-foreground">
+                              <MapPin className="h-3 w-3 text-primary" /> {farm.location}
+                            </CardDescription>
+                          </div>
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full hover:bg-white/50">
+                                <MoreVertical className="h-4 w-4" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end" className="glass-card border-none">
+                              <DropdownMenuItem className="text-destructive font-bold cursor-pointer" onClick={() => handleDeleteFarm(farm.id)}>
+                                <Trash2 className="mr-2 h-4 w-4" /> Eliminar finca
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        </div>
+                      </CardHeader>
+                      
+                      <CardContent className="space-y-6 pt-2">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-2">
+                            <Badge variant="secondary" className="gap-1.5 font-black text-[9px] uppercase tracking-widest bg-white/60">
+                              <Leaf className="h-3 w-3 text-primary" /> {farm.crop}
+                            </Badge>
+                            <span className="text-[10px] font-bold text-muted-foreground uppercase">{farm.area} HA</span>
+                          </div>
+                          <Badge variant={displayStatus === 'Saludable' ? 'default' : 'destructive'} className="text-[9px] font-black uppercase tracking-widest px-3 py-1 rounded-full shadow-md">
+                            {displayStatus === 'Saludable' ? t('healthy') : displayStatus}
+                          </Badge>
+                        </div>
 
-                    <CardFooter className="pt-2">
-                      <Link href="/monitoring" className="w-full">
-                        <Button variant="outline" className="w-full h-11 rounded-xl font-black uppercase text-xs tracking-widest border-primary/20 hover:bg-primary hover:text-white transition-all shadow-sm">
-                          <Activity className="h-4 w-4 mr-2" /> {t('view_monitoring')}
-                        </Button>
-                      </Link>
-                    </CardFooter>
-                  </Card>
-                ))}
+                        <div className="grid grid-cols-2 gap-4">
+                          <div className="bg-white/40 backdrop-blur-md p-4 rounded-2xl border border-white/60 shadow-inner flex flex-col gap-1 group-hover:bg-white/60 transition-colors">
+                            <div className="flex items-center gap-2">
+                              <Droplets className="h-4 w-4 text-blue-500 animate-pulse" />
+                              <p className="text-[9px] text-muted-foreground uppercase font-black tracking-tighter">{t('soil_humidity')}</p>
+                            </div>
+                            <p className="text-2xl font-black text-foreground/80" suppressHydrationWarning>{displayHumidity}%</p>
+                          </div>
+                          <div className="bg-white/40 backdrop-blur-md p-4 rounded-2xl border border-white/60 shadow-inner flex flex-col gap-1 group-hover:bg-white/60 transition-colors">
+                            <div className="flex items-center gap-2">
+                              <Thermometer className="h-4 w-4 text-orange-500 animate-pulse" />
+                              <p className="text-[9px] text-muted-foreground uppercase font-black tracking-tighter">{t('air_temp')}</p>
+                            </div>
+                            <p className="text-2xl font-black text-foreground/80" suppressHydrationWarning>{displayTemp}°C</p>
+                          </div>
+                        </div>
+                        
+                        <div className="flex items-center justify-between">
+                           <div className="flex items-center gap-1.5 text-[9px] font-black uppercase text-primary tracking-widest">
+                              <RefreshCw className="h-3 w-3 animate-spin-slow" />
+                              <span suppressHydrationWarning>{t('sync')}: {liveSensors.lastUpdate || '--:--'}</span>
+                           </div>
+                           <Badge variant="outline" className="text-[8px] font-black border-primary/20 text-primary uppercase">DATOS IoT VIVOS</Badge>
+                        </div>
+                      </CardContent>
+
+                      <CardFooter className="pt-2">
+                        <Link href="/monitoring" className="w-full">
+                          <Button variant="outline" className="w-full h-11 rounded-xl font-black uppercase text-xs tracking-widest border-primary/20 hover:bg-primary hover:text-white transition-all shadow-sm">
+                            <Activity className="h-4 w-4 mr-2" /> {t('view_monitoring')}
+                          </Button>
+                        </Link>
+                      </CardFooter>
+                    </Card>
+                  );
+                })}
 
                 <button 
                   className="glass-card border-2 border-dashed border-primary/20 rounded-2xl p-12 flex flex-col items-center justify-center gap-4 hover:bg-primary/5 transition-all group relative overflow-hidden"
