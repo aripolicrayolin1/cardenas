@@ -1,8 +1,9 @@
 import { initializeApp, getApps, getApp } from "firebase/app";
 import { getAuth } from "firebase/auth";
 import { getFirestore } from "firebase/firestore";
+import { getDatabase } from "firebase/database";
 
-// Configuración real obtenida de la consola de Firebase del usuario
+// Configuración unificada con Realtime Database
 const firebaseConfig = {
   apiKey: "AIzaSyBWD6WwCUJLiKlbSgr0NYGppQtL3HnHpoM",
   authDomain: "studio-3066950614-ac5b0.firebaseapp.com",
@@ -16,5 +17,6 @@ const firebaseConfig = {
 const app = getApps().length > 0 ? getApp() : initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
+const rtdb = getDatabase(app);
 
-export { app, auth, db };
+export { app, auth, db, rtdb };

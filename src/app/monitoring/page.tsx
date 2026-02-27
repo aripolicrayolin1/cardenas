@@ -1,4 +1,3 @@
-
 "use client";
 
 import { SidebarProvider, SidebarInset, SidebarTrigger } from "@/components/ui/sidebar";
@@ -34,8 +33,8 @@ import {
   FileEdit
 } from "lucide-react";
 import { useState, useEffect, useRef, useMemo } from "react";
-import { initializeApp, getApps } from "firebase/app";
-import { getDatabase, ref, onValue } from "firebase/database";
+import { rtdb } from "@/firebase/config";
+import { ref, onValue } from "firebase/database";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { 
@@ -45,13 +44,6 @@ import {
   DropdownMenuTrigger 
 } from "@/components/ui/dropdown-menu";
 import { useTranslation } from "@/hooks/use-translation";
-
-const firebaseConfig = {
-  databaseURL: "https://studio-3066950614-ac5b0-default-rtdb.firebaseio.com",
-};
-
-const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApps()[0];
-const db = getDatabase(app);
 
 interface SensorPoint {
   time: string;
@@ -78,24 +70,20 @@ export default function MonitoringPage() {
   const [isOnline, setIsOnline] = useState(false);
   const [events, setEvents] = useState<{time: string, event: string, status: string}[]>([]);
   const lastTimeRef = useRef<string>("");
-  const [formattedDateTime, setFormattedDateTime] = useState<{date: string, time: string} | null>(null);
 
   const chartConfig = {
-    temp: { label: t('air_temp'), color: "hsl(var(--chart-4))" },
-    humiditySoil: { label: t('soil_humidity'), color: "hsl(var(--chart-1))" },
-    humidityAir: { label: t('humidity_air'), color: "hsl(var(--chart-3))" },
-    et: { label: t('evapotranspiration'), color: "hsl(var(--chart-5))" },
-    dewPoint: { label: t('dew_point'), color: "hsl(var(--chart-2))" },
+    temp: { label: t('air_temp'), color: "#f97316" },
+    humiditySoil: { label: t('soil_humidity'), color: "#2563eb" },
+    humidityAir: { label: t('humidity_air'), color: "#0d9488" },
+    et: { label: t('evapotranspiration'), color: "#8b5cf6" },
+    dewPoint: { label: t('dew_point'), color: "#06b6d4" },
   };
 
   useEffect(() => {
     setIsMounted(true);
-    setFormattedDateTime({
-      date: new Date().toLocaleDateString(),
-      time: new Date().toLocaleTimeString()
-    });
+    if (!rtdb) return;
 
-    const sensorsRef = ref(db, 'sensores');
+    const sensorsRef = ref(rtdb, 'sensores');
     const unsubscribe = onValue(sensorsRef, (snapshot) => {
       const data = snapshot.val();
       if (data) {
@@ -260,13 +248,13 @@ export default function MonitoringPage() {
         <header className="flex h-16 shrink-0 items-center justify-between px-6 border-b bg-white/40 backdrop-blur-md sticky top-0 z-10">
           <div className="flex items-center gap-2">
             <SidebarTrigger />
-            <h1 className="text-xl font-black text-primary tracking-tight">{t('sensor_analytics')}</h1>
+            <h1 className="text-xl font-black text-primary tracking-tight" suppressHydrationWarning>{t('sensor_analytics')}</h1>
           </div>
           <div className="flex items-center gap-3">
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="outline" size="sm" className="gap-2 shadow-sm font-black border-primary/20 text-primary rounded-xl">
-                  <Download className="h-4 w-4" /> {t('download_report')}
+                  <Download className="h-4 w-4" /> <span suppressHydrationWarning>{t('download_report')}</span>
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-56 glass-card border-none">
@@ -280,7 +268,7 @@ export default function MonitoringPage() {
             </DropdownMenu>
             <Badge variant={isOnline ? "default" : "secondary"} className={`gap-1.5 py-1 px-3 rounded-full font-black text-[10px] tracking-widest ${isOnline ? 'bg-primary' : 'bg-slate-400'}`}>
               {isOnline ? <Wifi className="h-3.5 w-3.5 text-white animate-pulse" /> : <WifiOff className="h-3.5 w-3.5" />}
-              {isOnline ? t('online').toUpperCase() : t('offline').toUpperCase()}
+              <span suppressHydrationWarning>{isOnline ? t('online').toUpperCase() : t('offline').toUpperCase()}</span>
             </Badge>
           </div>
         </header>
@@ -289,13 +277,13 @@ export default function MonitoringPage() {
           <Tabs value={activeTab} className="w-full" onValueChange={setActiveTab}>
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
               <div className="space-y-1">
-                <h2 className="text-2xl font-black text-foreground/80 tracking-tighter">{t('crop_history')}</h2>
-                <p className="text-muted-foreground text-xs font-medium uppercase tracking-wider">{t('measured_params')}</p>
+                <h2 className="text-2xl font-black text-foreground/80 tracking-tighter" suppressHydrationWarning>{t('crop_history')}</h2>
+                <p className="text-muted-foreground text-xs font-medium uppercase tracking-wider" suppressHydrationWarning>{t('measured_params')}</p>
               </div>
               <TabsList className="grid grid-cols-3 w-full md:w-[350px] shadow-sm glass-card border-none p-1 rounded-2xl">
-                <TabsTrigger value="live" className="gap-2 font-bold rounded-xl data-[state=active]:bg-primary data-[state=active]:text-white"><Activity className="h-3.5 w-3.5" /> {t('live')}</TabsTrigger>
-                <TabsTrigger value="today" className="gap-2 font-bold rounded-xl data-[state=active]:bg-primary data-[state=active]:text-white"><Clock className="h-3.5 w-3.5" /> {t('today')}</TabsTrigger>
-                <TabsTrigger value="week" className="gap-2 font-bold rounded-xl data-[state=active]:bg-primary data-[state=active]:text-white"><CalendarDays className="h-3.5 w-3.5" /> {t('week')}</TabsTrigger>
+                <TabsTrigger value="live" className="gap-2 font-bold rounded-xl data-[state=active]:bg-primary data-[state=active]:text-white"><Activity className="h-3.5 w-3.5" /> <span suppressHydrationWarning>{t('live')}</span></TabsTrigger>
+                <TabsTrigger value="today" className="gap-2 font-bold rounded-xl data-[state=active]:bg-primary data-[state=active]:text-white"><Clock className="h-3.5 w-3.5" /> <span suppressHydrationWarning>{t('today')}</span></TabsTrigger>
+                <TabsTrigger value="week" className="gap-2 font-bold rounded-xl data-[state=active]:bg-primary data-[state=active]:text-white"><CalendarDays className="h-3.5 w-3.5" /> <span suppressHydrationWarning>{t('week')}</span></TabsTrigger>
               </TabsList>
             </div>
             <TabsContent value="live" className="space-y-6">{renderCharts(history, true)}</TabsContent>
@@ -305,7 +293,7 @@ export default function MonitoringPage() {
 
           <Card className="glass-card border-none shadow-xl">
             <CardHeader className="flex flex-row items-center justify-between">
-              <CardTitle className="text-lg font-black flex items-center gap-2 text-primary">
+              <CardTitle className="text-lg font-black flex items-center gap-2 text-primary" suppressHydrationWarning>
                 <TrendingUp className="h-5 w-5" />
                 {t('recent_alerts')}
               </CardTitle>
@@ -313,7 +301,7 @@ export default function MonitoringPage() {
             <CardContent>
               <div className="space-y-3">
                 {events.length === 0 ? (
-                  <div className="py-12 text-center text-muted-foreground text-sm italic font-bold uppercase tracking-widest bg-white/30 rounded-3xl border-2 border-dashed border-white/40">
+                  <div className="py-12 text-center text-muted-foreground text-sm italic font-bold uppercase tracking-widest bg-white/30 rounded-3xl border-2 border-dashed border-white/40" suppressHydrationWarning>
                     {t('no_anomalies')}
                   </div>
                 ) : (
@@ -343,8 +331,8 @@ function ChartCard({ title, description, data, dataKey, color, unit, type, confi
     <Card className="glass-card border-none overflow-hidden group transition-all duration-300 hover:-translate-y-1">
       <CardHeader className="pb-0 flex flex-row items-center justify-between">
         <div>
-          <CardTitle className="text-sm font-black text-muted-foreground uppercase tracking-widest group-hover:text-primary transition-colors">{title}</CardTitle>
-          <CardDescription className="text-[10px] font-bold text-primary/60">{description.toUpperCase()}</CardDescription>
+          <CardTitle className="text-sm font-black text-muted-foreground uppercase tracking-widest group-hover:text-primary transition-colors" suppressHydrationWarning>{title}</CardTitle>
+          <CardDescription className="text-[10px] font-bold text-primary/60" suppressHydrationWarning>{description.toUpperCase()}</CardDescription>
         </div>
         <div className="p-2 bg-white/60 rounded-xl shadow-inner">
           <Icon className={`h-5 w-5 text-primary`} />
