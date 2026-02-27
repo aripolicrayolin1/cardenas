@@ -1,3 +1,4 @@
+
 "use client";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -33,7 +34,7 @@ export function SensorStats({ sensorValues, isOnline, lastUpdate }: SensorStatsP
 
   const sensors = [
     { 
-      label: t('soil_humidity'), 
+      label: 'soil_humidity', 
       displayValue: sensorValues.humidity_soil > 100 
         ? Math.max(0, Math.min(100, (sensorValues.humidity_soil / 4095) * 100)) 
         : sensorValues.humidity_soil,
@@ -44,7 +45,7 @@ export function SensorStats({ sensorValues, isOnline, lastUpdate }: SensorStatsP
       isAnalog: sensorValues.humidity_soil > 100
     },
     { 
-      label: t('humidity_air'), 
+      label: 'humidity_air', 
       displayValue: sensorValues.humidity_air,
       unit: "%", 
       icon: Wind, 
@@ -52,7 +53,7 @@ export function SensorStats({ sensorValues, isOnline, lastUpdate }: SensorStatsP
       max: 100 
     },
     { 
-      label: t('air_temp'), 
+      label: 'air_temp', 
       displayValue: sensorValues.temp,
       unit: "°C", 
       icon: Thermometer, 
@@ -60,7 +61,7 @@ export function SensorStats({ sensorValues, isOnline, lastUpdate }: SensorStatsP
       max: 50 
     },
     { 
-      label: t('dew_point'), 
+      label: 'dew_point', 
       displayValue: sensorValues.dew_point,
       unit: "°C", 
       icon: Snowflake, 
@@ -68,7 +69,7 @@ export function SensorStats({ sensorValues, isOnline, lastUpdate }: SensorStatsP
       max: 40 
     },
     { 
-      label: t('evapotranspiration'), 
+      label: 'evapotranspiration', 
       displayValue: sensorValues.et,
       unit: " mm", 
       icon: CloudRain, 
@@ -89,7 +90,10 @@ export function SensorStats({ sensorValues, isOnline, lastUpdate }: SensorStatsP
     <div className="space-y-4">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 px-1">
         <div className="flex items-center gap-2">
-          <Badge variant={isOnline ? "default" : "secondary"} className={`gap-1.5 py-1.5 px-4 rounded-full font-black text-[10px] tracking-widest shadow-sm ${isOnline ? 'bg-primary/90' : 'bg-slate-400'}`}>
+          <Badge 
+            variant={isOnline ? "default" : "secondary"} 
+            className={`gap-1.5 py-1.5 px-4 rounded-full font-black text-[10px] tracking-widest shadow-sm ${isOnline ? 'bg-primary/90' : 'bg-slate-400'}`}
+          >
             {isOnline ? (
               <>
                 <Wifi className="h-3.5 w-3.5 text-white animate-pulse" />
@@ -102,7 +106,10 @@ export function SensorStats({ sensorValues, isOnline, lastUpdate }: SensorStatsP
               </>
             )}
           </Badge>
-          <Badge variant="outline" className="gap-1.5 py-1.5 px-4 rounded-full bg-white/40 backdrop-blur-sm border-primary/20 font-black text-[10px] tracking-widest text-primary shadow-sm">
+          <Badge 
+            variant="outline" 
+            className="gap-1.5 py-1.5 px-4 rounded-full bg-white/40 backdrop-blur-sm border-primary/20 font-black text-[10px] tracking-widest text-primary shadow-sm"
+          >
             <Zap className={`h-3.5 w-3.5 ${isOnline ? 'text-primary' : 'text-muted-foreground'}`} />
             <span suppressHydrationWarning>
               {t('status').toUpperCase()}: {sensorValues.status_text.toUpperCase()}
@@ -122,8 +129,11 @@ export function SensorStats({ sensorValues, isOnline, lastUpdate }: SensorStatsP
         {sensors.map((sensor) => (
           <Card key={sensor.label} className="glass-card overflow-hidden transition-all duration-300 hover:-translate-y-1 hover:shadow-xl group">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-[10px] font-black text-muted-foreground uppercase tracking-widest group-hover:text-primary transition-colors" suppressHydrationWarning>
-                {sensor.label}
+              <CardTitle 
+                className="text-[10px] font-black text-muted-foreground uppercase tracking-widest group-hover:text-primary transition-colors" 
+                suppressHydrationWarning
+              >
+                {t(sensor.label as any)}
               </CardTitle>
               <div className={`p-2 rounded-xl bg-white/50 shadow-inner ${sensor.color} transition-all group-hover:scale-110`}>
                 <sensor.icon className={`h-4 w-4 ${isOnline ? 'animate-pulse' : 'opacity-40'}`} />

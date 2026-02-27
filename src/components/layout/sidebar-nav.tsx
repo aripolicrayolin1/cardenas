@@ -1,3 +1,4 @@
+
 "use client";
 
 import { 
@@ -45,11 +46,11 @@ export function SidebarNav() {
   }, []);
 
   const navItems = [
-    { title: t('dashboard'), icon: LayoutDashboard, href: "/" },
-    { title: t('monitoring'), icon: Activity, href: "/monitoring" },
-    { title: t('diagnosis'), icon: Camera, href: "/diagnosis" },
-    { title: t('community'), icon: Users, href: "/community" },
-    { title: t('farms'), icon: Leaf, href: "/farms" },
+    { title: 'dashboard', icon: LayoutDashboard, href: "/" },
+    { title: 'monitoring', icon: Activity, href: "/monitoring" },
+    { title: 'diagnosis', icon: Camera, href: "/diagnosis" },
+    { title: 'community', icon: Users, href: "/community" },
+    { title: 'farms', icon: Leaf, href: "/farms" },
   ];
 
   const handleSignOut = async () => {
@@ -64,7 +65,11 @@ export function SidebarNav() {
           <div className="bg-primary rounded-2xl p-2 shadow-lg shadow-primary/20 animate-float">
             <Leaf className="h-7 w-7 text-white" />
           </div>
-          <span className="font-black text-2xl tracking-tighter text-primary" suppressHydrationWarning>
+          <span 
+            className="font-black text-2xl tracking-tighter text-primary" 
+            suppressHydrationWarning 
+            translate="no"
+          >
             Agro<span className="text-foreground">Tech</span>
           </span>
         </div>
@@ -84,8 +89,11 @@ export function SidebarNav() {
                 </AvatarFallback>
               </Avatar>
               <div className="flex flex-col min-w-0">
-                <p className="text-xs font-black truncate text-primary uppercase tracking-tighter" suppressHydrationWarning>
-                  {user.displayName || t('farmer')}
+                <p 
+                  className="text-xs font-black truncate text-primary uppercase tracking-tighter" 
+                  suppressHydrationWarning
+                >
+                  {user.displayName || (mounted ? t('farmer') : 'Agricultor')}
                 </p>
                 <p className="text-[10px] text-muted-foreground truncate font-medium">{user.email}</p>
               </div>
@@ -101,7 +109,7 @@ export function SidebarNav() {
                   <SidebarMenuButton 
                     asChild 
                     isActive={pathname === item.href}
-                    tooltip={item.title}
+                    tooltip={mounted ? t(item.title as any) : item.title}
                     className={`rounded-xl h-11 transition-all duration-300 ${
                       pathname === item.href 
                         ? 'bg-primary text-white shadow-lg shadow-primary/30 scale-105' 
@@ -110,7 +118,9 @@ export function SidebarNav() {
                   >
                     <Link href={item.href} className="flex items-center gap-3 px-4">
                       <item.icon className={`h-5 w-5 ${pathname === item.href ? 'text-white' : 'text-primary'}`} />
-                      <span className="font-bold tracking-tight" suppressHydrationWarning>{item.title}</span>
+                      <span className="font-bold tracking-tight" suppressHydrationWarning>
+                        {mounted ? t(item.title as any) : item.title}
+                      </span>
                     </Link>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
@@ -128,7 +138,7 @@ export function SidebarNav() {
           >
             <Languages className="h-4 w-4" />
             <span suppressHydrationWarning>
-              {lang === 'es' ? 'CAMBIAR A HÑÄHÑU' : 'MPENGI JA ESPAÑOL'}
+              {!mounted ? 'CAMBIAR IDIOMA' : lang === 'es' ? 'CAMBIAR A HÑÄHÑU' : 'MPENGI JA ESPAÑOL'}
             </span>
           </Button>
         </div>
@@ -138,28 +148,28 @@ export function SidebarNav() {
         <SidebarMenu className="gap-2">
           {!user && !loading ? (
             <SidebarMenuItem>
-              <SidebarMenuButton asChild tooltip={t('login')} className="rounded-xl h-11 hover:bg-primary/10 hover:text-primary">
+              <SidebarMenuButton asChild tooltip={mounted ? t('login') : 'Entrar'} className="rounded-xl h-11 hover:bg-primary/10 hover:text-primary">
                 <Link href="/login" className="flex items-center gap-3 px-4">
                   <LogIn className="h-5 w-5 text-primary" />
-                  <span className="font-bold" suppressHydrationWarning>{t('login')}</span>
+                  <span className="font-bold" suppressHydrationWarning>{mounted ? t('login') : 'Entrar'}</span>
                 </Link>
               </SidebarMenuButton>
             </SidebarMenuItem>
           ) : (
             <>
               <SidebarMenuItem>
-                <SidebarMenuButton asChild tooltip={t('settings')} className="rounded-xl h-11 hover:bg-primary/10 hover:text-primary">
+                <SidebarMenuButton asChild tooltip={mounted ? t('settings') : 'Ajustes'} className="rounded-xl h-11 hover:bg-primary/10 hover:text-primary">
                   <Link href="/settings" className="flex items-center gap-3 px-4">
                     <Settings className="h-5 w-5 text-primary" />
-                    <span className="font-bold" suppressHydrationWarning>{t('settings')}</span>
+                    <span className="font-bold" suppressHydrationWarning>{mounted ? t('settings') : 'Ajustes'}</span>
                   </Link>
                 </SidebarMenuButton>
               </SidebarMenuItem>
               <SidebarMenuItem>
-                <SidebarMenuButton tooltip={t('logout')} onClick={handleSignOut} className="rounded-xl h-11 hover:bg-destructive/10 hover:text-destructive text-muted-foreground">
+                <SidebarMenuButton tooltip={mounted ? t('logout') : 'Salir'} onClick={handleSignOut} className="rounded-xl h-11 hover:bg-destructive/10 hover:text-destructive text-muted-foreground">
                   <div className="flex items-center gap-3 px-4 w-full">
                     <LogOut className="h-5 w-5" />
-                    <span className="font-bold" suppressHydrationWarning>{t('logout')}</span>
+                    <span className="font-bold" suppressHydrationWarning>{mounted ? t('logout') : 'Salir'}</span>
                   </div>
                 </SidebarMenuButton>
               </SidebarMenuItem>
