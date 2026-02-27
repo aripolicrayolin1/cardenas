@@ -199,9 +199,8 @@ export default function MonitoringPage() {
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
-    link.setAttribute("href", url);
+    link.href = url;
     link.setAttribute("download", filename);
-    link.style.visibility = 'hidden';
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -250,13 +249,13 @@ export default function MonitoringPage() {
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
-                <DropdownMenuItem onClick={downloadCsv} className="gap-2">
+                <DropdownMenuItem onClick={downloadCsv} className="gap-2 cursor-pointer">
                   <FileText className="h-4 w-4" /> Exportar CSV (Excel)
                 </DropdownMenuItem>
-                <DropdownMenuItem onClick={downloadPdf} className="gap-2">
+                <DropdownMenuItem onClick={downloadPdf} className="gap-2 cursor-pointer">
                   <FileDown className="h-4 w-4" /> Generar Reporte PDF
                 </DropdownMenuItem>
-                <DropdownMenuItem onClick={downloadPdf} className="gap-2">
+                <DropdownMenuItem onClick={downloadPdf} className="gap-2 cursor-pointer">
                   <Printer className="h-4 w-4" /> Imprimir Reporte
                 </DropdownMenuItem>
               </DropdownMenuContent>
@@ -294,7 +293,7 @@ export default function MonitoringPage() {
             </div>
           </div>
 
-          <Tabs defaultValue="live" className="w-full" onValueChange={setActiveTab}>
+          <Tabs value={activeTab} className="w-full" onValueChange={setActiveTab}>
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6 no-print">
               <div className="space-y-1">
                 <h2 className="text-2xl font-bold">Historial de Cultivo</h2>
@@ -362,7 +361,7 @@ function ChartCard({ title, description, data, dataKey, color, unit, type }: any
       </CardHeader>
       <CardContent>
         <div className="h-[200px] w-full mt-4">
-          {data.length > 0 ? (
+          {data && data.length > 0 ? (
             <ChartContainer config={chartConfig} className="h-full w-full">
               <ResponsiveContainer width="100%" height="100%">
                 {type === 'area' ? (
