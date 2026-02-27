@@ -1,11 +1,10 @@
-
 "use client";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Users, MapPin, Calendar, ArrowRight, Plus, AlertTriangle, X, Info, Loader2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { useState, useMemo } from "react";
+import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { 
   Dialog, 
@@ -17,10 +16,6 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { useFirestore, useUser, useCollection } from "@/firebase";
-import { collection, doc, setDoc, serverTimestamp, query, orderBy, limit } from "firebase/firestore";
-import { errorEmitter } from "@/firebase/error-emitter";
-import { FirestorePermissionError } from "@/firebase/errors";
 
 interface Alert {
   id: string;
@@ -32,28 +27,36 @@ interface Alert {
   date: string;
   lat: number;
   lng: number;
-  userId?: string;
-  createdAt?: any;
 }
+
+const initialAlerts: Alert[] = [
+  {
+    id: "1",
+    region: "Actopan",
+    crop: "Maíz",
+    problem: "Brote de Gusano Cogollero",
+    severity: "Alta",
+    distance: "A 5km de ti",
+    date: "Hace 2h",
+    lat: 20.2687,
+    lng: -98.9413
+  },
+  {
+    id: "2",
+    region: "Ixmiquilpan",
+    crop: "Hortalizas",
+    problem: "Presencia de Mosca Blanca",
+    severity: "Media",
+    distance: "A 12km de ti",
+    date: "Hace 5h",
+    lat: 20.4849,
+    lng: -99.2192
+  }
+];
 
 export function CommunityAlerts() {
   const { toast } = useToast();
-  const db = useFirestore();
-  const { user, loading: userLoading } = useUser();
-  
-  const alertsCollectionRef = useMemo(() => {
-    if (!db) return null;
-    return collection(db, "community_alerts");
-  }, [db]);
-
-  const alertsQuery = useMemo(() => {
-    // IMPORTANTE: Solo creamos la consulta si el usuario NO está cargando y SÍ está autenticado
-    if (!alertsCollectionRef || userLoading || !user) return null;
-    return query(alertsCollectionRef, orderBy("createdAt", "desc"), limit(10));
-  }, [alertsCollectionRef, user, userLoading]);
-
-  const { data: alerts, loading: alertsLoading } = useCollection(alertsQuery);
-
+  const [alerts, setAlerts] = useState<Alert[]>([]);
   const [isReportOpen, setIsReportOpen] = useState(false);
   const [isMapOpen, setIsMapOpen] = useState(false);
   const [selectedAlert, setSelectedAlert] = useState<Alert | null>(null);
@@ -65,6 +68,16 @@ export function CommunityAlerts() {
     crop: "",
     problem: ""
   });
+
+  useEffect(() => {
+    const saved = localStorage.getItem("community_alerts");
+    if (saved) {
+      setAlerts(JSON.parse(saved));
+    } else {
+      setAlerts(initialAlerts);
+      localStorage.setItem("community_alerts", JSON.stringify(initialAlerts));
+    }
+  }, []);
 
   const handleGetLocation = () => {
     if (!navigator.geolocation) {
@@ -86,24 +99,21 @@ export function CommunityAlerts() {
         setLoadingLocation(false);
         toast({
           title: "Ubicación obtenida",
-          description: "Hemos fijado tu posición GPS actual para el reporte."
+          description: "Hemos fijado tu posición GPS para el reporte local."
         });
       },
-      (error) => {
-        console.error("Error getting location:", error);
+      () => {
         setLoadingLocation(false);
         toast({
           title: "Error de ubicación",
           description: "No pudimos obtener tu ubicación real.",
           variant: "destructive"
         });
-      },
-      { enableHighAccuracy: true }
+      }
     );
   };
 
   const handleReport = () => {
-    if (!db || !alertsCollectionRef || !user) return;
     if (!newAlert.region || !newAlert.problem) {
       toast({
         title: "Error",
@@ -116,39 +126,29 @@ export function CommunityAlerts() {
     const finalLat = userCoords?.lat || (20.1 + (Math.random() * 0.4));
     const finalLng = userCoords?.lng || (-98.8 - (Math.random() * 0.4));
 
-    const alertId = Date.now().toString();
-    const alertDocRef = doc(alertsCollectionRef, alertId);
-    
-    const alertData = {
+    const alert: Alert = {
+      id: Date.now().toString(),
       region: newAlert.region,
       crop: newAlert.crop || "Varios",
       problem: newAlert.problem,
       severity: "Alta",
       distance: userCoords ? "Cerca de ti" : "Hidalgo, MX",
-      date: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+      date: "Recién reportado",
       lat: finalLat,
-      lng: finalLng,
-      userId: user.uid,
-      createdAt: serverTimestamp()
+      lng: finalLng
     };
 
-    setDoc(alertDocRef, alertData)
-      .catch(async (error) => {
-        const permissionError = new FirestorePermissionError({
-          path: alertDocRef.path,
-          operation: 'write',
-          requestResourceData: alertData,
-        });
-        errorEmitter.emit('permission-error', permissionError);
-      });
-
+    const updated = [alert, ...alerts];
+    setAlerts(updated);
+    localStorage.setItem("community_alerts", JSON.stringify(updated));
+    
     setIsReportOpen(false);
     setNewAlert({ region: "", crop: "", problem: "" });
     setUserCoords(null);
     
     toast({
-      title: "Alerta Enviada",
-      description: "Tu reporte ha sido compartido con toda la red de Hidalgo."
+      title: "Alerta Guardada",
+      description: "Tu reporte ha sido guardado localmente en tu dispositivo."
     });
   };
 
@@ -162,66 +162,46 @@ export function CommunityAlerts() {
       <CardHeader className="bg-primary text-primary-foreground py-4">
         <CardTitle className="text-lg flex items-center gap-2">
           <Users className="h-5 w-5" />
-          Red Comunitaria Hidalgo
+          Red Comunitaria (Local)
         </CardTitle>
       </CardHeader>
       <CardContent className="p-0 flex-1 overflow-auto">
         <div className="divide-y">
-          {userLoading ? (
-            <div className="p-8 text-center flex flex-col items-center gap-2">
-              <Loader2 className="h-6 w-6 animate-spin text-primary" />
-              <span className="text-xs text-muted-foreground">Verificando acceso...</span>
-            </div>
-          ) : !user ? (
-            <div className="p-8 text-center text-xs text-muted-foreground italic">
-              Inicia sesión para participar en la red comunitaria.
-            </div>
-          ) : alertsLoading ? (
-            <div className="p-8 text-center flex flex-col items-center gap-2">
-              <Loader2 className="h-6 w-6 animate-spin text-primary" />
-              <span className="text-xs text-muted-foreground">Cargando alertas...</span>
-            </div>
-          ) : alerts.length === 0 ? (
-            <div className="p-8 text-center text-xs text-muted-foreground italic">
-              No hay alertas recientes en la región.
-            </div>
-          ) : (
-            alerts.map((alert: any) => (
-              <div key={alert.id} className="p-4 hover:bg-muted/30 transition-colors group">
-                <div className="flex items-center justify-between mb-2">
-                  <div className="flex items-center gap-2 text-xs font-medium text-muted-foreground">
-                    <MapPin className="h-3 w-3" />
-                    {alert.region} • {alert.distance}
-                  </div>
-                  <Badge variant={alert.severity === 'Alta' ? 'destructive' : 'secondary'} className="text-[10px] px-1.5 py-0 h-4">
-                    {alert.severity}
-                  </Badge>
+          {alerts.map((alert) => (
+            <div key={alert.id} className="p-4 hover:bg-muted/30 transition-colors group">
+              <div className="flex items-center justify-between mb-2">
+                <div className="flex items-center gap-2 text-xs font-medium text-muted-foreground">
+                  <MapPin className="h-3 w-3" />
+                  {alert.region} • {alert.distance}
                 </div>
-                <h4 className="font-bold text-sm group-hover:text-primary transition-colors">
-                  {alert.problem}
-                </h4>
-                <p className="text-xs text-muted-foreground mb-3">Cultivo: {alert.crop}</p>
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-1 text-[10px] text-muted-foreground">
-                    <Calendar className="h-3 w-3" />
-                    {alert.date}
-                  </div>
-                  <Button 
-                    variant="ghost" 
-                    size="sm" 
-                    className="h-7 text-xs px-2 gap-1 group-hover:translate-x-1 transition-transform"
-                    onClick={() => openMap(alert)}
-                  >
-                    Ver mapa <ArrowRight className="h-3 w-3" />
-                  </Button>
-                </div>
+                <Badge variant={alert.severity === 'Alta' ? 'destructive' : 'secondary'} className="text-[10px] px-1.5 py-0 h-4">
+                  {alert.severity}
+                </Badge>
               </div>
-            ))
-          )}
+              <h4 className="font-bold text-sm group-hover:text-primary transition-colors">
+                {alert.problem}
+              </h4>
+              <p className="text-xs text-muted-foreground mb-3">Cultivo: {alert.crop}</p>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-1 text-[10px] text-muted-foreground">
+                  <Calendar className="h-3 w-3" />
+                  {alert.date}
+                </div>
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  className="h-7 text-xs px-2 gap-1 group-hover:translate-x-1 transition-transform"
+                  onClick={() => openMap(alert)}
+                >
+                  Ver mapa <ArrowRight className="h-3 w-3" />
+                </Button>
+              </div>
+            </div>
+          ))}
         </div>
       </CardContent>
       <div className="p-4 bg-muted/20 border-t">
-        <Button className="w-full font-semibold shadow-sm" size="sm" onClick={() => setIsReportOpen(true)} disabled={!user}>
+        <Button className="w-full font-semibold shadow-sm" size="sm" onClick={() => setIsReportOpen(true)}>
           <Plus className="h-4 w-4 mr-2" /> Reportar Brote Local
         </Button>
       </div>
@@ -254,7 +234,7 @@ export function CommunityAlerts() {
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2 text-destructive">
               <AlertTriangle className="h-5 w-5" />
-              Reportar Brote en Campo
+              Reportar Brote Local
             </DialogTitle>
             <DialogDescription>
               Avisa a otros agricultores. Usaremos tu GPS para fijar el punto exacto.
@@ -308,7 +288,7 @@ export function CommunityAlerts() {
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setIsReportOpen(false)}>Cancelar</Button>
-            <Button variant="destructive" onClick={handleReport}>Enviar Alerta Regional</Button>
+            <Button variant="destructive" onClick={handleReport}>Guardar Alerta</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
