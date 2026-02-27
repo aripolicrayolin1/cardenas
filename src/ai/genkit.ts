@@ -21,6 +21,7 @@ const envKeys = [
 const finalKeys = envKeys.length > 0 ? envKeys : keys;
 
 // Creamos 3 instancias distintas de Genkit, una por cada llave
+// Usamos gemini-1.5-flash que es el más estable para cuotas gratuitas
 export const aiInstances = finalKeys.map(key => genkit({
   plugins: [googleAI({apiKey: key})],
   model: 'googleai/gemini-1.5-flash',

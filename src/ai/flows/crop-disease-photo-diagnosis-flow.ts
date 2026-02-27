@@ -3,7 +3,7 @@
  * @fileOverview Diagnóstico de enfermedades híbrido: IA + Lógica Local de Respaldo.
  */
 
-import {aiInstances} from '@/ai/genkit';
+import {getAIInstance} from '@/ai/genkit';
 import {z} from 'genkit';
 
 const CropDiagnosisInputSchema = z.object({
@@ -78,12 +78,12 @@ function getLocalDiagnosis(description: string = ""): CropDiagnosisOutput {
 export async function diagnoseCropDisease(input: CropDiagnosisInput): Promise<CropDiagnosisOutput> {
   const sleep = (ms: number) => new Promise(res => setTimeout(res, ms));
 
-  // Intentamos con las 3 instancias de IA
-  for (let i = 0; i < aiInstances.length; i++) {
+  // Intentamos con las 3 instancias de IA (Gemini 1.5 Flash)
+  for (let i = 0; i < 3; i++) {
     try {
-      const ai = aiInstances[i];
+      const ai = getAIInstance(i);
       const prompt = ai.definePrompt({
-        name: `cropDiagnosisPrompt_final_${i}`,
+        name: `cropDiagnosisPrompt_v7_rotation_${i}`,
         input: {schema: CropDiagnosisInputSchema},
         output: {schema: CropDiagnosisOutputSchema},
         prompt: `Eres un experto fitopatólogo en Hidalgo. Analiza y diagnostica:
@@ -94,11 +94,11 @@ export async function diagnoseCropDisease(input: CropDiagnosisInput): Promise<Cr
       const {output} = await prompt(input);
       if (output) return { ...output, diagnosis: { ...output.diagnosis, isFallback: false } };
     } catch (e: any) {
-      console.warn(`Llave ${i + 1} agotada, reintentando...`);
-      if (i < aiInstances.length - 1) await sleep(2000); 
+      console.warn(`Llave ${i + 1} con cuota agotada, intentando rotación...`);
+      if (i < 2) await sleep(3000); 
     }
   }
 
-  // Si todo falla, usamos el experto local
+  // Si todo falla (incluyendo las 3 llaves), usamos el experto local de respaldo
   return getLocalDiagnosis(input.description);
 }

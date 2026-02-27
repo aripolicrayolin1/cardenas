@@ -33,7 +33,7 @@ export async function predictivePestDiseaseAlerts(input: PredictiveAlertInput): 
       const ai = getAIInstance(i);
       
       const prompt = ai.definePrompt({
-        name: `predictiveAlertPrompt_v5_rotation_${i}`,
+        name: `predictiveAlertPrompt_v6_rotation_${i}`,
         input: {schema: PredictiveAlertInputSchema},
         output: {schema: PredictiveAlertOutputSchema},
         prompt: `Analiza como experto agrónomo en Hidalgo: Humedad Suelo: {{{soilHumidity}}}%, Temp: {{{temperature}}}°C. Indica riesgo de plagas brevemente.`,
@@ -42,8 +42,8 @@ export async function predictivePestDiseaseAlerts(input: PredictiveAlertInput): 
       const {output} = await prompt(input);
       if (output) return { ...output, isFallback: false };
     } catch (e: any) {
-      console.warn(`Llave ${i + 1} agotada en predicción, esperando para rotar...`);
-      if (i < 2) await sleep(3000); // Espera 3s para no saturar a Google
+      console.warn(`Llave ${i + 1} agotada en predicción, rotando...`);
+      if (i < 2) await sleep(2000); 
     }
   }
 
@@ -53,7 +53,7 @@ export async function predictivePestDiseaseAlerts(input: PredictiveAlertInput): 
     alertMessage: "IA pausada por alta demanda. Análisis de respaldo activado.",
     predictedRisk: input.soilHumidity > 85 ? "Medium" : "None",
     potentialProblem: input.soilHumidity > 85 ? "Exceso de humedad detectado" : "Normal",
-    recommendation: "Espera 20 segundos para un nuevo análisis por IA.",
+    recommendation: "Espera unos segundos para un nuevo análisis por IA.",
     isFallback: true
   };
 }
