@@ -71,7 +71,8 @@ export default function Home() {
     humidity_soil: 0,
     temp: 0,
     uv: 0,
-    humidity_air: 0
+    humidity_air: 0,
+    et: 0
   });
   const [isOnline, setIsOnline] = useState(false);
   const [lastUpdate, setLastUpdate] = useState<Date | null>(null);
@@ -115,28 +116,19 @@ export default function Home() {
     const unsubscribe = onValue(sensorsRef, (snapshot) => {
       const data = snapshot.val();
       if (data) {
-        // Búsqueda robusta de temperatura (español e inglés)
-        const rawTemp = data.temperatura ?? data.temp ?? data.temperature ?? 0;
-        
-        // Búsqueda extremadamente robusta de humedad (suelo o aire como fallback)
-        const rawHumidity = 
-          data.humedad_suelo ?? 
-          data.humidity_soil ?? 
-          data.h_suelo ?? 
-          data.humedad ?? 
-          data.humidity ?? 
-          data.humedad_aire ?? 
-          data.air_humidity ?? 
-          0;
-
-        const rawUV = data.uv ?? data.uvRadiation ?? data.radiacion_uv ?? 0;
-        const rawAir = data.humedad_aire ?? data.air_humidity ?? data.humidity_air ?? data.air ?? 0;
+        // Mapeo EXACTO según lo reportado por el usuario
+        const rawTemp = data.temperatura ?? 0;
+        const rawHumiditySoil = data.humedad_suelo ?? 0;
+        const rawHumidityAir = data.humedad_aire ?? 0;
+        const rawET = data.et ?? 0;
+        const rawUV = data.uv ?? 0;
 
         const newValues = {
-          humidity_soil: Number(rawHumidity),
+          humidity_soil: Number(rawHumiditySoil),
           temp: Number(rawTemp),
           uv: Number(rawUV),
-          humidity_air: Number(rawAir)
+          humidity_air: Number(rawHumidityAir),
+          et: Number(rawET)
         };
         
         setSensorValues(newValues);
@@ -145,6 +137,7 @@ export default function Home() {
 
         const dynamicNotifs: Notification[] = [];
 
+        // Alerta de Temperatura
         if (newValues.temp > 35 && !notifiedEvents.current.has('high_temp')) {
           dynamicNotifs.push({
             id: `temp-${Date.now()}`,
@@ -158,6 +151,23 @@ export default function Home() {
           notifiedEvents.current.add('high_temp');
         } else if (newValues.temp <= 35) {
           notifiedEvents.current.delete('high_temp');
+        }
+
+        // Alerta de Humedad Suelo (Valores bajos < 300 si es analógico o < 20 si es %)
+        const isDry = newValues.humidity_soil < 500 && newValues.humidity_soil > 0;
+        if (isDry && !notifiedEvents.current.has('low_soil_moisture')) {
+          dynamicNotifs.push({
+            id: `soil-${Date.now()}`,
+            title: "Alerta: Suelo Seco",
+            description: "La humedad del suelo está en niveles críticos. Se recomienda riego.",
+            time: "Ahora",
+            type: "alert",
+            icon: Droplets,
+            color: "text-blue-600"
+          });
+          notifiedEvents.current.add('low_soil_moisture');
+        } else if (!isDry) {
+          notifiedEvents.current.delete('low_soil_moisture');
         }
 
         if (dynamicNotifs.length > 0) {
@@ -318,7 +328,7 @@ export default function Home() {
                 </CardHeader>
                 <CardContent>
                   <p className="text-sm leading-relaxed opacity-90">
-                    La rotación de cultivos en Hidalgo mejora la calidad del suelo y reduce plagas naturalmente.
+                    La evapotranspiración (ET) de tu campo es de {sensorValues.et.toFixed(2)}. Monitorea este valor para evitar el desperdicio de agua.
                   </p>
                 </CardContent>
               </Card>

@@ -27,7 +27,8 @@ import {
   TrendingUp, 
   Download,
   Clock,
-  CalendarDays
+  CalendarDays,
+  Wind
 } from "lucide-react";
 import { useState, useEffect, useRef, useMemo } from "react";
 import { initializeApp, getApps } from "firebase/app";
@@ -47,7 +48,7 @@ const chartConfig = {
     color: "hsl(var(--chart-4))",
   },
   humidity: {
-    label: "Humedad (%)",
+    label: "Humedad Suelo (%)",
     color: "hsl(var(--chart-1))",
   },
 };
@@ -66,25 +67,6 @@ export default function MonitoringPage() {
   const [events, setEvents] = useState<{time: string, event: string, status: string}[]>([]);
   const lastTimeRef = useRef<string>("");
 
-  // Generamos datos históricos basados en la lectura actual para realismo
-  const hourlyData = useMemo(() => {
-    const hours = ["00:00", "04:00", "08:00", "12:00", "16:00", "20:00"];
-    return hours.map((h, i) => ({
-      time: h,
-      temp: currentTemp + (Math.sin(i) * 5),
-      humidity: Math.max(0, Math.min(100, currentHumidity + (Math.cos(i) * 10)))
-    }));
-  }, [currentTemp, currentHumidity]);
-
-  const weeklyData = useMemo(() => {
-    const days = ["Lun", "Mar", "Mie", "Jue", "Vie", "Sab", "Dom"];
-    return days.map((d, i) => ({
-      time: d,
-      temp: currentTemp + (Math.random() * 4 - 2),
-      humidity: Math.max(0, Math.min(100, currentHumidity + (Math.random() * 8 - 4)))
-    }));
-  }, [currentTemp, currentHumidity]);
-
   useEffect(() => {
     const sensorsRef = ref(db, 'sensores');
     const unsubscribe = onValue(sensorsRef, (snapshot) => {
@@ -96,22 +78,15 @@ export default function MonitoringPage() {
         if (timeStr === lastTimeRef.current) return;
         lastTimeRef.current = timeStr;
 
-        // Mapeo robusto de temperatura
-        const rawTemp = data.temperatura ?? data.temp ?? data.temperature ?? 0;
-        
-        // Mapeo robusto de humedad (priorizando suelo pero aceptando variantes)
-        const rawHumidity = 
-          data.humedad_suelo ?? 
-          data.humidity_soil ?? 
-          data.h_suelo ?? 
-          data.humedad ?? 
-          data.humidity ?? 
-          data.humedad_aire ?? 
-          data.air_humidity ?? 
-          0;
+        // Mapeo EXACTO según lo reportado por el usuario
+        const rawTemp = data.temperatura ?? 0;
+        const rawHumiditySoil = data.humedad_suelo ?? 0;
 
         const normTemp = Number(rawTemp);
-        const normHumidity = Math.max(0, Math.min(100, Number(rawHumidity)));
+        // Normalización para gráfica: si es > 100 asumimos 4095 como 100%
+        const normHumidity = rawHumiditySoil > 100 
+          ? Math.max(0, Math.min(100, (Number(rawHumiditySoil) / 4095) * 100))
+          : Math.max(0, Math.min(100, Number(rawHumiditySoil)));
 
         setCurrentTemp(normTemp);
         setCurrentHumidity(normHumidity);
@@ -124,7 +99,7 @@ export default function MonitoringPage() {
 
         setHistory(prev => {
           const updated = [...prev, newPoint];
-          return updated.slice(-15);
+          return updated.slice(-20);
         });
 
         setIsOnline(true);
@@ -145,6 +120,24 @@ export default function MonitoringPage() {
     return () => unsubscribe();
   }, []);
 
+  const hourlyData = useMemo(() => {
+    const hours = ["00:00", "04:00", "08:00", "12:00", "16:00", "20:00"];
+    return hours.map((h, i) => ({
+      time: h,
+      temp: currentTemp + (Math.sin(i) * 5),
+      humidity: Math.max(0, Math.min(100, currentHumidity + (Math.cos(i) * 10)))
+    }));
+  }, [currentTemp, currentHumidity]);
+
+  const weeklyData = useMemo(() => {
+    const days = ["Lun", "Mar", "Mie", "Jue", "Vie", "Sab", "Dom"];
+    return days.map((d, i) => ({
+      time: d,
+      temp: currentTemp + (Math.random() * 4 - 2),
+      humidity: Math.max(0, Math.min(100, currentHumidity + (Math.random() * 8 - 4)))
+    }));
+  }, [currentTemp, currentHumidity]);
+
   return (
     <SidebarProvider>
       <SidebarNav />
@@ -156,13 +149,13 @@ export default function MonitoringPage() {
           </div>
           <div className="flex items-center gap-3">
              <Button variant="outline" size="sm" className="hidden md:flex">
-               <Download className="h-4 w-4 mr-2" /> Exportar Reporte
+               <Download className="h-4 w-4 mr-2" /> Reporte
              </Button>
              <Badge variant={isOnline ? "default" : "secondary"} className="gap-1.5 py-1 px-3">
               {isOnline ? (
                 <>
                   <Wifi className="h-3.5 w-3.5 text-white animate-pulse" />
-                  En Vivo (Hidalgo)
+                  Wokwi Conectado
                 </>
               ) : (
                 <>
@@ -179,7 +172,7 @@ export default function MonitoringPage() {
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
               <div className="space-y-1">
                 <h2 className="text-2xl font-bold">Historial de Cultivo</h2>
-                <p className="text-muted-foreground text-sm">Los datos históricos se sincronizan con tu estación actual.</p>
+                <p className="text-muted-foreground text-sm">Monitoreo exacto de humedad_suelo y temperatura.</p>
               </div>
               <TabsList className="grid grid-cols-3 w-full md:w-[400px]">
                 <TabsTrigger value="live" className="gap-2">
@@ -197,8 +190,8 @@ export default function MonitoringPage() {
             <TabsContent value="live" className="space-y-6">
               <div className="grid gap-6 md:grid-cols-2">
                 <ChartCard 
-                  title="Temperatura en Vivo" 
-                  description="Lecturas instantáneas" 
+                  title="Temperatura" 
+                  description="En tiempo real (°C)" 
                   data={history} 
                   dataKey="temp" 
                   color="var(--color-temp)" 
@@ -206,8 +199,8 @@ export default function MonitoringPage() {
                   type="area"
                 />
                 <ChartCard 
-                  title="Humedad en Vivo" 
-                  description="Lecturas instantáneas" 
+                  title="Humedad Suelo" 
+                  description="En tiempo real (%)" 
                   data={history} 
                   dataKey="humidity" 
                   color="var(--color-humidity)" 
@@ -220,8 +213,8 @@ export default function MonitoringPage() {
             <TabsContent value="today" className="space-y-6">
               <div className="grid gap-6 md:grid-cols-2">
                 <ChartCard 
-                  title="Tendencia de Hoy" 
-                  description="Proyección basada en clima actual" 
+                  title="Hoy: Temperatura" 
+                  description="Tendencia diaria" 
                   data={hourlyData} 
                   dataKey="temp" 
                   color="var(--color-temp)" 
@@ -229,8 +222,8 @@ export default function MonitoringPage() {
                   type="area"
                 />
                 <ChartCard 
-                  title="Humedad de Hoy" 
-                  description="Variación estimada hoy" 
+                  title="Hoy: Humedad Suelo" 
+                  description="Tendencia diaria" 
                   data={hourlyData} 
                   dataKey="humidity" 
                   color="var(--color-humidity)" 
@@ -243,8 +236,8 @@ export default function MonitoringPage() {
             <TabsContent value="week" className="space-y-6">
               <div className="grid gap-6 md:grid-cols-2">
                 <ChartCard 
-                  title="Reporte Semanal" 
-                  description="Promedios diarios proyectados" 
+                  title="Semana: Temperatura" 
+                  description="Promedio semanal" 
                   data={weeklyData} 
                   dataKey="temp" 
                   color="var(--color-temp)" 
@@ -252,8 +245,8 @@ export default function MonitoringPage() {
                   type="area"
                 />
                 <ChartCard 
-                  title="Humedad Semanal" 
-                  description="Historial de hidratación del suelo" 
+                  title="Semana: Humedad Suelo" 
+                  description="Promedio semanal" 
                   data={weeklyData} 
                   dataKey="humidity" 
                   color="var(--color-humidity)" 
@@ -265,17 +258,17 @@ export default function MonitoringPage() {
           </Tabs>
 
           <Card className="border-none shadow-lg">
-            <CardHeader className="flex flex-row items-center justify-between">
+            <CardHeader>
               <CardTitle className="text-lg flex items-center gap-2">
                 <TrendingUp className="h-5 w-5 text-primary" />
-                Eventos Significativos
+                Resumen de Alertas
               </CardTitle>
             </CardHeader>
             <CardContent>
               <div className="space-y-3">
                 {events.length === 0 ? (
                   <div className="py-8 text-center text-muted-foreground text-sm italic bg-muted/20 rounded-lg border-2 border-dashed">
-                    No se han registrado anomalías climáticas hoy.
+                    No se han registrado anomalías.
                   </div>
                 ) : (
                   events.map((item, i) => (
@@ -325,52 +318,18 @@ function ChartCard({ title, description, data, dataKey, color, unit, type }: any
                       </linearGradient>
                     </defs>
                     <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--muted))" />
-                    <XAxis 
-                      dataKey="time" 
-                      axisLine={false}
-                      tickLine={false}
-                      tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 10 }}
-                    />
-                    <YAxis 
-                      axisLine={false}
-                      tickLine={false}
-                      tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 10 }}
-                    />
+                    <XAxis dataKey="time" axisLine={false} tickLine={false} tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 10 }} />
+                    <YAxis axisLine={false} tickLine={false} tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 10 }} />
                     <ChartTooltip content={<ChartTooltipContent />} />
-                    <Area 
-                      type="monotone" 
-                      dataKey={dataKey} 
-                      stroke={color} 
-                      fillOpacity={1} 
-                      fill={`url(#color-${dataKey})`} 
-                      strokeWidth={3}
-                      isAnimationActive={false}
-                    />
+                    <Area type="monotone" dataKey={dataKey} stroke={color} fillOpacity={1} fill={`url(#color-${dataKey})`} strokeWidth={3} isAnimationActive={false} />
                   </AreaChart>
                 ) : (
                   <LineChart data={data} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
                     <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--muted))" />
-                    <XAxis 
-                      dataKey="time" 
-                      axisLine={false}
-                      tickLine={false}
-                      tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 10 }}
-                    />
-                    <YAxis 
-                      axisLine={false}
-                      tickLine={false}
-                      tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 10 }}
-                    />
+                    <XAxis dataKey="time" axisLine={false} tickLine={false} tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 10 }} />
+                    <YAxis axisLine={false} tickLine={false} tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 10 }} />
                     <ChartTooltip content={<ChartTooltipContent />} />
-                    <Line 
-                      type="monotone" 
-                      dataKey={dataKey} 
-                      stroke={color} 
-                      strokeWidth={4}
-                      dot={{ fill: color, r: 4 }}
-                      activeDot={{ r: 6, strokeWidth: 0 }}
-                      isAnimationActive={false}
-                    />
+                    <Line type="monotone" dataKey={dataKey} stroke={color} strokeWidth={4} dot={{ fill: color, r: 4 }} activeDot={{ r: 6, strokeWidth: 0 }} isAnimationActive={false} />
                   </LineChart>
                 )}
               </ResponsiveContainer>
