@@ -91,7 +91,6 @@ export default function MonitoringPage() {
 
   useEffect(() => {
     setIsMounted(true);
-    // Para evitar errores de hidratación, generamos la fecha solo en el cliente
     setFormattedDateTime({
       date: new Date().toLocaleDateString(),
       time: new Date().toLocaleTimeString()
@@ -183,20 +182,14 @@ export default function MonitoringPage() {
   }, [currentValues, isMounted]);
 
   const downloadCsv = () => {
-    let dataToExport = history;
-    let filename = `reporte_agrotech_vivo_${new Date().toISOString().split('T')[0]}.csv`;
-
-    if (activeTab === 'today') {
-      dataToExport = hourlyData;
-      filename = `reporte_agrotech_hoy_${new Date().toISOString().split('T')[0]}.csv`;
-    } else if (activeTab === 'week') {
-      dataToExport = weeklyData;
-      filename = `reporte_agrotech_semana_${new Date().toISOString().split('T')[0]}.csv`;
-    }
+    let dataToExport = activeTab === 'live' ? history : activeTab === 'today' ? hourlyData : weeklyData;
+    let periodName = activeTab === 'live' ? 'En Vivo' : activeTab === 'today' ? 'Hoy' : 'Semanal';
+    let filename = `reporte_agrotech_${activeTab}_${new Date().toISOString().split('T')[0]}.csv`;
 
     const headers = ["Fecha/Hora", "Temp (C)", "Hum. Suelo (%)", "Hum. Aire (%)", "ET (mm)", "Pto. Rocio (C)"];
     
     const csvContent = [
+      `Reporte AgroTech Hidalgo - Periodo: ${periodName}`,
       headers.join(","),
       ...dataToExport.map(row => [
         row.time,
@@ -219,18 +212,31 @@ export default function MonitoringPage() {
     
     toast({
       title: "CSV Descargado",
-      description: `Reporte "${activeTab.toUpperCase()}" guardado correctamente.`,
+      description: `Reporte "${periodName}" guardado correctamente.`,
     });
   };
 
   const downloadWord = () => {
-    // Generar un HTML compatible con Word
+    let dataToExport = activeTab === 'live' ? history : activeTab === 'today' ? hourlyData : weeklyData;
+    let periodName = activeTab === 'live' ? 'En Vivo' : activeTab === 'today' ? 'Hoy' : 'Historial Semanal';
+
     const header = "<html xmlns:o='urn:schemas-microsoft-com:office:office' "+
             "xmlns:w='urn:schemas-microsoft-com:office:word' "+
             "xmlns='http://www.w3.org/TR/REC-html40'>"+
             "<head><meta charset='utf-8'><title>Reporte AgroTech</title></head><body>";
     const footer = "</body></html>";
     
+    const tableRows = dataToExport.map(row => `
+      <tr>
+        <td>${row.time}</td>
+        <td align="center">${row.temp.toFixed(2)} °C</td>
+        <td align="center">${row.humiditySoil.toFixed(2)} %</td>
+        <td align="center">${row.humidityAir.toFixed(2)} %</td>
+        <td align="center">${row.et.toFixed(2)} mm</td>
+        <td align="center">${row.dewPoint.toFixed(2)} °C</td>
+      </tr>
+    `).join("");
+
     const content = `
       <div style="text-align: center; font-family: sans-serif;">
         <h1 style="color: #339933; margin-bottom: 0;">AgroTech - Sistema Inteligente</h1>
@@ -238,44 +244,24 @@ export default function MonitoringPage() {
         <hr style="border: 1px solid #339933;">
       </div>
       <div style="font-family: sans-serif; padding: 20px;">
-        <h2>Resumen de Cultivo: ${activeTab === 'live' ? 'En Vivo' : activeTab === 'today' ? 'Hoy' : 'Histórico Semanal'}</h2>
+        <h2>Resumen de Cultivo: ${periodName}</h2>
         <p><strong>Fecha de Emisión:</strong> ${formattedDateTime?.date} ${formattedDateTime?.time}</p>
         <p><strong>Ubicación:</strong> Región Valle del Mezquital, Hidalgo.</p>
         
-        <table border="1" cellpadding="10" style="width: 100%; border-collapse: collapse; margin-top: 20px;">
+        <h3 style="margin-top: 30px; color: #339933;">Detalle de Mediciones</h3>
+        <table border="1" cellpadding="8" style="width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 12px;">
           <tr style="background-color: #339933; color: white;">
-            <th>Parámetro</th>
-            <th>Último Valor Registrado</th>
-            <th>Estado</th>
+            <th>Hora/Día</th>
+            <th>Temp</th>
+            <th>Hum. Suelo</th>
+            <th>Hum. Aire</th>
+            <th>ET</th>
+            <th>Pto. Rocío</th>
           </tr>
-          <tr>
-            <td>Temperatura Ambiental</td>
-            <td align="center">${currentValues.temp.toFixed(2)} °C</td>
-            <td align="center">${currentValues.temp > 35 ? 'Alerta Calor' : 'Normal'}</td>
-          </tr>
-          <tr>
-            <td>Humedad del Suelo</td>
-            <td align="center">${currentValues.humiditySoil.toFixed(2)} %</td>
-            <td align="center">${currentValues.humiditySoil < 40 ? 'Requiere Riego' : 'Óptimo'}</td>
-          </tr>
-          <tr>
-            <td>Humedad del Aire</td>
-            <td align="center">${currentValues.humidityAir.toFixed(2)} %</td>
-            <td align="center">Estable</td>
-          </tr>
-          <tr>
-            <td>Evapotranspiración (ET)</td>
-            <td align="center">${currentValues.et.toFixed(2)} mm</td>
-            <td align="center">Normal</td>
-          </tr>
-          <tr>
-            <td>Punto de Rocío</td>
-            <td align="center">${currentValues.dewPoint.toFixed(2)} °C</td>
-            <td align="center">Sin Riesgo Helada</td>
-          </tr>
+          ${tableRows}
         </table>
         
-        <div style="margin-top: 40px; border-top: 1px solid #eee; padding-top: 10px; font-size: 12px; color: #888;">
+        <div style="margin-top: 40px; border-top: 1px solid #eee; padding-top: 10px; font-size: 11px; color: #888;">
           <p>Este reporte ha sido generado automáticamente por la plataforma AgroTech Hidalgo utilizando tecnología de IA y sensores IoT en tiempo real.</p>
         </div>
       </div>
@@ -289,20 +275,25 @@ export default function MonitoringPage() {
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
     link.href = url;
-    link.setAttribute("download", `reporte_agrotech_${new Date().toISOString().split('T')[0]}.doc`);
+    link.setAttribute("download", `reporte_agrotech_${activeTab}_${new Date().toISOString().split('T')[0]}.doc`);
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
     
     toast({
-      title: "Documento Word Descargado",
-      description: "El reporte se ha guardado en formato Word (.doc).",
+      title: "Word Descargado",
+      description: `Reporte "${periodName}" guardado correctamente.`,
     });
   };
 
   const downloadPdf = () => {
-    // Simplemente llamamos a la impresión nativa que es la mejor forma de obtener PDF con gráficas
-    window.print();
+    toast({
+      title: "Generando PDF",
+      description: "Por favor, selecciona 'Guardar como PDF' en el destino de la impresora.",
+    });
+    setTimeout(() => {
+      window.print();
+    }, 500);
   };
 
   const renderCharts = (data: any[], isLive = false) => (
@@ -354,7 +345,6 @@ export default function MonitoringPage() {
         </header>
 
         <main className="flex-1 p-4 md:p-8 space-y-8 print:p-0 print:m-0">
-          {/* Cabecera del Reporte para PDF/Impresión */}
           <div className="only-print mb-8 border-b-4 border-primary pb-6">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-4">
@@ -376,22 +366,6 @@ export default function MonitoringPage() {
                      {activeTab === 'live' ? 'Monitoreo en Tiempo Real' : activeTab === 'today' ? 'Resumen Diario' : 'Histórico Semanal'}
                    </Badge>
                 </div>
-              </div>
-            </div>
-            <div className="mt-8 grid grid-cols-3 gap-6 text-sm bg-primary/5 p-6 rounded-2xl border border-primary/10">
-              <div>
-                <p className="text-xs text-muted-foreground uppercase font-bold tracking-wider mb-1">Ubicación de Finca</p>
-                <p className="font-bold text-foreground">Valle del Mezquital, Hidalgo</p>
-              </div>
-              <div>
-                <p className="text-xs text-muted-foreground uppercase font-bold tracking-wider mb-1">Estación de Sensores</p>
-                <p className="font-bold text-foreground">AgroNode-ESP32 (Wokwi Sim)</p>
-              </div>
-              <div>
-                <p className="text-xs text-muted-foreground uppercase font-bold tracking-wider mb-1">Estado del Cultivo</p>
-                <p className={`font-bold ${currentValues.temp > 35 || currentValues.humiditySoil < 40 ? 'text-destructive' : 'text-primary'}`}>
-                  {currentValues.temp > 35 || currentValues.humiditySoil < 40 ? 'ATENCIÓN REQUERIDA' : 'SISTEMA ESTABLE'}
-                </p>
               </div>
             </div>
           </div>
