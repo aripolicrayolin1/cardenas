@@ -26,32 +26,34 @@ const PredictiveAlertOutputSchema = z.object({
 export type PredictiveAlertOutput = z.infer<typeof PredictiveAlertOutputSchema>;
 
 export async function predictivePestDiseaseAlerts(input: PredictiveAlertInput): Promise<PredictiveAlertOutput> {
+  const sleep = (ms: number) => new Promise(res => setTimeout(res, ms));
+
   for (let i = 0; i < 3; i++) {
     try {
       const ai = getAIInstance(i);
       
       const prompt = ai.definePrompt({
-        name: `predictiveAlertPrompt_v4_flash_${i}`,
+        name: `predictiveAlertPrompt_v5_rotation_${i}`,
         input: {schema: PredictiveAlertInputSchema},
         output: {schema: PredictiveAlertOutputSchema},
-        config: { model: 'googleai/gemini-1.5-flash' },
-        prompt: `Analiza: Humedad Suelo: {{{soilHumidity}}}%, Temp: {{{temperature}}}°C. Indica riesgo de plagas en Hidalgo brevemente.`,
+        prompt: `Analiza como experto agrónomo en Hidalgo: Humedad Suelo: {{{soilHumidity}}}%, Temp: {{{temperature}}}°C. Indica riesgo de plagas brevemente.`,
       });
 
       const {output} = await prompt(input);
-      return { ...output!, isFallback: false };
+      if (output) return { ...output, isFallback: false };
     } catch (e: any) {
-      console.warn(`Llave ${i+1} falló en predicción.`);
-      continue; 
+      console.warn(`Llave ${i + 1} agotada en predicción, esperando para rotar...`);
+      if (i < 2) await sleep(3000); // Espera 3s para no saturar a Google
     }
   }
 
+  // Fallback local si Google falla por completo
   return {
     alertNeeded: input.soilHumidity > 85,
-    alertMessage: "IA pausada por alta demanda. Análisis local activado.",
+    alertMessage: "IA pausada por alta demanda. Análisis de respaldo activado.",
     predictedRisk: input.soilHumidity > 85 ? "Medium" : "None",
-    potentialProblem: input.soilHumidity > 85 ? "Posible exceso de humedad" : "Normal",
-    recommendation: "Reintenta el análisis de IA en un minuto.",
+    potentialProblem: input.soilHumidity > 85 ? "Exceso de humedad detectado" : "Normal",
+    recommendation: "Espera 20 segundos para un nuevo análisis por IA.",
     isFallback: true
   };
 }
