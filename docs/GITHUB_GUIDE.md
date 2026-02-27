@@ -17,7 +17,9 @@ git add .
 # Confirmar los cambios
 git commit -m "Build: Configuración final y documentación para GitHub"
 
-# Cambiar a la rama principal
+# Cambiar a la rama principalgit add .
+git commit -m "Actualización de reglas o mejoras"
+git push origin main
 git branch -M main
 
 # Conectar con tu repo (Sustituye con TU URL de GitHub)
