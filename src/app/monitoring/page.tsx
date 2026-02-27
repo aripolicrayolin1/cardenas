@@ -1,3 +1,4 @@
+
 "use client";
 
 import { SidebarProvider, SidebarInset, SidebarTrigger } from "@/components/ui/sidebar";
@@ -178,7 +179,68 @@ export default function MonitoringPage() {
   }, [currentValues, isMounted]);
 
   const downloadCsv = () => {
-    toast({ title: "Descarga Iniciada", description: "El reporte CSV se está generando." });
+    if (history.length === 0) {
+      toast({ title: "Sin datos", description: "No hay suficientes datos para exportar.", variant: "destructive" });
+      return;
+    }
+
+    const headers = ["Hora", "Temperatura (°C)", "Humedad Suelo (%)", "Hum. Aire (%)", "Punto Rocio (°C)", "ET (mm)"];
+    const rows = history.map(p => [
+      p.time,
+      p.temp.toFixed(2),
+      p.humiditySoil.toFixed(2),
+      p.humidityAir.toFixed(2),
+      p.dewPoint.toFixed(2),
+      p.et.toFixed(2)
+    ]);
+
+    const csvContent = [headers, ...rows].map(e => e.join(",")).join("\n");
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.setAttribute("href", url);
+    link.setAttribute("download", `reporte_agrotech_${new Date().toISOString().slice(0,10)}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+
+    toast({ title: "Excel Descargado", description: "El reporte CSV se ha generado con éxito." });
+  };
+
+  const downloadWord = () => {
+    const reportContent = `
+      AGROTECH HIDALGO - REPORTE DE ESTADO AGRÍCOLA
+      -------------------------------------------
+      Fecha de Emisión: ${new Date().toLocaleDateString()}
+      Hora de Emisión: ${new Date().toLocaleTimeString()}
+      Región: Valle del Mezquital, Hidalgo.
+      
+      ESTADO ACTUAL DE LA FINCA:
+      - Temperatura del Aire: ${currentValues.temp.toFixed(1)}°C
+      - Humedad del Suelo: ${currentValues.humiditySoil.toFixed(1)}%
+      - Humedad del Aire: ${currentValues.humidityAir.toFixed(1)}%
+      - Punto de Rocío: ${currentValues.dewPoint.toFixed(1)}°C
+      - Evapotranspiración (ET): ${currentValues.et.toFixed(1)} mm
+      
+      RESUMEN TÉCNICO:
+      El sistema se encuentra ${isOnline ? 'CONECTADO Y TRANSMITIENDO' : 'FUERA DE LÍNEA'}.
+      Se han registrado ${events.length} alertas recientes en el último ciclo de monitoreo.
+      
+      Este documento sirve como bitácora de seguimiento para certificaciones agrícolas.
+      -------------------------------------------
+      AgroTech Hidalgo - Tecnología para el campo.
+    `;
+    
+    const blob = new Blob([reportContent], { type: 'application/msword' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.setAttribute("href", url);
+    link.setAttribute("download", `reporte_agrotech_${new Date().toISOString().slice(0,10)}.doc`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+
+    toast({ title: "Word Descargado", description: "Se ha generado el reporte profesional en formato DOC." });
   };
 
   const renderCharts = (data: any[], isLive = false) => (
@@ -211,7 +273,7 @@ export default function MonitoringPage() {
                 <DropdownMenuItem onClick={downloadCsv} className="gap-2 cursor-pointer font-bold">
                   <FileText className="h-4 w-4 text-green-600" /> EXCEL (CSV)
                 </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => {}} className="gap-2 cursor-pointer font-bold">
+                <DropdownMenuItem onClick={downloadWord} className="gap-2 cursor-pointer font-bold">
                   <FileEdit className="h-4 w-4 text-blue-600" /> WORD (.DOC)
                 </DropdownMenuItem>
               </DropdownMenuContent>
