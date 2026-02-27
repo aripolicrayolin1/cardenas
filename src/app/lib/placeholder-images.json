@@ -4,37 +4,37 @@
     {
       "id": "hero-farm",
       "description": "Vista aérea de campos de cultivo verdes en Hidalgo",
-      "imageUrl": "https://picsum.photos/seed/hidalgo-fields-88/1200/600",
+      "imageUrl": "https://images.unsplash.com/photo-1500382017468-9049fed747ef?auto=format&fit=crop&q=80&w=1200&h=800",
       "imageHint": "agriculture field"
     },
     {
       "id": "crop-healthy",
       "description": "Planta de maíz sana y verde",
-      "imageUrl": "https://picsum.photos/seed/healthy-maize-99/600/400",
+      "imageUrl": "https://images.unsplash.com/photo-1523348837708-15d4a09cfac2?auto=format&fit=crop&q=80&w=800&h=600",
       "imageHint": "corn plant"
     },
     {
       "id": "crop-disease",
       "description": "Hoja con plaga o hongo",
-      "imageUrl": "https://picsum.photos/seed/pest-leaf-77/600/400",
+      "imageUrl": "https://images.unsplash.com/photo-1599307767316-776533da941c?auto=format&fit=crop&q=80&w=800&h=600",
       "imageHint": "leaf pest"
     },
     {
       "id": "expert-agronomist",
       "description": "Ingeniero agrónomo revisando cultivo",
-      "imageUrl": "https://picsum.photos/seed/agronomist-expert-11/600/400",
+      "imageUrl": "https://images.unsplash.com/photo-1592982537447-7440770cbfc9?auto=format&fit=crop&q=80&w=800&h=600",
       "imageHint": "agronomist field"
     },
     {
       "id": "agro-store",
       "description": "Tienda de insumos agrícolas y fertilizantes",
-      "imageUrl": "https://picsum.photos/seed/agro-supply-shop-22/600/400",
+      "imageUrl": "https://images.unsplash.com/photo-1589923188900-85dae523342b?auto=format&fit=crop&q=80&w=800&h=600",
       "imageHint": "agriculture store"
     },
     {
       "id": "agro-seeds",
       "description": "Semillas de maíz de alta calidad",
-      "imageUrl": "https://picsum.photos/seed/corn-seeds-33/600/400",
+      "imageUrl": "https://images.unsplash.com/photo-1508013861974-9f6347163835?auto=format&fit=crop&q=80&w=800&h=600",
       "imageHint": "corn seeds"
     }
   ]
