@@ -30,12 +30,14 @@ import {
   CalendarDays,
   Wind,
   CloudRain,
-  Snowflake
+  Snowflake,
+  FileText
 } from "lucide-react";
 import { useState, useEffect, useRef, useMemo } from "react";
 import { initializeApp, getApps } from "firebase/app";
 import { getDatabase, ref, onValue } from "firebase/database";
 import { Button } from "@/components/ui/button";
+import { useToast } from "@/hooks/use-toast";
 
 const firebaseConfig = {
   databaseURL: "https://studio-3066950614-ac5b0-default-rtdb.firebaseio.com",
@@ -62,6 +64,7 @@ interface SensorPoint {
 }
 
 export default function MonitoringPage() {
+  const { toast } = useToast();
   const [history, setHistory] = useState<SensorPoint[]>([]);
   const [currentValues, setCurrentValues] = useState<Omit<SensorPoint, 'time'>>({
     temp: 20,
@@ -126,7 +129,6 @@ export default function MonitoringPage() {
     return () => unsubscribe();
   }, []);
 
-  // Generar etiquetas de horas REALES para hoy (ej: de hace 12 horas hasta ahora)
   const hourlyData = useMemo(() => {
     const data = [];
     const currentHour = new Date().getHours();
@@ -159,6 +161,38 @@ export default function MonitoringPage() {
     }));
   }, [currentValues]);
 
+  const downloadReport = () => {
+    const dataToExport = history.length > 0 ? history : hourlyData;
+    const headers = ["Fecha/Hora", "Temp (C)", "Hum. Suelo (%)", "Hum. Aire (%)", "ET (mm)", "Pto. Rocio (C)"];
+    
+    const csvContent = [
+      headers.join(","),
+      ...dataToExport.map(row => [
+        row.time,
+        row.temp.toFixed(2),
+        row.humiditySoil.toFixed(2),
+        row.humidityAir.toFixed(2),
+        row.et.toFixed(2),
+        row.dewPoint.toFixed(2)
+      ].join(","))
+    ].join("\n");
+
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.setAttribute("href", url);
+    link.setAttribute("download", `reporte_agrotech_${new Date().toISOString().split('T')[0]}.csv`);
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    
+    toast({
+      title: "Reporte Descargado",
+      description: "Se ha generado un archivo CSV con tus registros actuales.",
+    });
+  };
+
   const renderCharts = (data: any[], isLive = false) => (
     <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
       <ChartCard title="Temperatura" description={isLive ? "En vivo" : "Tendencia"} data={data} dataKey="temp" color="var(--color-temp)" unit="°C" type="area" />
@@ -178,10 +212,15 @@ export default function MonitoringPage() {
             <SidebarTrigger />
             <h1 className="text-xl font-bold">Analítica de Sensores</h1>
           </div>
-          <Badge variant={isOnline ? "default" : "secondary"} className="gap-1.5 py-1 px-3">
-            {isOnline ? <Wifi className="h-3.5 w-3.5 text-white animate-pulse" /> : <WifiOff className="h-3.5 w-3.5" />}
-            {isOnline ? "Wokwi Conectado" : "Desconectado"}
-          </Badge>
+          <div className="flex items-center gap-3">
+            <Button variant="outline" size="sm" onClick={downloadReport} className="hidden sm:flex items-center gap-2">
+              <Download className="h-4 w-4" /> Exportar CSV
+            </Button>
+            <Badge variant={isOnline ? "default" : "secondary"} className="gap-1.5 py-1 px-3">
+              {isOnline ? <Wifi className="h-3.5 w-3.5 text-white animate-pulse" /> : <WifiOff className="h-3.5 w-3.5" />}
+              {isOnline ? "Wokwi Conectado" : "Desconectado"}
+            </Badge>
+          </div>
         </header>
 
         <main className="flex-1 p-4 md:p-8 space-y-8">
@@ -191,11 +230,16 @@ export default function MonitoringPage() {
                 <h2 className="text-2xl font-bold">Historial de Cultivo</h2>
                 <p className="text-muted-foreground text-sm">Monitoreo de 5 parámetros en tiempo real.</p>
               </div>
-              <TabsList className="grid grid-cols-3 w-full md:w-[400px]">
-                <TabsTrigger value="live" className="gap-2"><Activity className="h-3.5 w-3.5" /> Vivo</TabsTrigger>
-                <TabsTrigger value="today" className="gap-2"><Clock className="h-3.5 w-3.5" /> Hoy</TabsTrigger>
-                <TabsTrigger value="week" className="gap-2"><CalendarDays className="h-3.5 w-3.5" /> Semana</TabsTrigger>
-              </TabsList>
+              <div className="flex flex-col sm:flex-row gap-3">
+                <TabsList className="grid grid-cols-3 w-full md:w-[350px]">
+                  <TabsTrigger value="live" className="gap-2"><Activity className="h-3.5 w-3.5" /> Vivo</TabsTrigger>
+                  <TabsTrigger value="today" className="gap-2"><Clock className="h-3.5 w-3.5" /> Hoy</TabsTrigger>
+                  <TabsTrigger value="week" className="gap-2"><CalendarDays className="h-3.5 w-3.5" /> Semana</TabsTrigger>
+                </TabsList>
+                <Button variant="outline" size="icon" className="sm:hidden" onClick={downloadReport}>
+                  <Download className="h-4 w-4" />
+                </Button>
+              </div>
             </div>
 
             <TabsContent value="live" className="space-y-6">{renderCharts(history, true)}</TabsContent>
@@ -204,11 +248,14 @@ export default function MonitoringPage() {
           </Tabs>
 
           <Card className="border-none shadow-lg">
-            <CardHeader>
+            <CardHeader className="flex flex-row items-center justify-between">
               <CardTitle className="text-lg flex items-center gap-2">
                 <TrendingUp className="h-5 w-5 text-primary" />
                 Alertas Recientes
               </CardTitle>
+              <Button variant="ghost" size="sm" onClick={downloadReport} className="text-primary gap-2">
+                <FileText className="h-4 w-4" /> Descargar Historial
+              </Button>
             </CardHeader>
             <CardContent>
               <div className="space-y-3">
