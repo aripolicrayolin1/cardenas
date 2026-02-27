@@ -1,3 +1,40 @@
 {
-  "placeholderImages": []
+  "placeholderImages": [
+    {
+      "id": "hero-farm",
+      "description": "Vista aérea de campos de cultivo verdes en Hidalgo",
+      "imageUrl": "/fotos campo/CAMPO DE AGRICULTOR.png",
+      "imageHint": "agriculture field"
+    },
+    {
+      "id": "crop-healthy",
+      "description": "Planta de maíz sana y verde",
+      "imageUrl": "/fotos campo/Corn____.png",
+      "imageHint": "corn plant"
+    },
+    {
+      "id": "crop-disease",
+      "description": "Hoja con plaga o hongo",
+      "imageUrl": "/fotos campo/descarga (1).png",
+      "imageHint": "leaf pest"
+    },
+    {
+      "id": "expert-agronomist",
+      "description": "Ingeniero agrónomo revisando cultivo",
+      "imageUrl": "/fotos campo/Agronomía ❤️.png",
+      "imageHint": "agronomist field"
+    },
+    {
+      "id": "agro-store",
+      "description": "Tienda de insumos agrícolas y fertilizantes",
+      "imageUrl": "/fotos campo/Empty Shelves.png",
+      "imageHint": "agriculture store"
+    },
+    {
+      "id": "agro-seeds",
+      "description": "Semillas de maíz de alta calidad",
+      "imageUrl": "/fotos campo/Growing crops.png",
+      "imageHint": "corn seeds"
+    }
+  ]
 }
