@@ -15,7 +15,7 @@
       "required": ["email"]
     },
     "Farm": {
-      "title": "Finca",
+      "title": "Finca Agrícola",
       "description": "Datos de un terreno monitoreado y gestionado por el usuario en la región.",
       "type": "object",
       "properties": {
@@ -28,24 +28,8 @@
         "humidity": { "type": "string" },
         "temp": { "type": "string" },
         "lastUpdate": { "type": "string" }
-      }
-    },
-    "CommunityAlert": {
-      "title": "Alerta Comunitaria",
-      "description": "Reporte de plaga o enfermedad compartido públicamente para la vigilancia regional en Hidalgo.",
-      "type": "object",
-      "properties": {
-        "region": { "type": "string" },
-        "crop": { "type": "string" },
-        "problem": { "type": "string" },
-        "severity": { "type": "string" },
-        "distance": { "type": "string" },
-        "date": { "type": "string" },
-        "lat": { "type": "number" },
-        "lng": { "type": "number" },
-        "userId": { "type": "string" },
-        "createdAt": { "type": "string", "format": "date-time" }
-      }
+      },
+      "required": ["name", "userId"]
     }
   },
   "auth": {
@@ -54,11 +38,11 @@
   "firestore": {
     "/users/{userId}": {
       "schema": "UserProfile",
-      "description": "Datos privados de perfil del usuario accesible solo por el dueño"
+      "description": "Datos privados de perfil. Solo el usuario dueño ({userId}) tiene acceso total."
     },
     "/users/{userId}/farms/{farmId}": {
       "schema": "Farm",
-      "description": "Fincas individuales. Solo el dueño ({userId}) tiene permisos de lectura, listado y escritura."
+      "description": "Colección de fincas privadas. Solo el usuario autenticado que coincida con {userId} puede listar, leer y escribir."
     }
   }
 }
