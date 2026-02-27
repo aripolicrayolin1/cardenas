@@ -1,9 +1,10 @@
 'use server';
 /**
  * @fileOverview This file implements a Genkit flow for diagnosing crop diseases or pests from a photo.
+ * Now includes Multi-Key Rotation logic to handle Quota Exhausted errors.
  */
 
-import {ai} from '@/ai/genkit';
+import {getAIInstance} from '@/ai/genkit';
 import {z} from 'genkit';
 
 const CropDiagnosisInputSchema = z.object({
@@ -39,64 +40,57 @@ const CropDiagnosisOutputSchema = z.object({
 });
 export type CropDiagnosisOutput = z.infer<typeof CropDiagnosisOutputSchema>;
 
+/**
+ * Función principal que intenta el diagnóstico.
+ * Si falla por cuota, rota a la siguiente llave API disponible.
+ */
 export async function diagnoseCropDisease(input: CropDiagnosisInput): Promise<CropDiagnosisOutput> {
-  return cropDiagnosisFlow(input);
-}
+  const maxRetries = 3;
+  let lastError = null;
 
-const cropDiagnosisPrompt = ai.definePrompt({
-  name: 'cropDiagnosisPrompt',
-  input: {schema: CropDiagnosisInputSchema},
-  output: {schema: CropDiagnosisOutputSchema},
-  prompt: `Eres un experto fitopatólogo en Hidalgo, México. Analiza la imagen y diagnostica el problema.
-
-Si hay un problema:
-- Identifica el patógeno.
-- Sugiere productos comerciales disponibles en zonas como Actopan o Pachuca.
-- Da un remedio casero detallado (ingredientes y uso).
-
-Si no hay problema, indica que el cultivo está sano.
-
-Descripción: {{{description}}}
-Imagen: {{media url=photoDataUri}}`,
-});
-
-const cropDiagnosisFlow = ai.defineFlow(
-  {
-    name: 'cropDiagnosisFlow',
-    inputSchema: CropDiagnosisInputSchema,
-    outputSchema: CropDiagnosisOutputSchema,
-  },
-  async input => {
+  for (let i = 0; i < maxRetries; i++) {
     try {
-      const {output} = await cropDiagnosisPrompt(input);
+      const ai = getAIInstance(i);
+      
+      const prompt = ai.definePrompt({
+        name: `cropDiagnosisPrompt_${i}`,
+        input: {schema: CropDiagnosisInputSchema},
+        output: {schema: CropDiagnosisOutputSchema},
+        prompt: `Eres un experto fitopatólogo en Hidalgo, México. Analiza la imagen y diagnostica el problema.
+        Si hay un problema: Identifica el patógeno y sugiere productos comerciales en Hidalgo o remedios caseros.
+        Descripción: {{{description}}}
+        Imagen: {{media url=photoDataUri}}`,
+      });
+
+      const {output} = await prompt(input);
       return {
         ...output!,
-        diagnosis: {
-          ...output!.diagnosis,
-          isWaiting: false
-        }
+        diagnosis: { ...output!.diagnosis, isWaiting: false }
       };
     } catch (e: any) {
+      lastError = e;
       const isQuotaError = e.message?.includes('RESOURCE_EXHAUSTED') || e.status === 429;
-      console.warn(`AI Error:`, e.message);
-      
-      return {
-        diagnosis: {
-          isProblemDetected: true,
-          identifiedProblem: isQuotaError ? "IA en Espera (Límite de Google)" : "Error de Conexión",
-          severity: "Medium",
-          confidence: "Low",
-          recommendedActions: isQuotaError ? [
-            "El servicio gratuito de Google Gemini ha alcanzado su límite diario o por minuto.",
-            "Por favor, espera unos 30 segundos antes de intentar de nuevo.",
-            "Si el error persiste por mucho tiempo, podría ser el límite diario de la cuenta gratuita."
-          ] : ["Hubo un problema al procesar la imagen. Reintenta en unos momentos."],
-          commercialProducts: [],
-          homeMadeRemedies: [],
-          additionalNotes: "Estamos trabajando para optimizar el uso de la IA y reducir estos bloqueos temporales.",
-          isWaiting: true
-        }
-      };
+      if (!isQuotaError) break; // Si no es error de cuota, no reintentamos con otra llave
+      console.warn(`Llave ${i + 1} agotada, rotando...`);
     }
   }
-);
+
+  // Si llegamos aquí, todas las llaves fallaron o hubo un error fatal
+  return {
+    diagnosis: {
+      isProblemDetected: true,
+      identifiedProblem: "IA en Mantenimiento Regional",
+      severity: "Medium",
+      confidence: "Low",
+      recommendedActions: [
+        "El servicio de Google Gemini ha alcanzado el límite en todas las llaves configuradas.",
+        "Por favor, intenta de nuevo en 60 segundos.",
+        "Asegúrate de haber configurado GEMINI_API_KEY_2 y GEMINI_API_KEY_3 en tu entorno."
+      ],
+      commercialProducts: [],
+      homeMadeRemedies: [],
+      additionalNotes: `Error técnico: ${lastError?.message || 'Límite de cuota excedido'}`,
+      isWaiting: true
+    }
+  };
+}
