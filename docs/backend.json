@@ -3,7 +3,7 @@
   "entities": {
     "UserProfile": {
       "title": "Perfil de Usuario",
-      "description": "Información detallada del agricultor vinculada a su cuenta.",
+      "description": "Información detallada del agricultor vinculada a su cuenta de AgroTech Hidalgo.",
       "type": "object",
       "properties": {
         "displayName": { "type": "string" },
@@ -16,7 +16,7 @@
     },
     "Farm": {
       "title": "Finca",
-      "description": "Datos de un terreno monitoreado y gestionado por el usuario.",
+      "description": "Datos de un terreno monitoreado y gestionado por el usuario en la región.",
       "type": "object",
       "properties": {
         "name": { "type": "string" },
@@ -32,7 +32,7 @@
     },
     "CommunityAlert": {
       "title": "Alerta Comunitaria",
-      "description": "Reporte de plaga o enfermedad compartido para la vigilancia regional.",
+      "description": "Reporte de plaga o enfermedad compartido públicamente para la vigilancia regional en Hidalgo.",
       "type": "object",
       "properties": {
         "region": { "type": "string" },
@@ -54,15 +54,15 @@
   "firestore": {
     "/users/{userId}": {
       "schema": "UserProfile",
-      "description": "Datos privados de perfil del usuario"
+      "description": "Datos privados de perfil del usuario accesible solo por el dueño"
     },
     "/users/{userId}/farms/{farmId}": {
       "schema": "Farm",
-      "description": "Fincas privadas del usuario"
+      "description": "Fincas privadas del usuario accesible solo por el dueño"
     },
     "/community_alerts/{alertId}": {
       "schema": "CommunityAlert",
-      "description": "Alertas públicas para la comunidad de agricultores"
+      "description": "Alertas compartidas visibles para toda la comunidad autenticada"
     }
   }
 }

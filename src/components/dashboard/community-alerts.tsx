@@ -39,7 +39,7 @@ interface Alert {
 export function CommunityAlerts() {
   const { toast } = useToast();
   const db = useFirestore();
-  const { user } = useUser();
+  const { user, loading: userLoading } = useUser();
   
   const alertsCollectionRef = useMemo(() => {
     if (!db) return null;
@@ -47,10 +47,10 @@ export function CommunityAlerts() {
   }, [db]);
 
   const alertsQuery = useMemo(() => {
-    // Solo permitimos la consulta si hay una referencia y el usuario está autenticado
-    if (!alertsCollectionRef || !user) return null;
+    // IMPORTANTE: Solo creamos la consulta si el usuario NO está cargando y SÍ está autenticado
+    if (!alertsCollectionRef || userLoading || !user) return null;
     return query(alertsCollectionRef, orderBy("createdAt", "desc"), limit(10));
-  }, [alertsCollectionRef, user]);
+  }, [alertsCollectionRef, user, userLoading]);
 
   const { data: alerts, loading: alertsLoading } = useCollection(alertsQuery);
 
@@ -167,9 +167,14 @@ export function CommunityAlerts() {
       </CardHeader>
       <CardContent className="p-0 flex-1 overflow-auto">
         <div className="divide-y">
-          {!user ? (
+          {userLoading ? (
+            <div className="p-8 text-center flex flex-col items-center gap-2">
+              <Loader2 className="h-6 w-6 animate-spin text-primary" />
+              <span className="text-xs text-muted-foreground">Verificando acceso...</span>
+            </div>
+          ) : !user ? (
             <div className="p-8 text-center text-xs text-muted-foreground italic">
-              Inicia sesión para ver las alertas de la comunidad.
+              Inicia sesión para participar en la red comunitaria.
             </div>
           ) : alertsLoading ? (
             <div className="p-8 text-center flex flex-col items-center gap-2">
