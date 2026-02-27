@@ -1,11 +1,11 @@
 "use client";
 
-import { useEffect, useState, useRef } from "react";
+import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { AlertCircle, ShieldCheck, Zap, Info, WifiOff, Loader2 } from "lucide-react";
+import { AlertCircle, ShieldCheck, Zap, Info, WifiOff, Loader2, RefreshCw } from "lucide-react";
 import { predictivePestDiseaseAlerts, type PredictiveAlertOutput } from "@/ai/flows/predictive-pest-disease-alerts";
 import { Badge } from "@/components/ui/badge";
-import { Skeleton } from "@/components/ui/skeleton";
+import { Button } from "@/components/ui/button";
 
 interface AIRiskAlertProps {
   sensorValues: {
@@ -18,70 +18,38 @@ interface AIRiskAlertProps {
 
 export function AIRiskAlert({ sensorValues }: AIRiskAlertProps) {
   const [prediction, setPrediction] = useState<PredictiveAlertOutput | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [updating, setUpdating] = useState(false);
-  const lastUpdateRef = useRef<number>(0);
+  const [loading, setLoading] = useState(false);
 
-  useEffect(() => {
-    async function getPrediction() {
-      // Actualizar máximo cada 120 segundos para ahorrar cuota de las llaves
-      const now = Date.now();
-      if (now - lastUpdateRef.current < 120000 && prediction) return;
-
-      const normalizedHumidity = sensorValues.humidity_soil > 100 
-        ? Math.max(0, Math.min(100, (sensorValues.humidity_soil / 4095) * 100))
-        : Math.max(0, Math.min(100, sensorValues.humidity_soil));
-      
-      const normalizedTemp = Math.max(-10, Math.min(60, sensorValues.temp));
-      
-      setUpdating(true);
-      try {
-        const result = await predictivePestDiseaseAlerts({
-          soilHumidity: normalizedHumidity,
-          temperature: normalizedTemp,
-          uvRadiation: sensorValues.uv,
-          cropType: "Maíz",
-          region: "Hidalgo"
-        });
-        setPrediction(result);
-        lastUpdateRef.current = Date.now();
-      } catch (error) {
-        console.error("Failed to fetch AI prediction", error);
-      } finally {
-        setLoading(false);
-        setUpdating(false);
-      }
+  const handleManualScan = async () => {
+    setLoading(true);
+    
+    const normalizedHumidity = sensorValues.humidity_soil > 100 
+      ? Math.max(0, Math.min(100, (sensorValues.humidity_soil / 4095) * 100))
+      : Math.max(0, Math.min(100, sensorValues.humidity_soil));
+    
+    const normalizedTemp = Math.max(-10, Math.min(60, sensorValues.temp));
+    
+    try {
+      const result = await predictivePestDiseaseAlerts({
+        soilHumidity: normalizedHumidity,
+        temperature: normalizedTemp,
+        uvRadiation: sensorValues.uv,
+        cropType: "Maíz",
+        region: "Hidalgo"
+      });
+      setPrediction(result);
+    } catch (error) {
+      console.error("Failed to fetch AI prediction", error);
+    } finally {
+      setLoading(false);
     }
-
-    const timeout = setTimeout(getPrediction, 8000);
-    return () => clearTimeout(timeout);
-  }, [sensorValues, prediction]);
-
-  if (loading) {
-    return (
-      <Card className="border-none shadow-md">
-        <CardHeader>
-          <Skeleton className="h-6 w-1/3" />
-          <Skeleton className="h-4 w-2/3" />
-        </CardHeader>
-        <CardContent>
-          <Skeleton className="h-24 w-full" />
-        </CardContent>
-      </Card>
-    );
-  }
+  };
 
   const isRisk = prediction?.alertNeeded;
   const isFallback = prediction?.isFallback;
 
   return (
     <Card className={`border-none shadow-md transition-all duration-500 relative ${isRisk ? 'bg-accent/10 ring-1 ring-accent' : 'bg-primary/5 ring-1 ring-primary/20'}`}>
-      {updating && (
-        <div className="absolute top-2 right-2 opacity-50 flex items-center gap-2 text-[10px] font-medium text-primary">
-          <span className="animate-pulse">Sincronizando IA...</span>
-          <Loader2 className="h-3 w-3 animate-spin" />
-        </div>
-      )}
       <CardHeader className="flex flex-row items-start justify-between pb-2">
         <div className="space-y-1">
           <CardTitle className="text-lg flex items-center gap-2">
@@ -92,12 +60,17 @@ export function AIRiskAlert({ sensorValues }: AIRiskAlertProps) {
             ) : (
               <ShieldCheck className="text-primary h-5 w-5" />
             )}
-            {isFallback ? 'Analítica Local' : 'IA de Sensores'}
+            Análisis de Riesgo
           </CardTitle>
           <CardDescription>
-            Análisis predictivo de cultivos
+            Predicción basada en sensores actuales
           </CardDescription>
         </div>
+        {!prediction && !loading && (
+          <Button size="sm" onClick={handleManualScan} className="h-8 gap-2 font-bold shadow-sm">
+            <Zap className="h-3.5 w-3.5" /> Analizar con IA
+          </Button>
+        )}
         {prediction && (
           <Badge variant={prediction.predictedRisk === 'High' ? 'destructive' : prediction.predictedRisk === 'Medium' ? 'secondary' : 'default'} className="uppercase text-[10px]">
             Riesgo: {prediction.predictedRisk}
@@ -105,30 +78,40 @@ export function AIRiskAlert({ sensorValues }: AIRiskAlertProps) {
         )}
       </CardHeader>
       <CardContent className="space-y-4">
-        <div className="bg-white/60 p-3 rounded-lg">
-          <h4 className="font-semibold text-xs mb-1 flex items-center gap-2">
-            <Zap className="h-3 w-3 text-accent-foreground" />
-            Diagnóstico
-          </h4>
-          <p className="text-xs text-foreground/80 leading-relaxed">
-            {prediction?.alertMessage}
-          </p>
-        </div>
-        
-        {isRisk && (
-          <div className="bg-destructive/10 p-3 rounded-lg border border-destructive/20">
-            <h4 className="font-semibold text-xs mb-1 text-destructive">Amenaza</h4>
-            <p className="text-xs font-medium">{prediction?.potentialProblem}</p>
+        {loading ? (
+          <div className="py-8 flex flex-col items-center justify-center gap-3 text-muted-foreground">
+            <Loader2 className="h-8 w-8 animate-spin text-primary" />
+            <p className="text-sm font-medium animate-pulse">Consultando a los expertos virtuales...</p>
+          </div>
+        ) : prediction ? (
+          <>
+            <div className="bg-white/60 p-3 rounded-lg">
+              <h4 className="font-semibold text-xs mb-1 flex items-center gap-2">
+                <Zap className="h-3 w-3 text-accent-foreground" />
+                Diagnóstico IA
+              </h4>
+              <p className="text-xs text-foreground/80 leading-relaxed">
+                {prediction?.alertMessage}
+              </p>
+            </div>
+            
+            <div className="bg-primary/10 p-3 rounded-lg border border-primary/20">
+              <h4 className="font-semibold text-xs mb-1 text-primary flex items-center gap-2">
+                <Info className="h-3 w-3" />
+                Acción Recomendada
+              </h4>
+              <p className="text-xs italic">{prediction?.recommendation}</p>
+            </div>
+
+            <Button variant="ghost" size="sm" onClick={handleManualScan} className="w-full text-[10px] h-6 text-muted-foreground hover:text-primary">
+              <RefreshCw className="h-2 w-2 mr-1" /> Actualizar Análisis
+            </Button>
+          </>
+        ) : (
+          <div className="py-6 text-center text-xs text-muted-foreground italic border-2 border-dashed rounded-lg bg-muted/5">
+            Haz clic en "Analizar con IA" para obtener una predicción basada en tus sensores.
           </div>
         )}
-
-        <div className="bg-primary/10 p-3 rounded-lg border border-primary/20">
-          <h4 className="font-semibold text-xs mb-1 text-primary flex items-center gap-2">
-            <Info className="h-3 w-3" />
-            Acción sugerida
-          </h4>
-          <p className="text-xs italic">{prediction?.recommendation}</p>
-        </div>
       </CardContent>
     </Card>
   );

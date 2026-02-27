@@ -1,6 +1,6 @@
 'use server';
 /**
- * @fileOverview Diagnóstico de enfermedades con rotación de llaves y gestión de cuotas.
+ * @fileOverview Diagnóstico de enfermedades usando Gemini 1.5 Flash para mayor estabilidad en cuota.
  */
 
 import {getAIInstance} from '@/ai/genkit';
@@ -42,15 +42,17 @@ const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 export async function diagnoseCropDisease(input: CropDiagnosisInput): Promise<CropDiagnosisOutput> {
   let lastError = null;
 
+  // Rotación sobre las 3 llaves
   for (let i = 0; i < 3; i++) {
     try {
-      // Usar Gemini 1.5 Flash como respaldo si el 2.0 está muy saturado
+      // Forzamos el uso de Gemini 1.5 Flash que tiene límites de RPM más generosos
       const ai = getAIInstance(i);
       
       const prompt = ai.definePrompt({
-        name: `cropDiagnosisPrompt_v4_${i}`,
+        name: `cropDiagnosisPrompt_v5_flash_${i}`,
         input: {schema: CropDiagnosisInputSchema},
         output: {schema: CropDiagnosisOutputSchema},
+        config: { model: 'googleai/gemini-1.5-flash' },
         prompt: `Eres un experto fitopatólogo en Hidalgo. Analiza la imagen y diagnostica. 
         Si hay problemas, identifica el patógeno y sugiere productos en Hidalgo o remedios caseros.
         Descripción: {{{description}}}
@@ -64,32 +66,31 @@ export async function diagnoseCropDisease(input: CropDiagnosisInput): Promise<Cr
       };
     } catch (e: any) {
       lastError = e;
-      const isQuotaError = e.message?.includes('RESOURCE_EXHAUSTED') || e.status === 429;
+      console.error(`Error con llave ${i + 1}:`, e.message);
       
-      if (isQuotaError) {
-        console.warn(`Llave ${i + 1} agotada. Esperando 5 segundos para enfriar...`);
-        await sleep(5000); // Espera extendida para limpiar la cuota
+      // Si es un error de cuota, esperamos un poco y saltamos a la siguiente llave
+      if (e.message?.includes('429') || e.message?.includes('RESOURCE_EXHAUSTED')) {
+        await sleep(3000); 
         continue;
       }
       break; 
     }
   }
 
-  // Si fallan todas las llaves, devolver un estado de espera informativo
   return {
     diagnosis: {
       isProblemDetected: true,
-      identifiedProblem: "Sistema en Enfriamiento",
+      identifiedProblem: "Límite de Google Alcanzado",
       severity: "Medium",
       confidence: "Low",
       recommendedActions: [
-        "Google ha pausado las peticiones por alta demanda en tu zona.",
-        "Estamos rotando tus 3 llaves, pero todas han alcanzado el límite momentáneo.",
-        "Por favor, espera 15 segundos y presiona 'Iniciar Análisis' de nuevo."
+        "Todas las llaves han alcanzado el límite de peticiones gratuitas por minuto.",
+        "Por favor, espera exactamente 30 segundos sin presionar nada.",
+        "Google liberará tu conexión automáticamente tras ese tiempo."
       ],
       commercialProducts: [],
       homeMadeRemedies: [],
-      additionalNotes: `Mensaje de Google: Por favor reintenta en 15 segundos. (Error: ${lastError?.message?.substring(0, 50)}...)`,
+      additionalNotes: `Error técnico: ${lastError?.message?.substring(0, 60)}...`,
       isWaiting: true
     }
   };

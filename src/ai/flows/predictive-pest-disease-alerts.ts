@@ -1,6 +1,6 @@
 'use server';
 /**
- * @fileOverview Alertas predictivas con rotación automática y menor frecuencia para ahorrar cuota.
+ * @fileOverview Alertas predictivas usando Gemini 1.5 Flash para optimizar cuota.
  */
 
 import {getAIInstance} from '@/ai/genkit';
@@ -26,32 +26,32 @@ const PredictiveAlertOutputSchema = z.object({
 export type PredictiveAlertOutput = z.infer<typeof PredictiveAlertOutputSchema>;
 
 export async function predictivePestDiseaseAlerts(input: PredictiveAlertInput): Promise<PredictiveAlertOutput> {
-  // Rotación silenciosa para no interrumpir el flujo principal
   for (let i = 0; i < 3; i++) {
     try {
       const ai = getAIInstance(i);
       
       const prompt = ai.definePrompt({
-        name: `predictiveAlertPrompt_v3_${i}`,
+        name: `predictiveAlertPrompt_v4_flash_${i}`,
         input: {schema: PredictiveAlertInputSchema},
         output: {schema: PredictiveAlertOutputSchema},
-        prompt: `Analiza sensores: Humedad Suelo: {{{soilHumidity}}}%, Temp: {{{temperature}}}°C. Indica riesgo de plagas.`,
+        config: { model: 'googleai/gemini-1.5-flash' },
+        prompt: `Analiza: Humedad Suelo: {{{soilHumidity}}}%, Temp: {{{temperature}}}°C. Indica riesgo de plagas en Hidalgo brevemente.`,
       });
 
       const {output} = await prompt(input);
       return { ...output!, isFallback: false };
     } catch (e: any) {
-      continue; // Si falla, intenta la siguiente llave rápido
+      console.warn(`Llave ${i+1} falló en predicción.`);
+      continue; 
     }
   }
 
-  // Fallback local si Google nos bloquea todas las llaves
   return {
     alertNeeded: input.soilHumidity > 85,
-    alertMessage: "IA en pausa por cuota. Análisis local activo.",
+    alertMessage: "IA pausada por alta demanda. Análisis local activado.",
     predictedRisk: input.soilHumidity > 85 ? "Medium" : "None",
-    potentialProblem: input.soilHumidity > 85 ? "Riesgo de Hongos" : "Ninguno",
-    recommendation: "Espera 2 minutos para que la IA se reconecte.",
+    potentialProblem: input.soilHumidity > 85 ? "Posible exceso de humedad" : "Normal",
+    recommendation: "Reintenta el análisis de IA en un minuto.",
     isFallback: true
   };
 }
