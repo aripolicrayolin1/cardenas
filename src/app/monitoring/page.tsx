@@ -66,18 +66,16 @@ export default function MonitoringPage() {
   const [events, setEvents] = useState<{time: string, event: string, status: string}[]>([]);
   const lastTimeRef = useRef<string>("");
 
-  // Generamos datos de "Hoy" basados en el valor actual del sensor para que coincidan
+  // Generamos datos históricos basados en la lectura actual para realismo
   const hourlyData = useMemo(() => {
     const hours = ["00:00", "04:00", "08:00", "12:00", "16:00", "20:00"];
     return hours.map((h, i) => ({
       time: h,
-      // Simulamos variaciones naturales basadas en la lectura real de Wokwi
       temp: currentTemp + (Math.sin(i) * 5),
       humidity: Math.max(0, Math.min(100, currentHumidity + (Math.cos(i) * 10)))
     }));
   }, [currentTemp, currentHumidity]);
 
-  // Generamos datos de "Semana" basados en el valor actual
   const weeklyData = useMemo(() => {
     const days = ["Lun", "Mar", "Mie", "Jue", "Vie", "Sab", "Dom"];
     return days.map((d, i) => ({
@@ -98,8 +96,19 @@ export default function MonitoringPage() {
         if (timeStr === lastTimeRef.current) return;
         lastTimeRef.current = timeStr;
 
+        // Mapeo robusto de temperatura
         const rawTemp = data.temperatura ?? data.temp ?? data.temperature ?? 0;
-        const rawHumidity = data.humedad_suelo ?? data.humidity ?? data.humidity_soil ?? data.humedad ?? 0;
+        
+        // Mapeo robusto de humedad (priorizando suelo pero aceptando variantes)
+        const rawHumidity = 
+          data.humedad_suelo ?? 
+          data.humidity_soil ?? 
+          data.h_suelo ?? 
+          data.humedad ?? 
+          data.humidity ?? 
+          data.humedad_aire ?? 
+          data.air_humidity ?? 
+          0;
 
         const normTemp = Number(rawTemp);
         const normHumidity = Math.max(0, Math.min(100, Number(rawHumidity)));
@@ -128,6 +137,9 @@ export default function MonitoringPage() {
           }, ...prev].slice(0, 5));
         }
       }
+    }, (error) => {
+      console.error("Firebase Monitoreo Error:", error);
+      setIsOnline(false);
     });
 
     return () => unsubscribe();
@@ -186,7 +198,7 @@ export default function MonitoringPage() {
               <div className="grid gap-6 md:grid-cols-2">
                 <ChartCard 
                   title="Temperatura en Vivo" 
-                  description="Lecturas instantáneas desde Wokwi" 
+                  description="Lecturas instantáneas" 
                   data={history} 
                   dataKey="temp" 
                   color="var(--color-temp)" 
@@ -195,7 +207,7 @@ export default function MonitoringPage() {
                 />
                 <ChartCard 
                   title="Humedad en Vivo" 
-                  description="Lecturas instantáneas desde Wokwi" 
+                  description="Lecturas instantáneas" 
                   data={history} 
                   dataKey="humidity" 
                   color="var(--color-humidity)" 

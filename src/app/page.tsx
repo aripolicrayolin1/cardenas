@@ -115,11 +115,22 @@ export default function Home() {
     const unsubscribe = onValue(sensorsRef, (snapshot) => {
       const data = snapshot.val();
       if (data) {
-        // Soporte robusto para múltiples nombres de variables
+        // Búsqueda robusta de temperatura (español e inglés)
         const rawTemp = data.temperatura ?? data.temp ?? data.temperature ?? 0;
-        const rawHumidity = data.humedad_suelo ?? data.humidity ?? data.humidity_soil ?? data.humedad ?? 0;
-        const rawUV = data.uv ?? data.uvRadiation ?? 0;
-        const rawAir = data.humedad_aire ?? data.air ?? data.air_humidity ?? 0;
+        
+        // Búsqueda extremadamente robusta de humedad (suelo o aire como fallback)
+        const rawHumidity = 
+          data.humedad_suelo ?? 
+          data.humidity_soil ?? 
+          data.h_suelo ?? 
+          data.humedad ?? 
+          data.humidity ?? 
+          data.humedad_aire ?? 
+          data.air_humidity ?? 
+          0;
+
+        const rawUV = data.uv ?? data.uvRadiation ?? data.radiacion_uv ?? 0;
+        const rawAir = data.humedad_aire ?? data.air_humidity ?? data.humidity_air ?? data.air ?? 0;
 
         const newValues = {
           humidity_soil: Number(rawHumidity),
@@ -153,6 +164,9 @@ export default function Home() {
           setNotifications(prev => [...dynamicNotifs, ...prev].slice(0, 10));
         }
       }
+    }, (error) => {
+      console.error("Firebase Read Error:", error);
+      setIsOnline(false);
     });
     return () => unsubscribe();
   }, []);
