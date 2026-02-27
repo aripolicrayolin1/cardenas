@@ -7,7 +7,7 @@ import { SensorStats } from "@/components/dashboard/sensor-stats";
 import { AIRiskAlert } from "@/components/dashboard/ai-risk-alert";
 import { CommunityAlerts } from "@/components/dashboard/community-alerts";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Activity, Bell, Info, TrendingUp, AlertTriangle, MessageSquare, CheckCircle2, Droplets, Thermometer } from "lucide-react";
+import { Activity, Bell, Info, TrendingUp, AlertTriangle, CheckCircle2, Droplets, Thermometer } from "lucide-react";
 import Image from "next/image";
 import { 
   AreaChart, 
@@ -15,7 +15,6 @@ import {
   XAxis, 
   YAxis, 
   CartesianGrid, 
-  Tooltip, 
   ResponsiveContainer 
 } from "recharts";
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
@@ -27,7 +26,6 @@ import {
   SheetTrigger,
   SheetDescription 
 } from "@/components/ui/sheet";
-import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useState, useEffect, useRef } from "react";
 import { initializeApp, getApps } from "firebase/app";
@@ -72,7 +70,9 @@ export default function Home() {
     temp: 0,
     uv: 0,
     humidity_air: 0,
-    et: 0
+    et: 0,
+    dew_point: 0,
+    status_text: "Iniciando..."
   });
   const [isOnline, setIsOnline] = useState(false);
   const [lastUpdate, setLastUpdate] = useState<Date | null>(null);
@@ -116,19 +116,15 @@ export default function Home() {
     const unsubscribe = onValue(sensorsRef, (snapshot) => {
       const data = snapshot.val();
       if (data) {
-        // Mapeo EXACTO según lo reportado por el usuario
-        const rawTemp = data.temperatura ?? 0;
-        const rawHumiditySoil = data.humedad_suelo ?? 0;
-        const rawHumidityAir = data.humedad_aire ?? 0;
-        const rawET = data.et ?? 0;
-        const rawUV = data.uv ?? 0;
-
+        // Mapeo EXACTO según los datos enviados por el usuario
         const newValues = {
-          humidity_soil: Number(rawHumiditySoil),
-          temp: Number(rawTemp),
-          uv: Number(rawUV),
-          humidity_air: Number(rawHumidityAir),
-          et: Number(rawET)
+          humidity_soil: Number(data.humedad_suelo ?? 0),
+          temp: Number(data.temperatura ?? 0),
+          uv: Number(data.uv ?? 0),
+          humidity_air: Number(data.humedad_aire ?? 0),
+          et: Number(data.et ?? 0),
+          dew_point: Number(data.punto_rocio ?? 0),
+          status_text: String(data.estado ?? "SISTEMA NORMAL")
         };
         
         setSensorValues(newValues);
@@ -137,7 +133,6 @@ export default function Home() {
 
         const dynamicNotifs: Notification[] = [];
 
-        // Alerta de Temperatura
         if (newValues.temp > 35 && !notifiedEvents.current.has('high_temp')) {
           dynamicNotifs.push({
             id: `temp-${Date.now()}`,
@@ -153,7 +148,6 @@ export default function Home() {
           notifiedEvents.current.delete('high_temp');
         }
 
-        // Alerta de Humedad Suelo (Valores bajos < 300 si es analógico o < 20 si es %)
         const isDry = newValues.humidity_soil < 500 && newValues.humidity_soil > 0;
         if (isDry && !notifiedEvents.current.has('low_soil_moisture')) {
           dynamicNotifs.push({
@@ -328,7 +322,7 @@ export default function Home() {
                 </CardHeader>
                 <CardContent>
                   <p className="text-sm leading-relaxed opacity-90">
-                    La evapotranspiración (ET) de tu campo es de {sensorValues.et.toFixed(2)}. Monitorea este valor para evitar el desperdicio de agua.
+                    La evapotranspiración (ET) de tu campo es de {sensorValues.et.toFixed(2)}. Monitorea este valor para evitar el desperdicio de agua. El punto de rocío actual es de {sensorValues.dew_point.toFixed(1)}°C.
                   </p>
                 </CardContent>
               </Card>
