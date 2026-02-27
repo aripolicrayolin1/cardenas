@@ -2,7 +2,7 @@
 "use client";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Users, MapPin, Calendar, ArrowRight, Plus, AlertTriangle, X, Info, Loader2, ShieldCheck, Radio, Zap } from "lucide-react";
+import { Users, MapPin, Calendar, ArrowRight, Plus, AlertTriangle, X, Info, Loader2, ShieldCheck, Radio, Zap, Target } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { useState, useEffect, useMemo } from "react";
@@ -65,6 +65,17 @@ const initialAlerts: Alert[] = [
     date: "Hace 1h",
     lat: 20.2222,
     lng: -98.9111
+  },
+  {
+    id: "4",
+    region: "Santiago de Anaya",
+    crop: "Maíz",
+    problem: "Gusano Cogollero",
+    severity: "Alta",
+    distance: "A 15km de ti",
+    date: "Hace 3h",
+    lat: 20.3845,
+    lng: -98.9621
   }
 ];
 
@@ -172,12 +183,10 @@ export function CommunityAlerts() {
     setIsMapOpen(true);
   };
 
-  // Filtra alertas similares para el mapa global
   const similarAlerts = useMemo(() => {
     if (!selectedAlert) return [];
     return alerts.filter(a => 
-      a.problem.toLowerCase().includes(selectedAlert.problem.toLowerCase()) ||
-      (selectedAlert.crop && a.crop.toLowerCase().includes(selectedAlert.crop.toLowerCase()))
+      a.problem.toLowerCase().includes(selectedAlert.problem.toLowerCase())
     );
   }, [selectedAlert, alerts]);
 
@@ -234,38 +243,52 @@ export function CommunityAlerts() {
 
       <Dialog open={isMapOpen} onOpenChange={setIsMapOpen}>
         <DialogContent className="sm:max-w-5xl p-0 overflow-hidden border-none bg-background/95 backdrop-blur-xl">
-          <div className="flex flex-col md:flex-row h-[600px]">
-            {/* Panel Lateral del Mapa */}
-            <div className="w-full md:w-80 border-r border-primary/10 p-6 flex flex-col bg-white/50">
+          <div className="flex flex-col md:flex-row h-[650px]">
+            {/* Panel de Localizaciones Similares */}
+            <div className="w-full md:w-96 border-r border-primary/10 p-6 flex flex-col bg-white/60">
               <DialogHeader className="mb-6">
-                <DialogTitle className="flex items-center gap-2 text-primary font-black tracking-tighter text-xl">
-                  <Radio className="h-5 w-5 animate-pulse" />
-                  RADAR: {selectedAlert?.problem}
+                <div className="flex items-center gap-2 text-destructive font-black text-[10px] uppercase tracking-widest mb-2">
+                  <Target className="h-4 w-4 animate-pulse" /> ZONA DE VIGILANCIA ACTIVA
+                </div>
+                <DialogTitle className="text-2xl font-black text-primary tracking-tighter leading-tight">
+                  {selectedAlert?.problem}
                 </DialogTitle>
-                <DialogDescription className="text-[10px] font-bold uppercase text-muted-foreground tracking-widest pt-2">
-                  Zona de Riesgo Detectada
+                <DialogDescription className="text-xs font-bold text-muted-foreground pt-1">
+                  Analizando reportes similares en la región.
                 </DialogDescription>
               </DialogHeader>
 
-              <div className="flex-1 space-y-4 overflow-hidden">
-                <div className="p-4 bg-primary/10 rounded-2xl border border-primary/20">
+              <div className="flex-1 space-y-6 overflow-hidden">
+                <div className="p-4 bg-primary/10 rounded-2xl border border-primary/20 shadow-inner">
                   <p className="text-[10px] font-black text-primary uppercase mb-2 flex items-center gap-2">
-                    <ShieldCheck className="h-3 w-3" /> ESCUDO ACTIVO
+                    <ShieldCheck className="h-4 w-4" /> {t('radar_active')}
                   </p>
-                  <p className="text-xs font-bold text-foreground/80 leading-relaxed italic">
+                  <p className="text-xs font-medium text-foreground/80 italic leading-relaxed">
                     "{t('radar_map_desc')}"
                   </p>
                 </div>
 
-                <div className="space-y-3">
-                  <h5 className="text-[10px] font-black uppercase text-muted-foreground tracking-tighter">Reportes Similares ({similarAlerts.length})</h5>
-                  <ScrollArea className="h-[250px] pr-4">
-                    <div className="space-y-2">
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <h5 className="text-[11px] font-black uppercase text-muted-foreground tracking-tighter">Botes Identificados ({similarAlerts.length})</h5>
+                    <Badge className="bg-destructive text-[9px]">{similarAlerts.length} SITIOS</Badge>
+                  </div>
+                  
+                  <ScrollArea className="h-[320px] pr-4">
+                    <div className="space-y-3">
                       {similarAlerts.map(a => (
-                        <div key={a.id} className="p-3 bg-white border rounded-xl shadow-sm hover:border-primary/30 transition-all">
-                          <p className="text-[10px] font-black text-primary uppercase">{a.region}</p>
-                          <p className="text-xs font-bold text-foreground/70">{a.problem}</p>
-                          <p className="text-[9px] text-muted-foreground mt-1">{a.date} • {a.distance}</p>
+                        <div key={a.id} className="p-4 bg-white border-2 border-primary/5 rounded-2xl shadow-sm hover:border-primary/20 transition-all group">
+                          <div className="flex items-center justify-between mb-2">
+                            <span className="text-[10px] font-black text-primary uppercase flex items-center gap-1">
+                              <MapPin className="h-3 w-3" /> {a.region}
+                            </span>
+                            <Badge variant="outline" className="text-[8px] font-black h-4 px-1">{a.date}</Badge>
+                          </div>
+                          <p className="text-xs font-black text-foreground/80 mb-1">{a.problem}</p>
+                          <div className="flex items-center justify-between mt-2">
+                            <span className="text-[9px] font-bold text-muted-foreground uppercase">{a.distance}</span>
+                            <div className="h-2 w-2 rounded-full bg-destructive animate-pulse" />
+                          </div>
                         </div>
                       ))}
                     </div>
@@ -273,33 +296,51 @@ export function CommunityAlerts() {
                 </div>
               </div>
               
-              <Button className="mt-6 w-full font-black text-xs uppercase" variant="outline" onClick={() => setIsMapOpen(false)}>
-                Cerrar Radar
+              <Button className="mt-6 w-full font-black text-xs uppercase rounded-xl h-11" variant="outline" onClick={() => setIsMapOpen(false)}>
+                Cerrar Vigilancia
               </Button>
             </div>
 
-            {/* El Mapa Global */}
-            <div className="flex-1 relative bg-muted group">
-              <div className="absolute top-4 left-4 z-10">
-                <Badge className="bg-destructive/90 text-white font-black text-[10px] px-4 py-1.5 shadow-2xl animate-pulse flex items-center gap-2 uppercase tracking-widest">
-                  <Zap className="h-3 w-3 fill-white" /> ALERTA REGIONAL ACTIVA
+            {/* Mapa de Vigilancia Unificada */}
+            <div className="flex-1 relative bg-slate-200 group overflow-hidden">
+              <div className="absolute top-6 left-6 z-10 flex flex-col gap-2">
+                <Badge className="bg-destructive/90 text-white font-black text-[10px] px-5 py-2 shadow-2xl animate-pulse flex items-center gap-2 uppercase tracking-widest rounded-full">
+                  <Zap className="h-3.5 w-3.5 fill-white" /> ESCUDO REGIONAL ACTIVADO
                 </Badge>
+                <div className="bg-white/80 backdrop-blur-md px-3 py-1.5 rounded-full text-[9px] font-black text-primary border border-primary/10 shadow-lg">
+                  ÁREA DE RIESGO: VALLE DEL MEZQUITAL
+                </div>
+              </div>
+
+              {/* Efecto visual de Radar sobre el mapa */}
+              <div className="absolute inset-0 pointer-events-none z-0">
+                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-primary/5 rounded-full border-2 border-primary/10 animate-ping opacity-20"></div>
+                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[400px] h-[400px] bg-primary/10 rounded-full border-2 border-primary/20 animate-pulse opacity-20"></div>
               </div>
               
               {selectedAlert && (
                 <iframe
                   width="100%"
                   height="100%"
-                  style={{ border: 0 }}
+                  style={{ border: 0, filter: 'grayscale(0.2) contrast(1.1)' }}
                   loading="lazy"
                   allowFullScreen
-                  src={`https://www.google.com/maps?q=${selectedAlert.problem}+en+${selectedAlert.region}+Hidalgo&z=12&output=embed`}
+                  src={`https://www.google.com/maps?q=${selectedAlert.problem}+en+${selectedAlert.region}+Actopan+Ixmiquilpan+Hidalgo&z=11&output=embed`}
                 />
               )}
               
-              <div className="absolute bottom-4 right-4 z-10 flex gap-2">
-                <div className="bg-white/80 backdrop-blur-md p-3 rounded-2xl shadow-xl border border-white/50 text-[9px] font-black uppercase text-primary">
-                  Sincronizado con Firebase Satelital
+              <div className="absolute bottom-6 left-6 right-6 z-10">
+                <div className="bg-white/90 backdrop-blur-xl p-4 rounded-2xl shadow-2xl border border-white/50 flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="bg-primary/10 p-2 rounded-full">
+                      <ShieldCheck className="h-5 w-5 text-primary" />
+                    </div>
+                    <div>
+                      <p className="text-[10px] font-black text-primary uppercase tracking-widest">Protección Activa</p>
+                      <p className="text-xs font-bold text-foreground/70">Se han notificado a todas las parcelas vecinas.</p>
+                    </div>
+                  </div>
+                  <Badge variant="outline" className="font-black text-[9px] border-primary/20 text-primary">FIREBASE SYNC</Badge>
                 </div>
               </div>
             </div>
