@@ -71,7 +71,32 @@ const cropDiagnosisFlow = ai.defineFlow(
     outputSchema: CropDiagnosisOutputSchema,
   },
   async input => {
-    const {output} = await cropDiagnosisPrompt(input);
-    return output!;
+    try {
+      const {output} = await cropDiagnosisPrompt(input);
+      return output!;
+    } catch (e: any) {
+      // Manejo de error de cuota agotada (429 Too Many Requests)
+      if (e.message?.includes('RESOURCE_EXHAUSTED') || e.status === 429) {
+        console.warn("IA Quota exhausted for diagnosis flow.");
+        return {
+          diagnosis: {
+            isProblemDetected: false,
+            identifiedProblem: "Servicio de IA en espera (Cuota alcanzada)",
+            severity: "Not Applicable",
+            confidence: "Low",
+            recommendedActions: [
+              "Por favor, espera unos 15-30 segundos antes de intentar de nuevo.",
+              "El servicio gratuito de Google Gemini tiene un límite de peticiones por minuto."
+            ],
+            commercialProducts: [],
+            homeMadeRemedies: [],
+            additionalNotes: "Has alcanzado el límite de procesamiento de imágenes por minuto. No te preocupes, esto es normal en la versión de prueba gratuita. Intenta nuevamente en un momento."
+          }
+        };
+      }
+      
+      // Si es otro tipo de error, lo lanzamos para que se vea en los logs
+      throw e;
+    }
   }
 );
