@@ -27,8 +27,8 @@ const initialStores = [
     specialty: "Asesoría en Plagas y Cultivos",
     rating: 5.0,
     phone: "771-555-0101",
-    image: PlaceHolderImages.find(img => img.id === 'expert-agronomist')?.imageUrl || "https://picsum.photos/seed/expert/400/200",
-    imageHint: "agronomist",
+    image: PlaceHolderImages.find(img => img.id === 'expert-agronomist')?.imageUrl || "https://picsum.photos/seed/agronomo/600/400",
+    imageHint: PlaceHolderImages.find(img => img.id === 'expert-agronomist')?.imageHint || "agronomist",
     open: true,
     isExpert: true
   },
@@ -39,8 +39,8 @@ const initialStores = [
     specialty: "Fertilizantes y Control de Plagas",
     rating: 4.8,
     phone: "772-123-4567",
-    image: PlaceHolderImages.find(img => img.id === 'agro-store')?.imageUrl || "https://picsum.photos/seed/store/400/200",
-    imageHint: "farm store",
+    image: PlaceHolderImages.find(img => img.id === 'agro-store')?.imageUrl || "https://picsum.photos/seed/agroshop/600/400",
+    imageHint: PlaceHolderImages.find(img => img.id === 'agro-store')?.imageHint || "agriculture shop",
     open: true
   },
   {
@@ -50,8 +50,8 @@ const initialStores = [
     specialty: "Semillas e Implementos",
     rating: 4.5,
     phone: "771-987-6543",
-    image: PlaceHolderImages.find(img => img.id === 'agro-seeds')?.imageUrl || "https://picsum.photos/seed/seeds/400/200",
-    imageHint: "seeds",
+    image: PlaceHolderImages.find(img => img.id === 'agro-seeds')?.imageUrl || "https://picsum.photos/seed/cornseeds/600/400",
+    imageHint: PlaceHolderImages.find(img => img.id === 'agro-seeds')?.imageHint || "corn seeds",
     open: true
   }
 ];

@@ -1,40 +1,41 @@
+
 {
   "placeholderImages": [
     {
       "id": "hero-farm",
       "description": "Aerial view of a green farm field in Hidalgo",
-      "imageUrl": "https://picsum.photos/seed/agrotech-farm-1/1200/600",
+      "imageUrl": "https://picsum.photos/seed/agrotech-farm-hidalgo/1200/600",
       "imageHint": "green farm"
     },
     {
       "id": "crop-healthy",
       "description": "Healthy corn plant leaves",
-      "imageUrl": "https://picsum.photos/seed/crop-healthy/600/400",
+      "imageUrl": "https://picsum.photos/seed/healthy-corn/600/400",
       "imageHint": "corn leaves"
     },
     {
       "id": "crop-disease",
       "description": "Plant leaf with fungal spots",
-      "imageUrl": "https://picsum.photos/seed/crop-disease/600/400",
+      "imageUrl": "https://picsum.photos/seed/diseased-leaf/600/400",
       "imageHint": "leaf disease"
     },
     {
       "id": "expert-agronomist",
       "description": "Professional agronomist in the field",
-      "imageUrl": "https://picsum.photos/seed/field-expert-agro/400/300",
-      "imageHint": "agronomist"
+      "imageUrl": "https://picsum.photos/seed/agronomo-campo/600/400",
+      "imageHint": "agronomist field"
     },
     {
       "id": "agro-store",
       "description": "Agricultural supply store interior",
-      "imageUrl": "https://picsum.photos/seed/agri-center-hidalgo/400/300",
-      "imageHint": "farm store"
+      "imageUrl": "https://picsum.photos/seed/tienda-agricola/600/400",
+      "imageHint": "agriculture store"
     },
     {
       "id": "agro-seeds",
       "description": "Various types of agricultural seeds",
-      "imageUrl": "https://picsum.photos/seed/corn-seeds-agro/400/300",
-      "imageHint": "farm seeds"
+      "imageUrl": "https://picsum.photos/seed/semillas-maiz/600/400",
+      "imageHint": "corn seeds"
     }
   ]
 }
