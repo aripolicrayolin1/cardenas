@@ -45,6 +45,7 @@ import {
   DropdownMenuItem, 
   DropdownMenuTrigger 
 } from "@/components/ui/dropdown-menu";
+import { useTranslation } from "@/hooks/use-translation";
 
 const firebaseConfig = {
   databaseURL: "https://studio-3066950614-ac5b0-default-rtdb.firebaseio.com",
@@ -52,14 +53,6 @@ const firebaseConfig = {
 
 const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApps()[0];
 const db = getDatabase(app);
-
-const chartConfig = {
-  temp: { label: "Temperatura (°C)", color: "hsl(var(--chart-4))" },
-  humiditySoil: { label: "Humedad Suelo (%)", color: "hsl(var(--chart-1))" },
-  humidityAir: { label: "Humedad Aire (%)", color: "hsl(var(--chart-3))" },
-  et: { label: "ET (mm)", color: "hsl(var(--chart-5))" },
-  dewPoint: { label: "Punto Rocío (°C)", color: "hsl(var(--chart-2))" },
-};
 
 interface SensorPoint {
   time: string;
@@ -72,6 +65,7 @@ interface SensorPoint {
 
 export default function MonitoringPage() {
   const { toast } = useToast();
+  const { t } = useTranslation();
   const [activeTab, setActiveTab] = useState("live");
   const [history, setHistory] = useState<SensorPoint[]>([]);
   const [isMounted, setIsMounted] = useState(false);
@@ -86,6 +80,14 @@ export default function MonitoringPage() {
   const [events, setEvents] = useState<{time: string, event: string, status: string}[]>([]);
   const lastTimeRef = useRef<string>("");
   const [formattedDateTime, setFormattedDateTime] = useState<{date: string, time: string} | null>(null);
+
+  const chartConfig = {
+    temp: { label: t('air_temp'), color: "hsl(var(--chart-4))" },
+    humiditySoil: { label: t('soil_humidity'), color: "hsl(var(--chart-1))" },
+    humidityAir: { label: t('humidity_air'), color: "hsl(var(--chart-3))" },
+    et: { label: t('evapotranspiration'), color: "hsl(var(--chart-5))" },
+    dewPoint: { label: t('dew_point'), color: "hsl(var(--chart-2))" },
+  };
 
   useEffect(() => {
     setIsMounted(true);
@@ -181,7 +183,7 @@ export default function MonitoringPage() {
 
   const downloadCsv = () => {
     let dataToExport = activeTab === 'live' ? history : activeTab === 'today' ? hourlyData : weeklyData;
-    let periodName = activeTab === 'live' ? 'En Vivo' : activeTab === 'today' ? 'Hoy' : 'Semanal';
+    let periodName = activeTab === 'live' ? t('live') : activeTab === 'today' ? t('today') : t('week');
     let filename = `reporte_agrotech_${activeTab}_${new Date().toISOString().split('T')[0]}.csv`;
 
     const headers = ["Fecha/Hora", "Temp (C)", "Hum. Suelo (%)", "Hum. Aire (%)", "ET (mm)", "Pto. Rocio (C)"];
@@ -216,7 +218,7 @@ export default function MonitoringPage() {
 
   const downloadWord = () => {
     let dataToExport = activeTab === 'live' ? history : activeTab === 'today' ? hourlyData : weeklyData;
-    let periodName = activeTab === 'live' ? 'En Vivo' : activeTab === 'today' ? 'Hoy' : 'Historial Semanal';
+    let periodName = activeTab === 'live' ? t('live') : activeTab === 'today' ? t('today') : t('week');
 
     const header = "<html xmlns:o='urn:schemas-microsoft-com:office:office' "+
             "xmlns:w='urn:schemas-microsoft-com:office:word' "+
@@ -286,11 +288,11 @@ export default function MonitoringPage() {
 
   const renderCharts = (data: any[], isLive = false) => (
     <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-      <ChartCard title="Temperatura" description={isLive ? "En vivo" : "Tendencia"} data={data} dataKey="temp" color="var(--color-temp)" unit="°C" type="area" />
-      <ChartCard title="Hum. Suelo" description={isLive ? "En vivo" : "Tendencia"} data={data} dataKey="humiditySoil" color="var(--color-humiditySoil)" unit="%" type="line" />
-      <ChartCard title="Hum. Aire" description={isLive ? "En vivo" : "Tendencia"} data={data} dataKey="humidityAir" color="var(--color-humidityAir)" unit="%" type="line" />
-      <ChartCard title="Punto Rocío" description={isLive ? "En vivo" : "Tendencia"} data={data} dataKey="dewPoint" color="var(--color-dewPoint)" unit="°C" type="area" />
-      <ChartCard title="Evapotransp." description={isLive ? "En vivo" : "Tendencia"} data={data} dataKey="et" color="var(--color-et)" unit=" mm" type="area" />
+      <ChartCard title={t('air_temp')} description={isLive ? t('live') : t('today')} data={data} dataKey="temp" color="var(--color-temp)" unit="°C" type="area" config={chartConfig} />
+      <ChartCard title={t('soil_humidity')} description={isLive ? t('live') : t('today')} data={data} dataKey="humiditySoil" color="var(--color-humiditySoil)" unit="%" type="line" config={chartConfig} />
+      <ChartCard title={t('humidity_air')} description={isLive ? t('live') : t('today')} data={data} dataKey="humidityAir" color="var(--color-humidityAir)" unit="%" type="line" config={chartConfig} />
+      <ChartCard title={t('dew_point')} description={isLive ? t('live') : t('today')} data={data} dataKey="dewPoint" color="var(--color-dewPoint)" unit="°C" type="area" config={chartConfig} />
+      <ChartCard title={t('evapotranspiration')} description={isLive ? t('live') : t('today')} data={data} dataKey="et" color="var(--color-et)" unit=" mm" type="area" config={chartConfig} />
     </div>
   );
 
@@ -301,27 +303,27 @@ export default function MonitoringPage() {
         <header className="flex h-16 shrink-0 items-center justify-between px-6 border-b bg-white/80 backdrop-blur-md sticky top-0 z-10">
           <div className="flex items-center gap-2">
             <SidebarTrigger />
-            <h1 className="text-xl font-bold">Analítica de Sensores</h1>
+            <h1 className="text-xl font-bold">{t('sensor_analytics')}</h1>
           </div>
           <div className="flex items-center gap-3">
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="outline" size="sm" className="gap-2 shadow-sm font-bold border-primary/20 text-primary">
-                  <Download className="h-4 w-4" /> Descargar Reporte
+                  <Download className="h-4 w-4" /> {t('download_report')}
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-56">
                 <DropdownMenuItem onClick={downloadCsv} className="gap-2 cursor-pointer font-medium">
-                  <FileText className="h-4 w-4 text-green-600" /> Descargar CSV (Excel)
+                  <FileText className="h-4 w-4 text-green-600" /> CSV (Excel)
                 </DropdownMenuItem>
                 <DropdownMenuItem onClick={downloadWord} className="gap-2 cursor-pointer font-medium">
-                  <FileEdit className="h-4 w-4 text-blue-600" /> Descargar Word (.doc)
+                  <FileEdit className="h-4 w-4 text-blue-600" /> Word (.doc)
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
             <Badge variant={isOnline ? "default" : "secondary"} className="gap-1.5 py-1 px-3">
               {isOnline ? <Wifi className="h-3.5 w-3.5 text-white animate-pulse" /> : <WifiOff className="h-3.5 w-3.5" />}
-              {isOnline ? "En Línea" : "Desconectado"}
+              {isOnline ? t('online') : t('offline')}
             </Badge>
           </div>
         </header>
@@ -330,14 +332,14 @@ export default function MonitoringPage() {
           <Tabs value={activeTab} className="w-full" onValueChange={setActiveTab}>
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
               <div className="space-y-1">
-                <h2 className="text-2xl font-bold">Historial de Cultivo</h2>
-                <p className="text-muted-foreground text-sm">Monitoreo de 5 parámetros en tiempo real.</p>
+                <h2 className="text-2xl font-bold">{t('crop_history')}</h2>
+                <p className="text-muted-foreground text-sm">{t('measured_params')}</p>
               </div>
               <div className="flex flex-col sm:flex-row gap-3">
                 <TabsList className="grid grid-cols-3 w-full md:w-[350px] shadow-sm">
-                  <TabsTrigger value="live" className="gap-2"><Activity className="h-3.5 w-3.5" /> Vivo</TabsTrigger>
-                  <TabsTrigger value="today" className="gap-2"><Clock className="h-3.5 w-3.5" /> Hoy</TabsTrigger>
-                  <TabsTrigger value="week" className="gap-2"><CalendarDays className="h-3.5 w-3.5" /> Semana</TabsTrigger>
+                  <TabsTrigger value="live" className="gap-2"><Activity className="h-3.5 w-3.5" /> {t('live')}</TabsTrigger>
+                  <TabsTrigger value="today" className="gap-2"><Clock className="h-3.5 w-3.5" /> {t('today')}</TabsTrigger>
+                  <TabsTrigger value="week" className="gap-2"><CalendarDays className="h-3.5 w-3.5" /> {t('week')}</TabsTrigger>
                 </TabsList>
               </div>
             </div>
@@ -351,14 +353,14 @@ export default function MonitoringPage() {
             <CardHeader className="flex flex-row items-center justify-between">
               <CardTitle className="text-lg flex items-center gap-2">
                 <TrendingUp className="h-5 w-5 text-primary" />
-                Alertas Recientes
+                {t('recent_alerts')}
               </CardTitle>
             </CardHeader>
             <CardContent>
               <div className="space-y-3">
                 {events.length === 0 ? (
                   <div className="py-8 text-center text-muted-foreground text-sm italic bg-muted/20 rounded-lg border-2 border-dashed">
-                    No se han registrado anomalías.
+                    {t('no_anomalies')}
                   </div>
                 ) : (
                   events.map((item, i) => (
@@ -380,7 +382,7 @@ export default function MonitoringPage() {
   );
 }
 
-function ChartCard({ title, description, data, dataKey, color, unit, type }: any) {
+function ChartCard({ title, description, data, dataKey, color, unit, type, config }: any) {
   const Icon = dataKey === 'temp' ? Thermometer : dataKey.includes('humidity') ? Droplets : dataKey === 'et' ? CloudRain : Snowflake;
   const iconColor = dataKey === 'temp' ? 'text-orange-500' : dataKey.includes('Soil') ? 'text-blue-600' : dataKey.includes('Air') ? 'text-teal-500' : dataKey === 'et' ? 'text-purple-500' : 'text-cyan-500';
 
@@ -396,7 +398,7 @@ function ChartCard({ title, description, data, dataKey, color, unit, type }: any
       <CardContent>
         <div className="h-[200px] w-full mt-4">
           {data && data.length > 0 ? (
-            <ChartContainer config={chartConfig} className="h-full w-full">
+            <ChartContainer config={config} className="h-full w-full">
               <ResponsiveContainer width="100%" height="100%">
                 {type === 'area' ? (
                   <AreaChart data={data} margin={{ top: 5, right: 5, left: -20, bottom: 0 }}>

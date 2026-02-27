@@ -38,7 +38,15 @@ const translations = {
     health_history: "Historial de Salud",
     sensor_data: "Dato del Sensor",
     change_lang: "Cambiar a Hñähñu",
-    logout: "Salir"
+    logout: "Salir",
+    live: "Vivo",
+    today: "Hoy",
+    week: "Semana",
+    download_report: "Descargar Reporte",
+    sensor_analytics: "Analítica de Sensores",
+    crop_history: "Historial de Cultivo",
+    measured_params: "Monitoreo de 5 parámetros en tiempo real.",
+    no_anomalies: "No se han registrado anomalías."
   },
   hn: {
     dashboard: "Ñut’i Ja’i",
@@ -72,7 +80,15 @@ const translations = {
     health_history: "M’u̱i b’o̱za",
     sensor_data: "Dato IoT",
     change_lang: "Mpengi ja Español",
-    logout: "Poni"
+    logout: "Poni",
+    live: "Ja nthe",
+    today: "Na’ya",
+    week: "N’onda",
+    download_report: "Xo̱fo Reporte",
+    sensor_analytics: "Analítica IoT",
+    crop_history: "M’u̱i b’o̱za",
+    measured_params: "Hyandi 5 parámetros ja nthe.",
+    no_anomalies: "Hotho n’u ja ya."
   }
 };
 
