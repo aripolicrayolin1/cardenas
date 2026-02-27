@@ -2,7 +2,7 @@
 "use client";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Users, MapPin, Calendar, ArrowRight, Plus, AlertTriangle, X, Info, Loader2 } from "lucide-react";
+import { Users, MapPin, Calendar, ArrowRight, Plus, AlertTriangle, X, Info, Loader2, ShieldCheck } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { useState, useEffect } from "react";
@@ -216,6 +216,10 @@ export function CommunityAlerts() {
               <MapPin className="h-5 w-5 text-primary" />
               Ubicación: {selectedAlert?.region}
             </DialogTitle>
+            <DialogDescription className="text-xs font-bold text-primary/80 italic flex items-start gap-2 pt-2" suppressHydrationWarning>
+              <ShieldCheck className="h-4 w-4 shrink-0 text-primary" />
+              {t('radar_map_desc')}
+            </DialogDescription>
           </DialogHeader>
           <div className="relative h-[450px] w-full bg-muted">
             {selectedAlert && (

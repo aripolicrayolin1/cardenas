@@ -113,7 +113,8 @@ const translations = {
     sev_low: "Baja",
     sev_medium: "Media",
     sev_high: "Alta",
-    sev_na: "No Aplica"
+    sev_na: "No Aplica",
+    radar_map_desc: "El RADAR comunitario geolocaliza brotes. Un solo reporte alerta a todos los vecinos, creando un escudo preventivo que salva las cosechas de toda la comunidad."
   },
   hn: {
     dashboard: "Ñut’i Ja’i",
@@ -222,7 +223,8 @@ const translations = {
     sev_low: "B’e̱",
     sev_medium: "Mäni",
     sev_high: "Dä",
-    sev_na: "Hotho"
+    sev_na: "Hotho",
+    radar_map_desc: "Ar RADAR munthe geolocaliza ya n’u. N’a hñä ma̱ alerti tdu’u ya vecinos, hño escudo preventivo pa hñeti ya b’o̱za ja munthe."
   }
 };
 
