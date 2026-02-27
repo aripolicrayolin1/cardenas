@@ -125,6 +125,24 @@ export default function DiagnosisPage() {
     }
   };
 
+  const translateSeverity = (sev: string) => {
+    switch(sev) {
+      case 'High': return t('sev_high');
+      case 'Medium': return t('sev_medium');
+      case 'Low': return t('sev_low');
+      default: return t('sev_na');
+    }
+  };
+
+  const translateConfidence = (conf: string) => {
+    switch(conf) {
+      case 'High': return t('conf_high');
+      case 'Medium': return t('conf_medium');
+      case 'Low': return t('conf_low');
+      default: return conf;
+    }
+  };
+
   const handleShareWithCommunity = () => {
     if (!diagnosis) return;
 
@@ -265,11 +283,11 @@ export default function DiagnosisPage() {
                       <div className="grid grid-cols-2 gap-4">
                          <div className="p-4 rounded-xl bg-destructive/5 border border-destructive/20">
                             <p className="text-[10px] font-bold uppercase text-destructive">{t('severity')}</p>
-                            <p className="text-xl font-black">{diagnosis.diagnosis.severity}</p>
+                            <p className="text-xl font-black">{translateSeverity(diagnosis.diagnosis.severity)}</p>
                          </div>
                          <div className="p-4 rounded-xl bg-primary/5 border border-primary/20">
                             <p className="text-[10px] font-bold uppercase text-primary">{t('confidence')}</p>
-                            <p className="text-xl font-black">{diagnosis.diagnosis.confidence}</p>
+                            <p className="text-xl font-black">{translateConfidence(diagnosis.diagnosis.confidence)}</p>
                          </div>
                       </div>
 

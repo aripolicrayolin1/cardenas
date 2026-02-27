@@ -191,7 +191,7 @@ export default function Home() {
             <div className="flex items-center justify-between">
               <h2 className="text-2xl font-bold tracking-tight">{t('iot_station')}</h2>
               <p className="text-sm text-muted-foreground flex items-center gap-1">
-                <Activity className="h-4 w-4 text-primary animate-pulse" /> Live
+                <Activity className="h-4 w-4 text-primary animate-pulse" /> {t('live')}
               </p>
             </div>
             <SensorStats sensorValues={sensorValues} isOnline={isOnline} lastUpdate={lastUpdate} />
@@ -239,7 +239,7 @@ export default function Home() {
                 </CardHeader>
                 <CardContent>
                   <p className="text-sm opacity-90 leading-relaxed">
-                    Evapotranspiración actual: {sensorValues.et.toFixed(2)} mm. 
+                    {t('evapotranspiration')} actual: {sensorValues.et.toFixed(2)} mm. 
                     Tus cultivos están perdiendo humedad a un ritmo {sensorValues.et > 4 ? 'alto' : 'normal'}. 
                     Ajusta tu sistema de riego.
                   </p>

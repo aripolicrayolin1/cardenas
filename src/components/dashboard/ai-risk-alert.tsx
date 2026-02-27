@@ -51,6 +51,17 @@ export function AIRiskAlert({ sensorValues }: AIRiskAlertProps) {
   const isRisk = prediction?.alertNeeded;
   const isFallback = prediction?.isFallback;
 
+  // Helper para traducir niveles de riesgo que vienen del backend en inglés
+  const translateRisk = (risk: string) => {
+    switch (risk) {
+      case 'High': return t('risk_high');
+      case 'Medium': return t('risk_medium');
+      case 'Low': return t('risk_low');
+      case 'None': return t('risk_none');
+      default: return risk;
+    }
+  };
+
   return (
     <Card className={`border-none shadow-md transition-all duration-500 relative ${isRisk ? 'bg-accent/10 ring-1 ring-accent' : 'bg-primary/5 ring-1 ring-primary/20'}`}>
       <CardHeader className="flex flex-row items-start justify-between pb-2">
@@ -76,7 +87,7 @@ export function AIRiskAlert({ sensorValues }: AIRiskAlertProps) {
         )}
         {prediction && (
           <Badge variant={prediction.predictedRisk === 'High' ? 'destructive' : prediction.predictedRisk === 'Medium' ? 'secondary' : 'default'} className="uppercase text-[10px]">
-            Riesgo: {prediction.predictedRisk}
+            {t('risk')}: {translateRisk(prediction.predictedRisk)}
           </Badge>
         )}
       </CardHeader>

@@ -20,7 +20,7 @@ const translations = {
     humidity_air: "Hum. Aire",
     air_temp: "Temperatura",
     dew_point: "Punto Rocío",
-    evapotranspiration: "Evapotransp. (ET)",
+    evapotranspiration: "Evapotranspiración",
     risk_analysis: "Análisis de Riesgo",
     community_network: "Red Comunitaria",
     radar_active: "RADAR ACTIVO",
@@ -101,7 +101,19 @@ const translations = {
     area_label: "Área (Hectáreas)",
     cancel: "Cancelar",
     save_farm: "Guardar Finca",
-    inicia_sesion_anadir: "Inicia sesión para añadir"
+    inicia_sesion_anadir: "Inicia sesión para añadir",
+    risk: "Riesgo",
+    risk_low: "Bajo",
+    risk_medium: "Medio",
+    risk_high: "Alto",
+    risk_none: "Ninguno",
+    conf_low: "Baja",
+    conf_medium: "Media",
+    conf_high: "Alta",
+    sev_low: "Baja",
+    sev_medium: "Media",
+    sev_high: "Alta",
+    sev_na: "No Aplica"
   },
   hn: {
     dashboard: "Ñut’i Ja’i",
@@ -168,7 +180,7 @@ const translations = {
     instructions: "Hahni:",
     fallback_mode: "RESPALDO",
     voice_captured: "Hñä captured",
-    voice_captured_desc: "Ja hño hñä.",
+    voice_captured_desc: "Hñä ja hño.",
     not_compatible: "Hotho compatible",
     not_compatible_desc: "Navegador hotho hñä.",
     missing_data: "Hotho datos",
@@ -198,7 +210,19 @@ const translations = {
     area_label: "Área",
     cancel: "Hotho",
     save_farm: "Xo̱fo",
-    inicia_sesion_anadir: "Ñut’i ja’i pa hño"
+    inicia_sesion_anadir: "Ñut’i ja’i pa hño",
+    risk: "N’u",
+    risk_low: "B’e̱",
+    risk_medium: "Mäni",
+    risk_high: "Dä",
+    risk_none: "Hotho",
+    conf_low: "B’e̱",
+    conf_medium: "Mäni",
+    conf_high: "Dä",
+    sev_low: "B’e̱",
+    sev_medium: "Mäni",
+    sev_high: "Dä",
+    sev_na: "Hotho"
   }
 };
 
