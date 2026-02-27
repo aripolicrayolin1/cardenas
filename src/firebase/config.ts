@@ -2,8 +2,8 @@ import { initializeApp, getApps, getApp } from "firebase/app";
 import { getAuth } from "firebase/auth";
 import { getFirestore } from "firebase/firestore";
 
-// NOTA: Reemplaza 'TU_API_KEY_REAL' con la que aparece en la sección 
-// "Configuración del SDK web" de tu captura de pantalla.
+// NOTA: Reemplaza 'AIzaSyDummyKey_RealProject' con tu API Key real de la consola de Firebase.
+// La encuentras en: Configuración del proyecto > General > Tus apps > Configuración del SDK web.
 const firebaseConfig = {
   apiKey: "AIzaSyDummyKey_RealProject", 
   authDomain: "studio-3066950614-ac5b0.firebaseapp.com",
