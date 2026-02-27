@@ -1,35 +1,29 @@
-
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 @layer base {
   :root {
-    --background: 120 20% 95%; /* #EFF5EF */
+    --background: 120 25% 97%; /* Un fondo más suave */
     --foreground: 120 40% 10%;
-    --card: 0 0% 100%;
+    --card: 0 0% 100% / 0.6; /* Transparencia por defecto */
     --card-foreground: 120 40% 10%;
-    --popover: 0 0% 100%;
+    --popover: 0 0% 100% / 0.9;
     --popover-foreground: 120 40% 10%;
-    --primary: 120 50% 40%; /* #339933 */
+    --primary: 142 76% 36%; /* Un verde más vibrante */
     --primary-foreground: 0 0% 100%;
-    --secondary: 120 20% 90%;
+    --secondary: 120 20% 90% / 0.5;
     --secondary-foreground: 120 50% 30%;
-    --muted: 120 10% 90%;
+    --muted: 120 10% 90% / 0.5;
     --muted-foreground: 120 20% 40%;
-    --accent: 56 100% 60%; /* #FFF233 */
+    --accent: 48 100% 50%; /* Amarillo ámbar */
     --accent-foreground: 120 50% 10%;
     --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 98%;
-    --border: 120 20% 85%;
-    --input: 120 20% 85%;
-    --ring: 120 50% 40%;
-    --chart-1: 120 50% 40%;
-    --chart-2: 56 100% 60%;
-    --chart-3: 140 40% 50%;
-    --chart-4: 40 80% 60%;
-    --chart-5: 200 60% 50%;
-    --radius: 0.75rem;
+    --border: 120 20% 85% / 0.4;
+    --input: 120 20% 85% / 0.4;
+    --ring: 142 76% 36%;
+    --radius: 1rem;
   }
 }
 
@@ -39,7 +33,20 @@
   }
   body {
     @apply bg-background text-foreground font-body;
+    background-image: 
+      radial-gradient(at 0% 0%, hsla(142, 76%, 36%, 0.05) 0px, transparent 50%),
+      radial-gradient(at 100% 100%, hsla(48, 100%, 50%, 0.05) 0px, transparent 50%);
+    background-attachment: fixed;
   }
+}
+
+/* Clases de utilidad para Glassmorphism */
+.glass-card {
+  @apply bg-white/40 backdrop-blur-xl border border-white/40 shadow-[0_8px_32px_0_rgba(31,38,135,0.07)];
+}
+
+.glass-nav {
+  @apply bg-white/20 backdrop-blur-md border-r border-white/20;
 }
 
 @media print {
@@ -49,25 +56,14 @@
   .only-print {
     display: block !important;
   }
-  body {
-    background: white !important;
-    padding: 20px !important;
-  }
-  .printable-content {
-    display: grid !important;
-    grid-template-columns: repeat(2, 1fr) !important;
-    gap: 20px !important;
-  }
-  .recharts-responsive-container {
-    width: 100% !important;
-    height: 250px !important;
-  }
-  .card, .border {
-    border: 1px solid #ddd !important;
-    box-shadow: none !important;
-  }
 }
 
-.only-print {
-  display: none;
+.animate-float {
+  animation: float 6s ease-in-out infinite;
+}
+
+@keyframes float {
+  0% { transform: translateY(0px); }
+  50% { transform: translateY(-10px); }
+  100% { transform: translateY(0px); }
 }

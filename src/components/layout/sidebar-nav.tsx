@@ -1,4 +1,3 @@
-
 "use client";
 
 import { 
@@ -53,48 +52,55 @@ export function SidebarNav() {
   };
 
   return (
-    <Sidebar variant="inset" collapsible="icon">
-      <SidebarHeader className="h-16 flex items-center justify-center border-b px-6">
+    <Sidebar variant="inset" collapsible="icon" className="glass-nav border-none">
+      <SidebarHeader className="h-20 flex items-center justify-center px-6">
         <div className="flex items-center gap-2 group-data-[collapsible=icon]:hidden">
-          <div className="bg-primary rounded-lg p-1.5">
-            <Leaf className="h-6 w-6 text-white" />
+          <div className="bg-primary rounded-2xl p-2 shadow-lg shadow-primary/20 animate-float">
+            <Leaf className="h-7 w-7 text-white" />
           </div>
-          <span className="font-bold text-xl tracking-tight text-primary">Agro<span className="text-foreground">Tech</span></span>
+          <span className="font-black text-2xl tracking-tighter text-primary">Agro<span className="text-foreground">Tech</span></span>
         </div>
-        <div className="hidden group-data-[collapsible=icon]:flex bg-primary rounded-lg p-1">
+        <div className="hidden group-data-[collapsible=icon]:flex bg-primary rounded-xl p-1.5 shadow-lg">
           <Leaf className="h-5 w-5 text-white" />
         </div>
       </SidebarHeader>
-      <SidebarContent className="py-4">
+      
+      <SidebarContent className="py-6">
         {user && !loading && (
-          <div className="px-4 py-2 group-data-[collapsible=icon]:hidden">
-            <div className="flex items-center gap-3 p-2 bg-primary/5 rounded-xl border border-primary/10">
-              <Avatar className="h-8 w-8 border-2 border-primary/20">
+          <div className="px-4 py-2 group-data-[collapsible=icon]:hidden mb-4">
+            <div className="flex items-center gap-3 p-3 bg-white/50 backdrop-blur-sm rounded-2xl border border-white/50 shadow-sm transition-all hover:shadow-md">
+              <Avatar className="h-10 w-10 border-2 border-primary/20 shadow-inner">
                 <AvatarImage src={user.photoURL ?? undefined} alt={user.displayName ?? undefined} />
-                <AvatarFallback className="bg-primary/20 text-primary">
-                  {user.displayName?.charAt(0) || user.email?.charAt(0) || <User className="h-4 w-4" />}
+                <AvatarFallback className="bg-primary/10 text-primary font-bold">
+                  {user.displayName?.charAt(0) || user.email?.charAt(0) || <User className="h-5 w-5" />}
                 </AvatarFallback>
               </Avatar>
               <div className="flex flex-col min-w-0">
-                <p className="text-xs font-bold truncate">{user.displayName || t('farmer')}</p>
-                <p className="text-[10px] text-muted-foreground truncate">{user.email}</p>
+                <p className="text-xs font-black truncate text-primary uppercase tracking-tighter">{user.displayName || t('farmer')}</p>
+                <p className="text-[10px] text-muted-foreground truncate font-medium">{user.email}</p>
               </div>
             </div>
           </div>
         )}
+        
         <SidebarGroup>
           <SidebarGroupContent>
-            <SidebarMenu>
+            <SidebarMenu className="gap-2">
               {navItems.map((item) => (
                 <SidebarMenuItem key={item.title}>
                   <SidebarMenuButton 
                     asChild 
                     isActive={pathname === item.href}
                     tooltip={item.title}
+                    className={`rounded-xl h-11 transition-all duration-300 ${
+                      pathname === item.href 
+                        ? 'bg-primary text-white shadow-lg shadow-primary/30 scale-105' 
+                        : 'hover:bg-primary/10 text-muted-foreground hover:text-primary hover:translate-x-1'
+                    }`}
                   >
-                    <Link href={item.href}>
-                      <item.icon className="h-5 w-5" />
-                      <span>{item.title}</span>
+                    <Link href={item.href} className="flex items-center gap-3 px-4">
+                      <item.icon className={`h-5 w-5 ${pathname === item.href ? 'text-white' : 'text-primary'}`} />
+                      <span className="font-bold tracking-tight">{item.title}</span>
                     </Link>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
@@ -103,43 +109,46 @@ export function SidebarNav() {
           </SidebarGroupContent>
         </SidebarGroup>
 
-        <div className="px-4 mt-4 group-data-[collapsible=icon]:hidden">
+        <div className="px-4 mt-8 group-data-[collapsible=icon]:hidden">
           <Button 
             variant="outline" 
             size="sm" 
-            className="w-full gap-2 border-primary/20 text-[10px] h-8"
+            className="w-full gap-2 border-primary/20 text-[10px] h-9 font-black uppercase tracking-widest rounded-xl hover:bg-primary hover:text-white transition-all shadow-sm"
             onClick={toggleLanguage}
           >
-            <Languages className="h-3.5 w-3.5" />
-            {lang === 'es' ? 'Cambiar a Hñähñu' : 'Mpengi ja Español'}
+            <Languages className="h-4 w-4" />
+            {lang === 'es' ? 'CAMBIAR A HÑÄHÑU' : 'MPENGI JA ESPAÑOL'}
           </Button>
         </div>
       </SidebarContent>
-      <SidebarFooter className="border-t p-4">
-        <SidebarMenu>
+
+      <SidebarFooter className="p-4 border-t border-white/20">
+        <SidebarMenu className="gap-2">
           {!user && !loading ? (
             <SidebarMenuItem>
-              <SidebarMenuButton asChild tooltip={t('login')}>
-                <Link href="/login">
-                  <LogIn className="h-5 w-5" />
-                  <span>{t('login')}</span>
+              <SidebarMenuButton asChild tooltip={t('login')} className="rounded-xl h-11 hover:bg-primary/10 hover:text-primary">
+                <Link href="/login" className="flex items-center gap-3 px-4">
+                  <LogIn className="h-5 w-5 text-primary" />
+                  <span className="font-bold">{t('login')}</span>
                 </Link>
               </SidebarMenuButton>
             </SidebarMenuItem>
           ) : (
             <>
               <SidebarMenuItem>
-                <SidebarMenuButton asChild tooltip={t('settings')}>
-                  <Link href="/settings">
-                    <Settings className="h-5 w-5" />
-                    <span>{t('settings')}</span>
+                <SidebarMenuButton asChild tooltip={t('settings')} className="rounded-xl h-11 hover:bg-primary/10 hover:text-primary">
+                  <Link href="/settings" className="flex items-center gap-3 px-4">
+                    <Settings className="h-5 w-5 text-primary" />
+                    <span className="font-bold">{t('settings')}</span>
                   </Link>
                 </SidebarMenuButton>
               </SidebarMenuItem>
               <SidebarMenuItem>
-                <SidebarMenuButton tooltip={t('logout')} onClick={handleSignOut}>
-                  <LogOut className="h-5 w-5" />
-                  <span>{t('logout')}</span>
+                <SidebarMenuButton tooltip={t('logout')} onClick={handleSignOut} className="rounded-xl h-11 hover:bg-destructive/10 hover:text-destructive text-muted-foreground">
+                  <div className="flex items-center gap-3 px-4 w-full">
+                    <LogOut className="h-5 w-5" />
+                    <span className="font-bold">{t('logout')}</span>
+                  </div>
                 </SidebarMenuButton>
               </SidebarMenuItem>
             </>

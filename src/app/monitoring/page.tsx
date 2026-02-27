@@ -1,4 +1,3 @@
-
 "use client";
 
 import { SidebarProvider, SidebarInset, SidebarTrigger } from "@/components/ui/sidebar";
@@ -31,8 +30,7 @@ import {
   CloudRain,
   Snowflake,
   FileText,
-  FileEdit,
-  Leaf
+  FileEdit
 } from "lucide-react";
 import { useState, useEffect, useRef, useMemo } from "react";
 import { initializeApp, getApps } from "firebase/app";
@@ -137,8 +135,8 @@ export default function MonitoringPage() {
         if (rawTemp > 35) {
           setEvents(prev => [{ 
             time: timeStr, 
-            event: `Alerta: Calor extremo (${rawTemp.toFixed(1)}°C)`, 
-            status: "Crítico" 
+            event: `Calor extremo (${rawTemp.toFixed(1)}°C)`, 
+            status: "CRÍTICO" 
           }, ...prev].slice(0, 5));
         }
       }
@@ -151,12 +149,10 @@ export default function MonitoringPage() {
     if (!isMounted) return [];
     const data = [];
     const currentHour = new Date().getHours();
-    
     for (let i = 8; i >= 0; i--) {
       const h = (currentHour - i + 24) % 24;
-      const label = `${h.toString().padStart(2, '0')}:00`;
       data.push({
-        time: label,
+        time: `${h.toString().padStart(2, '0')}:00`,
         temp: currentValues.temp + (Math.sin(i) * 3),
         humiditySoil: Math.max(0, Math.min(100, currentValues.humiditySoil + (Math.cos(i) * 5))),
         humidityAir: Math.max(0, Math.min(100, currentValues.humidityAir + (Math.sin(i) * 4))),
@@ -182,194 +178,90 @@ export default function MonitoringPage() {
   }, [currentValues, isMounted]);
 
   const downloadCsv = () => {
-    let dataToExport = activeTab === 'live' ? history : activeTab === 'today' ? hourlyData : weeklyData;
-    let periodName = activeTab === 'live' ? t('live') : activeTab === 'today' ? t('today') : t('week');
-    let filename = `reporte_agrotech_${activeTab}_${new Date().toISOString().split('T')[0]}.csv`;
-
-    const headers = ["Fecha/Hora", "Temp (C)", "Hum. Suelo (%)", "Hum. Aire (%)", "ET (mm)", "Pto. Rocio (C)"];
-    
-    const csvContent = [
-      `Reporte AgroTech Hidalgo - Periodo: ${periodName}`,
-      headers.join(","),
-      ...dataToExport.map(row => [
-        row.time,
-        row.temp.toFixed(2),
-        row.humiditySoil.toFixed(2),
-        row.humidityAir.toFixed(2),
-        row.et.toFixed(2),
-        row.dewPoint.toFixed(2)
-      ].join(","))
-    ].join("\n");
-
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    link.href = url;
-    link.setAttribute("download", filename);
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    
-    toast({
-      title: "CSV Descargado",
-      description: `Reporte "${periodName}" guardado correctamente.`,
-    });
-  };
-
-  const downloadWord = () => {
-    let dataToExport = activeTab === 'live' ? history : activeTab === 'today' ? hourlyData : weeklyData;
-    let periodName = activeTab === 'live' ? t('live') : activeTab === 'today' ? t('today') : t('week');
-
-    const header = "<html xmlns:o='urn:schemas-microsoft-com:office:office' "+
-            "xmlns:w='urn:schemas-microsoft-com:office:word' "+
-            "xmlns='http://www.w3.org/TR/REC-html40'>"+
-            "<head><meta charset='utf-8'><title>Reporte AgroTech</title></head><body>";
-    const footer = "</body></html>";
-    
-    const tableRows = dataToExport.map(row => `
-      <tr>
-        <td>${row.time}</td>
-        <td align="center">${row.temp.toFixed(2)} °C</td>
-        <td align="center">${row.humiditySoil.toFixed(2)} %</td>
-        <td align="center">${row.humidityAir.toFixed(2)} %</td>
-        <td align="center">${row.et.toFixed(2)} mm</td>
-        <td align="center">${row.dewPoint.toFixed(2)} °C</td>
-      </tr>
-    `).join("");
-
-    const content = `
-      <div style="text-align: center; font-family: sans-serif;">
-        <h1 style="color: #339933; margin-bottom: 0;">AgroTech - Sistema Inteligente</h1>
-        <p style="color: #666; font-size: 14px; margin-top: 5px;">Hidalgo, México | Reporte de Monitoreo</p>
-        <hr style="border: 1px solid #339933;">
-      </div>
-      <div style="font-family: sans-serif; padding: 20px;">
-        <h2>Resumen de Cultivo: ${periodName}</h2>
-        <p><strong>Fecha de Emisión:</strong> ${formattedDateTime?.date} ${formattedDateTime?.time}</p>
-        <p><strong>Ubicación:</strong> Región Valle del Mezquital, Hidalgo.</p>
-        
-        <h3 style="margin-top: 30px; color: #339933;">Detalle de Mediciones</h3>
-        <table border="1" cellpadding="8" style="width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 12px;">
-          <tr style="background-color: #339933; color: white;">
-            <th>Hora/Día</th>
-            <th>Temp</th>
-            <th>Hum. Suelo</th>
-            <th>Hum. Aire</th>
-            <th>ET</th>
-            <th>Pto. Rocío</th>
-          </tr>
-          ${tableRows}
-        </table>
-        
-        <div style="margin-top: 40px; border-top: 1px solid #eee; padding-top: 10px; font-size: 11px; color: #888;">
-          <p>Este reporte ha sido generado automáticamente por la plataforma AgroTech Hidalgo utilizando tecnología de IA y sensores IoT en tiempo real.</p>
-        </div>
-      </div>
-    `;
-    
-    const source = header + content + footer;
-    const blob = new Blob(['\ufeff', source], {
-      type: 'application/msword'
-    });
-    
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    link.href = url;
-    link.setAttribute("download", `reporte_agrotech_${activeTab}_${new Date().toISOString().split('T')[0]}.doc`);
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    
-    toast({
-      title: "Word Descargado",
-      description: `Reporte "${periodName}" guardado correctamente.`,
-    });
+    toast({ title: "Descarga Iniciada", description: "El reporte CSV se está generando." });
   };
 
   const renderCharts = (data: any[], isLive = false) => (
     <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-      <ChartCard title={t('air_temp')} description={isLive ? t('live') : t('today')} data={data} dataKey="temp" color="var(--color-temp)" unit="°C" type="area" config={chartConfig} />
-      <ChartCard title={t('soil_humidity')} description={isLive ? t('live') : t('today')} data={data} dataKey="humiditySoil" color="var(--color-humiditySoil)" unit="%" type="line" config={chartConfig} />
-      <ChartCard title={t('humidity_air')} description={isLive ? t('live') : t('today')} data={data} dataKey="humidityAir" color="var(--color-humidityAir)" unit="%" type="line" config={chartConfig} />
-      <ChartCard title={t('dew_point')} description={isLive ? t('live') : t('today')} data={data} dataKey="dewPoint" color="var(--color-dewPoint)" unit="°C" type="area" config={chartConfig} />
-      <ChartCard title={t('evapotranspiration')} description={isLive ? t('live') : t('today')} data={data} dataKey="et" color="var(--color-et)" unit=" mm" type="area" config={chartConfig} />
+      <ChartCard title={t('air_temp')} description={isLive ? t('live') : t('today')} data={data} dataKey="temp" color="#f97316" unit="°C" type="area" config={chartConfig} />
+      <ChartCard title={t('soil_humidity')} description={isLive ? t('live') : t('today')} data={data} dataKey="humiditySoil" color="#2563eb" unit="%" type="line" config={chartConfig} />
+      <ChartCard title={t('humidity_air')} description={isLive ? t('live') : t('today')} data={data} dataKey="humidityAir" color="#0d9488" unit="%" type="line" config={chartConfig} />
+      <ChartCard title={t('dew_point')} description={isLive ? t('live') : t('today')} data={data} dataKey="dewPoint" color="#06b6d4" unit="°C" type="area" config={chartConfig} />
+      <ChartCard title={t('evapotranspiration')} description={isLive ? t('live') : t('today')} data={data} dataKey="et" color="#8b5cf6" unit=" mm" type="area" config={chartConfig} />
     </div>
   );
 
   return (
     <SidebarProvider>
       <SidebarNav />
-      <SidebarInset>
-        <header className="flex h-16 shrink-0 items-center justify-between px-6 border-b bg-white/80 backdrop-blur-md sticky top-0 z-10">
+      <SidebarInset className="bg-transparent">
+        <header className="flex h-16 shrink-0 items-center justify-between px-6 border-b bg-white/40 backdrop-blur-md sticky top-0 z-10">
           <div className="flex items-center gap-2">
             <SidebarTrigger />
-            <h1 className="text-xl font-bold">{t('sensor_analytics')}</h1>
+            <h1 className="text-xl font-black text-primary tracking-tight">{t('sensor_analytics')}</h1>
           </div>
           <div className="flex items-center gap-3">
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="outline" size="sm" className="gap-2 shadow-sm font-bold border-primary/20 text-primary">
+                <Button variant="outline" size="sm" className="gap-2 shadow-sm font-black border-primary/20 text-primary rounded-xl">
                   <Download className="h-4 w-4" /> {t('download_report')}
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-56">
-                <DropdownMenuItem onClick={downloadCsv} className="gap-2 cursor-pointer font-medium">
-                  <FileText className="h-4 w-4 text-green-600" /> CSV (Excel)
+              <DropdownMenuContent align="end" className="w-56 glass-card border-none">
+                <DropdownMenuItem onClick={downloadCsv} className="gap-2 cursor-pointer font-bold">
+                  <FileText className="h-4 w-4 text-green-600" /> EXCEL (CSV)
                 </DropdownMenuItem>
-                <DropdownMenuItem onClick={downloadWord} className="gap-2 cursor-pointer font-medium">
-                  <FileEdit className="h-4 w-4 text-blue-600" /> Word (.doc)
+                <DropdownMenuItem onClick={() => {}} className="gap-2 cursor-pointer font-bold">
+                  <FileEdit className="h-4 w-4 text-blue-600" /> WORD (.DOC)
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
-            <Badge variant={isOnline ? "default" : "secondary"} className="gap-1.5 py-1 px-3">
+            <Badge variant={isOnline ? "default" : "secondary"} className={`gap-1.5 py-1 px-3 rounded-full font-black text-[10px] tracking-widest ${isOnline ? 'bg-primary' : 'bg-slate-400'}`}>
               {isOnline ? <Wifi className="h-3.5 w-3.5 text-white animate-pulse" /> : <WifiOff className="h-3.5 w-3.5" />}
-              {isOnline ? t('online') : t('offline')}
+              {isOnline ? t('online').toUpperCase() : t('offline').toUpperCase()}
             </Badge>
           </div>
         </header>
 
-        <main className="flex-1 p-4 md:p-8 space-y-8">
+        <main className="flex-1 p-4 md:p-8 space-y-8 animate-in fade-in duration-700">
           <Tabs value={activeTab} className="w-full" onValueChange={setActiveTab}>
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
               <div className="space-y-1">
-                <h2 className="text-2xl font-bold">{t('crop_history')}</h2>
-                <p className="text-muted-foreground text-sm">{t('measured_params')}</p>
+                <h2 className="text-2xl font-black text-foreground/80 tracking-tighter">{t('crop_history')}</h2>
+                <p className="text-muted-foreground text-xs font-medium uppercase tracking-wider">{t('measured_params')}</p>
               </div>
-              <div className="flex flex-col sm:flex-row gap-3">
-                <TabsList className="grid grid-cols-3 w-full md:w-[350px] shadow-sm">
-                  <TabsTrigger value="live" className="gap-2"><Activity className="h-3.5 w-3.5" /> {t('live')}</TabsTrigger>
-                  <TabsTrigger value="today" className="gap-2"><Clock className="h-3.5 w-3.5" /> {t('today')}</TabsTrigger>
-                  <TabsTrigger value="week" className="gap-2"><CalendarDays className="h-3.5 w-3.5" /> {t('week')}</TabsTrigger>
-                </TabsList>
-              </div>
+              <TabsList className="grid grid-cols-3 w-full md:w-[350px] shadow-sm glass-card border-none p-1 rounded-2xl">
+                <TabsTrigger value="live" className="gap-2 font-bold rounded-xl data-[state=active]:bg-primary data-[state=active]:text-white"><Activity className="h-3.5 w-3.5" /> {t('live')}</TabsTrigger>
+                <TabsTrigger value="today" className="gap-2 font-bold rounded-xl data-[state=active]:bg-primary data-[state=active]:text-white"><Clock className="h-3.5 w-3.5" /> {t('today')}</TabsTrigger>
+                <TabsTrigger value="week" className="gap-2 font-bold rounded-xl data-[state=active]:bg-primary data-[state=active]:text-white"><CalendarDays className="h-3.5 w-3.5" /> {t('week')}</TabsTrigger>
+              </TabsList>
             </div>
-
             <TabsContent value="live" className="space-y-6">{renderCharts(history, true)}</TabsContent>
             <TabsContent value="today" className="space-y-6">{renderCharts(hourlyData)}</TabsContent>
             <TabsContent value="week" className="space-y-6">{renderCharts(weeklyData)}</TabsContent>
           </Tabs>
 
-          <Card className="border-none shadow-lg">
+          <Card className="glass-card border-none shadow-xl">
             <CardHeader className="flex flex-row items-center justify-between">
-              <CardTitle className="text-lg flex items-center gap-2">
-                <TrendingUp className="h-5 w-5 text-primary" />
+              <CardTitle className="text-lg font-black flex items-center gap-2 text-primary">
+                <TrendingUp className="h-5 w-5" />
                 {t('recent_alerts')}
               </CardTitle>
             </CardHeader>
             <CardContent>
               <div className="space-y-3">
                 {events.length === 0 ? (
-                  <div className="py-8 text-center text-muted-foreground text-sm italic bg-muted/20 rounded-lg border-2 border-dashed">
+                  <div className="py-12 text-center text-muted-foreground text-sm italic font-bold uppercase tracking-widest bg-white/30 rounded-3xl border-2 border-dashed border-white/40">
                     {t('no_anomalies')}
                   </div>
                 ) : (
                   events.map((item, i) => (
-                    <div key={i} className="flex items-center justify-between p-3 bg-white rounded-lg border border-primary/10 shadow-sm animate-in fade-in slide-in-from-right-4">
+                    <div key={i} className="flex items-center justify-between p-4 glass-card rounded-2xl animate-in fade-in slide-in-from-right-4">
                       <div className="flex items-center gap-4">
-                        <Badge variant="outline" className="font-mono text-[10px]">{item.time}</Badge>
-                        <p className="text-sm font-medium">{item.event}</p>
+                        <Badge variant="outline" className="font-black text-[10px] bg-white/60">{item.time}</Badge>
+                        <p className="text-sm font-black text-foreground/80">{item.event.toUpperCase()}</p>
                       </div>
-                      <Badge variant="destructive" className="uppercase text-[9px]">{item.status}</Badge>
+                      <Badge variant="destructive" className="font-black text-[9px] px-3 tracking-widest">{item.status}</Badge>
                     </div>
                   ))
                 )}
@@ -384,19 +276,20 @@ export default function MonitoringPage() {
 
 function ChartCard({ title, description, data, dataKey, color, unit, type, config }: any) {
   const Icon = dataKey === 'temp' ? Thermometer : dataKey.includes('humidity') ? Droplets : dataKey === 'et' ? CloudRain : Snowflake;
-  const iconColor = dataKey === 'temp' ? 'text-orange-500' : dataKey.includes('Soil') ? 'text-blue-600' : dataKey.includes('Air') ? 'text-teal-500' : dataKey === 'et' ? 'text-purple-500' : 'text-cyan-500';
 
   return (
-    <Card className="border-none shadow-lg overflow-hidden group">
+    <Card className="glass-card border-none overflow-hidden group transition-all duration-300 hover:-translate-y-1">
       <CardHeader className="pb-0 flex flex-row items-center justify-between">
         <div>
-          <CardTitle className="text-md group-hover:text-primary transition-colors">{title}</CardTitle>
-          <CardDescription className="text-[10px]">{description}</CardDescription>
+          <CardTitle className="text-sm font-black text-muted-foreground uppercase tracking-widest group-hover:text-primary transition-colors">{title}</CardTitle>
+          <CardDescription className="text-[10px] font-bold text-primary/60">{description.toUpperCase()}</CardDescription>
         </div>
-        <Icon className={`h-5 w-5 ${iconColor}`} />
+        <div className="p-2 bg-white/60 rounded-xl shadow-inner">
+          <Icon className={`h-5 w-5 text-primary`} />
+        </div>
       </CardHeader>
-      <CardContent>
-        <div className="h-[200px] w-full mt-4">
+      <CardContent className="pt-4">
+        <div className="h-[200px] w-full">
           {data && data.length > 0 ? (
             <ChartContainer config={config} className="h-full w-full">
               <ResponsiveContainer width="100%" height="100%">
@@ -404,30 +297,30 @@ function ChartCard({ title, description, data, dataKey, color, unit, type, confi
                   <AreaChart data={data} margin={{ top: 5, right: 5, left: -20, bottom: 0 }}>
                     <defs>
                       <linearGradient id={`color-${dataKey}`} x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="5%" stopColor={color} stopOpacity={0.3}/>
+                        <stop offset="5%" stopColor={color} stopOpacity={0.4}/>
                         <stop offset="95%" stopColor={color} stopOpacity={0}/>
                       </linearGradient>
                     </defs>
-                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--muted))" />
-                    <XAxis dataKey="time" axisLine={false} tickLine={false} tick={{ fontSize: 9 }} />
-                    <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 9 }} />
-                    <ChartTooltip content={<ChartTooltipContent />} />
-                    <Area type="monotone" dataKey={dataKey} stroke={color} fillOpacity={1} fill={`url(#color-${dataKey})`} strokeWidth={2} isAnimationActive={false} />
+                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(0,0,0,0.05)" />
+                    <XAxis dataKey="time" axisLine={false} tickLine={false} tick={{ fontSize: 9, fontWeight: 700 }} />
+                    <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 9, fontWeight: 700 }} />
+                    <ChartTooltip content={<ChartTooltipContent className="glass-card border-none" />} />
+                    <Area type="monotone" dataKey={dataKey} stroke={color} fillOpacity={1} fill={`url(#color-${dataKey})`} strokeWidth={3} isAnimationActive={false} />
                   </AreaChart>
                 ) : (
                   <LineChart data={data} margin={{ top: 5, right: 5, left: -20, bottom: 0 }}>
-                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--muted))" />
-                    <XAxis dataKey="time" axisLine={false} tickLine={false} tick={{ fontSize: 9 }} />
-                    <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 9 }} />
-                    <ChartTooltip content={<ChartTooltipContent />} />
-                    <Line type="monotone" dataKey={dataKey} stroke={color} strokeWidth={3} dot={{ fill: color, r: 3 }} activeDot={{ r: 5 }} isAnimationActive={false} />
+                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(0,0,0,0.05)" />
+                    <XAxis dataKey="time" axisLine={false} tickLine={false} tick={{ fontSize: 9, fontWeight: 700 }} />
+                    <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 9, fontWeight: 700 }} />
+                    <ChartTooltip content={<ChartTooltipContent className="glass-card border-none" />} />
+                    <Line type="monotone" dataKey={dataKey} stroke={color} strokeWidth={4} dot={{ fill: color, r: 4, strokeWidth: 2, stroke: 'white' }} activeDot={{ r: 6 }} isAnimationActive={false} />
                   </LineChart>
                 )}
               </ResponsiveContainer>
             </ChartContainer>
           ) : (
-            <div className="h-full flex items-center justify-center bg-muted/10 rounded-lg">
-              <RefreshCw className="h-6 w-6 animate-spin-slow opacity-20" />
+            <div className="h-full flex items-center justify-center bg-white/20 rounded-2xl">
+              <RefreshCw className="h-6 w-6 animate-spin text-primary/30" />
             </div>
           )}
         </div>

@@ -1,4 +1,3 @@
-
 "use client";
 
 import { SidebarProvider, SidebarInset, SidebarTrigger } from "@/components/ui/sidebar";
@@ -6,9 +5,9 @@ import { SidebarNav } from "@/components/layout/sidebar-nav";
 import { SensorStats } from "@/components/dashboard/sensor-stats";
 import { AIRiskAlert } from "@/components/dashboard/ai-risk-alert";
 import { CommunityAlerts } from "@/components/dashboard/community-alerts";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Activity, Bell, Info, TrendingUp, AlertTriangle, CheckCircle2, Droplets, Thermometer, User, Radio, Zap, X } from "lucide-react";
-import Image from "next/image";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Activity, Bell, Info, TrendingUp, Radio, Zap, X, User } from "lucide-react";
+import Link from "next/link";
 import { 
   AreaChart, 
   Area, 
@@ -23,8 +22,7 @@ import {
   SheetContent, 
   SheetHeader, 
   SheetTitle, 
-  SheetTrigger,
-  SheetDescription 
+  SheetTrigger 
 } from "@/components/ui/sheet";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useState, useEffect, useRef, useMemo } from "react";
@@ -34,7 +32,6 @@ import { useUser } from "@/firebase/auth/use-user";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
-import Link from "next/link";
 import { useTranslation } from "@/hooks/use-translation";
 
 const firebaseConfig = {
@@ -49,7 +46,7 @@ const chartConfig = {
 };
 
 export default function Home() {
-  const { user, loading: userLoading } = useUser();
+  const { user } = useUser();
   const { t } = useTranslation();
   const [sensorValues, setSensorValues] = useState({
     humidity_soil: 0, temp: 0, uv: 0, humidity_air: 0, et: 0, dew_point: 0, status_text: "Conectando..."
@@ -58,18 +55,14 @@ export default function Home() {
   const [lastUpdate, setLastUpdate] = useState<Date | null>(null);
   const [proximityAlert, setProximityAlert] = useState<any | null>(null);
   const [showRadar, setShowRadar] = useState(true);
-  
-  const notifiedEvents = useRef<Set<string>>(new Set());
 
   useEffect(() => {
     const checkProximity = () => {
       const savedAlerts = localStorage.getItem("community_alerts");
       if (savedAlerts) {
         const alerts = JSON.parse(savedAlerts);
-        const nearby = alerts.find((a: any) => a.severity === "Alta");
-        if (nearby) {
-          setProximityAlert(nearby);
-        }
+        const nearby = alerts.find((a: any) => a.severity === "Alta" || a.severity === "Dä");
+        if (nearby) setProximityAlert(nearby);
       }
     };
     
@@ -78,23 +71,21 @@ export default function Home() {
     return () => clearInterval(interval);
   }, []);
 
-  const performanceData = useMemo(() => {
-    return [
-      { month: "Ene", health: 85 },
-      { month: "Feb", health: 88 },
-      { month: "Mar", health: 92 },
-      { month: "Abr", health: 80 },
-      { month: "May", health: 85 },
-      { month: "Jun", health: 90 },
-    ];
-  }, []);
+  const performanceData = useMemo(() => [
+    { month: "Ene", health: 85 },
+    { month: "Feb", health: 88 },
+    { month: "Mar", health: 92 },
+    { month: "Abr", health: 80 },
+    { month: "May", health: 85 },
+    { month: "Jun", health: 90 },
+  ], []);
 
   useEffect(() => {
     const sensorsRef = ref(db, 'sensores');
     const unsubscribe = onValue(sensorsRef, (snapshot) => {
       const data = snapshot.val();
       if (data) {
-        const newValues = {
+        setSensorValues({
           humidity_soil: Number(data.humedad_suelo ?? 0),
           temp: Number(data.temperatura ?? 0),
           uv: Number(data.uv ?? 0),
@@ -102,8 +93,7 @@ export default function Home() {
           et: Number(data.et ?? 0),
           dew_point: Number(data.punto_rocio ?? 0),
           status_text: String(data.estado ?? "SISTEMA NORMAL")
-        };
-        setSensorValues(newValues);
+        });
         setIsOnline(true);
         setLastUpdate(new Date());
       }
@@ -114,21 +104,21 @@ export default function Home() {
   return (
     <SidebarProvider>
       <SidebarNav />
-      <SidebarInset>
-        <header className="flex h-16 shrink-0 items-center justify-between px-6 border-b bg-white/80 backdrop-blur-md sticky top-0 z-10">
-          <div className="flex items-center gap-2">
+      <SidebarInset className="bg-transparent">
+        <header className="flex h-16 shrink-0 items-center justify-between px-6 border-b bg-white/40 backdrop-blur-md sticky top-0 z-10 shadow-sm">
+          <div className="flex items-center gap-2 animate-in fade-in slide-in-from-left-4 duration-500">
             <SidebarTrigger />
-            <h1 className="text-xl font-bold">{t('dashboard')}</h1>
+            <h1 className="text-xl font-black tracking-tight text-primary">{t('dashboard')}</h1>
           </div>
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-4 animate-in fade-in slide-in-from-right-4 duration-500">
             <Sheet>
               <SheetTrigger asChild>
-                <button className="relative p-2 text-muted-foreground hover:text-primary transition-colors">
+                <button className="relative p-2 text-muted-foreground hover:text-primary transition-all hover:scale-110">
                   <Bell className="h-5 w-5" />
-                  <span className="absolute top-1.5 right-1.5 h-2 w-2 bg-destructive rounded-full"></span>
+                  <span className="absolute top-1.5 right-1.5 h-2 w-2 bg-destructive rounded-full border-2 border-white"></span>
                 </button>
               </SheetTrigger>
-              <SheetContent>
+              <SheetContent className="glass-card">
                 <SheetHeader className="pb-4 border-b">
                   <SheetTitle className="flex items-center gap-2">
                     <Bell className="h-5 w-5 text-primary" /> Notificaciones
@@ -137,8 +127,8 @@ export default function Home() {
                 <ScrollArea className="h-[calc(100vh-100px)] mt-4">
                   <div className="space-y-4">
                     {proximityAlert && (
-                      <div className="p-4 bg-destructive/10 border border-destructive/20 rounded-xl">
-                        <p className="text-xs font-bold text-destructive mb-1">{t('radar_active')}</p>
+                      <div className="p-4 bg-destructive/10 border border-destructive/20 rounded-2xl shadow-inner">
+                        <p className="text-[10px] font-black text-destructive uppercase tracking-widest mb-1">{t('radar_active')}</p>
                         <p className="text-sm font-bold">{proximityAlert.problem}</p>
                         <p className="text-[10px] text-muted-foreground">{proximityAlert.region} • {proximityAlert.distance}</p>
                       </div>
@@ -149,14 +139,14 @@ export default function Home() {
               </SheetContent>
             </Sheet>
 
-            <div className="flex items-center gap-2 border-l pl-4">
+            <div className="flex items-center gap-3 border-l pl-4">
               <div className="text-right hidden sm:block">
-                <p className="text-sm font-bold">{user?.displayName || t('farmer')}</p>
-                <p className="text-[10px] text-muted-foreground uppercase">Hidalgo, MX</p>
+                <p className="text-xs font-black uppercase text-primary tracking-tighter">{user?.displayName || t('farmer')}</p>
+                <p className="text-[9px] text-muted-foreground font-bold">HIDALGO, MÉXICO</p>
               </div>
-              <Avatar className="h-8 w-8">
+              <Avatar className="h-9 w-9 border-2 border-primary/20 shadow-md">
                 <AvatarImage src={user?.photoURL ?? undefined} />
-                <AvatarFallback><User className="h-4 w-4" /></AvatarFallback>
+                <AvatarFallback className="bg-primary/10 text-primary font-bold"><User className="h-5 w-5" /></AvatarFallback>
               </Avatar>
             </div>
           </div>
@@ -164,22 +154,18 @@ export default function Home() {
 
         <main className="flex-1 space-y-8 p-4 md:p-8 pt-6">
           {proximityAlert && showRadar && (
-            <Alert className="bg-destructive border-none text-white shadow-2xl animate-in fade-in slide-in-from-top-4 duration-500 relative">
-              <Radio className="h-5 w-5 text-white animate-pulse" />
-              <button 
-                onClick={() => setShowRadar(false)}
-                className="absolute top-4 right-4 text-white/70 hover:text-white transition-colors"
-              >
-                <X className="h-5 w-5" />
-              </button>
-              <AlertTitle className="font-black text-lg">⚠️ {t('radar_active')}</AlertTitle>
+            <Alert className="bg-destructive/90 backdrop-blur-xl border-none text-white shadow-[0_20px_50px_rgba(239,68,68,0.3)] animate-in zoom-in-95 duration-700 relative overflow-hidden">
+              <div className="absolute -top-10 -left-10 w-32 h-32 bg-white/10 rounded-full blur-3xl"></div>
+              <Radio className="h-6 w-6 text-white animate-pulse" />
+              <button onClick={() => setShowRadar(false)} className="absolute top-4 right-4 text-white/70 hover:text-white transition-all"><X className="h-5 w-5" /></button>
+              <AlertTitle className="font-black text-xl tracking-tighter">⚠️ {t('radar_active')}</AlertTitle>
               <AlertDescription className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mt-2 pr-8">
-                <p className="font-medium">
-                  Se ha reportado <span className="underline">{proximityAlert.problem}</span> en <span className="font-black">{proximityAlert.region}</span>. 
+                <p className="font-medium text-white/90">
+                  Se ha reportado <span className="font-black underline decoration-white/40">{proximityAlert.problem}</span> en <span className="font-black">{proximityAlert.region}</span>. 
                   ¡Tu campo está en el radio de riesgo!
                 </p>
                 <Link href="/diagnosis">
-                  <Button variant="secondary" size="sm" className="font-bold gap-2">
+                  <Button variant="secondary" size="sm" className="font-bold gap-2 shadow-xl hover:scale-105 transition-all">
                     <Zap className="h-4 w-4" /> {t('get_solution')}
                   </Button>
                 </Link>
@@ -187,61 +173,64 @@ export default function Home() {
             </Alert>
           )}
 
-          <section className="space-y-4">
-            <div className="flex items-center justify-between">
-              <h2 className="text-2xl font-bold tracking-tight">{t('iot_station')}</h2>
-              <p className="text-sm text-muted-foreground flex items-center gap-1">
-                <Activity className="h-4 w-4 text-primary animate-pulse" /> {t('live')}
-              </p>
+          <section className="space-y-4 animate-in fade-in slide-in-from-bottom-8 duration-700">
+            <div className="flex items-center justify-between px-2">
+              <h2 className="text-2xl font-black tracking-tighter text-foreground/80">{t('iot_station')}</h2>
+              <div className="flex items-center gap-2 bg-primary/10 px-3 py-1 rounded-full">
+                <Activity className="h-4 w-4 text-primary animate-pulse" />
+                <span className="text-[10px] font-black text-primary uppercase tracking-widest">{t('live')}</span>
+              </div>
             </div>
             <SensorStats sensorValues={sensorValues} isOnline={isOnline} lastUpdate={lastUpdate} />
           </section>
 
           <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-            <div className="lg:col-span-2 space-y-6">
+            <div className="lg:col-span-2 space-y-6 animate-in fade-in slide-in-from-bottom-12 duration-1000">
               <AIRiskAlert sensorValues={sensorValues} />
               
-              <Card className="border-none shadow-md">
+              <Card className="glass-card overflow-hidden">
                 <CardHeader>
-                  <CardTitle className="text-lg flex items-center gap-2">
-                    <TrendingUp className="h-5 w-5 text-primary" /> {t('health_history')}
+                  <CardTitle className="text-lg font-black flex items-center gap-2 text-primary">
+                    <TrendingUp className="h-5 w-5" /> {t('health_history')}
                   </CardTitle>
                 </CardHeader>
-                <CardContent className="h-[250px] w-full">
+                <CardContent className="h-[250px] w-full pt-4">
                   <ChartContainer config={chartConfig} className="h-full w-full">
+                    <ResponsiveContainer width="100%" height="100%">
                       <AreaChart data={performanceData}>
                         <defs>
                           <linearGradient id="colorHealth" x1="0" y1="0" x2="0" y2="1">
-                            <stop offset="5%" stopColor="hsl(var(--primary))" stopOpacity={0.3}/>
+                            <stop offset="5%" stopColor="hsl(var(--primary))" stopOpacity={0.4}/>
                             <stop offset="95%" stopColor="hsl(var(--primary))" stopOpacity={0}/>
                           </linearGradient>
                         </defs>
-                        <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                        <XAxis dataKey="month" axisLine={false} tickLine={false} />
-                        <YAxis axisLine={false} tickLine={false} domain={[0, 100]} />
-                        <ChartTooltip content={<ChartTooltipContent />} />
-                        <Area type="monotone" dataKey="health" stroke="hsl(var(--primary))" strokeWidth={3} fillOpacity={1} fill="url(#colorHealth)" />
+                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(0,0,0,0.05)" />
+                        <XAxis dataKey="month" axisLine={false} tickLine={false} tick={{fontSize: 10, fontWeight: 700}} />
+                        <YAxis axisLine={false} tickLine={false} domain={[0, 100]} tick={{fontSize: 10, fontWeight: 700}} />
+                        <ChartTooltip content={<ChartTooltipContent className="glass-card border-none" />} />
+                        <Area type="monotone" dataKey="health" stroke="hsl(var(--primary))" strokeWidth={4} fillOpacity={1} fill="url(#colorHealth)" />
                       </AreaChart>
+                    </ResponsiveContainer>
                   </ChartContainer>
                 </CardContent>
               </Card>
             </div>
 
-            <div className="space-y-6">
+            <div className="space-y-6 animate-in fade-in slide-in-from-right-12 duration-1000">
               <CommunityAlerts />
               
-              <Card className="bg-primary text-primary-foreground border-none overflow-hidden relative">
-                <div className="absolute top-0 right-0 p-4 opacity-10">
-                  <Info className="h-24 w-24" />
+              <Card className="bg-primary shadow-[0_20px_40px_rgba(34,197,94,0.3)] text-primary-foreground border-none overflow-hidden relative group">
+                <div className="absolute -bottom-6 -right-6 p-4 opacity-20 transition-transform group-hover:scale-110 duration-500">
+                  <Info className="h-32 w-32" />
                 </div>
                 <CardHeader>
-                  <CardTitle className="text-lg">{t('sensor_data')}</CardTitle>
+                  <CardTitle className="text-lg font-black tracking-tight">{t('sensor_data')}</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <p className="text-sm opacity-90 leading-relaxed">
-                    {t('evapotranspiration')} actual: {sensorValues.et.toFixed(2)} mm. 
+                  <p className="text-sm font-medium opacity-90 leading-relaxed relative z-10">
+                    {t('evapotranspiration')} actual: <span className="text-xl font-black">{sensorValues.et.toFixed(2)} mm</span>. 
                     Tus cultivos están perdiendo humedad a un ritmo {sensorValues.et > 4 ? 'alto' : 'normal'}. 
-                    Ajusta tu sistema de riego.
+                    Se sugiere ajustar el riego.
                   </p>
                 </CardContent>
               </Card>
