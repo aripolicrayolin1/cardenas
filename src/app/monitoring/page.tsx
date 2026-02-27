@@ -75,6 +75,7 @@ export default function MonitoringPage() {
   const { toast } = useToast();
   const [activeTab, setActiveTab] = useState("live");
   const [history, setHistory] = useState<SensorPoint[]>([]);
+  const [isMounted, setIsMounted] = useState(false);
   const [currentValues, setCurrentValues] = useState<Omit<SensorPoint, 'time'>>({
     temp: 20,
     humiditySoil: 50,
@@ -87,6 +88,7 @@ export default function MonitoringPage() {
   const lastTimeRef = useRef<string>("");
 
   useEffect(() => {
+    setIsMounted(true);
     const sensorsRef = ref(db, 'sensores');
     const unsubscribe = onValue(sensorsRef, (snapshot) => {
       const data = snapshot.val();
@@ -139,6 +141,7 @@ export default function MonitoringPage() {
   }, []);
 
   const hourlyData = useMemo(() => {
+    if (!isMounted) return [];
     const data = [];
     const currentHour = new Date().getHours();
     
@@ -155,9 +158,10 @@ export default function MonitoringPage() {
       });
     }
     return data;
-  }, [currentValues]);
+  }, [currentValues, isMounted]);
 
   const weeklyData = useMemo(() => {
+    if (!isMounted) return [];
     const days = ["Lun", "Mar", "Mie", "Jue", "Vie", "Sab", "Dom"];
     const todayIndex = (new Date().getDay() + 6) % 7;
     return days.map((d, i) => ({
@@ -168,7 +172,7 @@ export default function MonitoringPage() {
       et: i <= todayIndex ? Math.max(0, currentValues.et + (Math.random() * 0.6 - 0.3)) : 0,
       dewPoint: i <= todayIndex ? currentValues.dewPoint + (Math.random() * 3 - 1.5) : 0
     }));
-  }, [currentValues]);
+  }, [currentValues, isMounted]);
 
   const downloadCsv = () => {
     let dataToExport = history;
@@ -282,7 +286,9 @@ export default function MonitoringPage() {
               </div>
               <div className="text-right">
                 <p className="text-lg font-bold">Reporte de Monitoreo Agrícola</p>
-                <p className="text-sm text-muted-foreground">Generado: {new Date().toLocaleDateString()} {new Date().toLocaleTimeString()}</p>
+                {isMounted && (
+                  <p className="text-sm text-muted-foreground">Generado: {new Date().toLocaleDateString()} {new Date().toLocaleTimeString()}</p>
+                )}
                 <Badge className="mt-2 uppercase">{activeTab === 'live' ? 'En Vivo' : activeTab === 'today' ? 'Hoy' : 'Histórico Semanal'}</Badge>
               </div>
             </div>
