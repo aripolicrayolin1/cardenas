@@ -31,12 +31,18 @@ import { signOut } from "firebase/auth";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useTranslation } from "@/hooks/use-translation";
 import { Button } from "@/components/ui/button";
+import { useState, useEffect } from "react";
 
 export function SidebarNav() {
   const pathname = usePathname();
   const router = useRouter();
   const { user, loading } = useUser();
   const { t, lang, toggleLanguage } = useTranslation();
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const navItems = [
     { title: t('dashboard'), icon: LayoutDashboard, href: "/" },
@@ -52,13 +58,15 @@ export function SidebarNav() {
   };
 
   return (
-    <Sidebar variant="inset" collapsible="icon" className="glass-nav border-none">
+    <Sidebar variant="inset" collapsible="icon" className="glass-nav border-none" suppressHydrationWarning>
       <SidebarHeader className="h-20 flex items-center justify-center px-6">
         <div className="flex items-center gap-2 group-data-[collapsible=icon]:hidden">
           <div className="bg-primary rounded-2xl p-2 shadow-lg shadow-primary/20 animate-float">
             <Leaf className="h-7 w-7 text-white" />
           </div>
-          <span className="font-black text-2xl tracking-tighter text-primary">Agro<span className="text-foreground">Tech</span></span>
+          <span className="font-black text-2xl tracking-tighter text-primary" suppressHydrationWarning>
+            Agro<span className="text-foreground">Tech</span>
+          </span>
         </div>
         <div className="hidden group-data-[collapsible=icon]:flex bg-primary rounded-xl p-1.5 shadow-lg">
           <Leaf className="h-5 w-5 text-white" />
@@ -66,7 +74,7 @@ export function SidebarNav() {
       </SidebarHeader>
       
       <SidebarContent className="py-6">
-        {user && !loading && (
+        {mounted && user && !loading && (
           <div className="px-4 py-2 group-data-[collapsible=icon]:hidden mb-4">
             <div className="flex items-center gap-3 p-3 bg-white/50 backdrop-blur-sm rounded-2xl border border-white/50 shadow-sm transition-all hover:shadow-md">
               <Avatar className="h-10 w-10 border-2 border-primary/20 shadow-inner">
@@ -76,7 +84,9 @@ export function SidebarNav() {
                 </AvatarFallback>
               </Avatar>
               <div className="flex flex-col min-w-0">
-                <p className="text-xs font-black truncate text-primary uppercase tracking-tighter">{user.displayName || t('farmer')}</p>
+                <p className="text-xs font-black truncate text-primary uppercase tracking-tighter" suppressHydrationWarning>
+                  {user.displayName || t('farmer')}
+                </p>
                 <p className="text-[10px] text-muted-foreground truncate font-medium">{user.email}</p>
               </div>
             </div>
@@ -100,7 +110,7 @@ export function SidebarNav() {
                   >
                     <Link href={item.href} className="flex items-center gap-3 px-4">
                       <item.icon className={`h-5 w-5 ${pathname === item.href ? 'text-white' : 'text-primary'}`} />
-                      <span className="font-bold tracking-tight">{item.title}</span>
+                      <span className="font-bold tracking-tight" suppressHydrationWarning>{item.title}</span>
                     </Link>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
@@ -117,7 +127,9 @@ export function SidebarNav() {
             onClick={toggleLanguage}
           >
             <Languages className="h-4 w-4" />
-            {lang === 'es' ? 'CAMBIAR A HÑÄHÑU' : 'MPENGI JA ESPAÑOL'}
+            <span suppressHydrationWarning>
+              {lang === 'es' ? 'CAMBIAR A HÑÄHÑU' : 'MPENGI JA ESPAÑOL'}
+            </span>
           </Button>
         </div>
       </SidebarContent>
@@ -129,7 +141,7 @@ export function SidebarNav() {
               <SidebarMenuButton asChild tooltip={t('login')} className="rounded-xl h-11 hover:bg-primary/10 hover:text-primary">
                 <Link href="/login" className="flex items-center gap-3 px-4">
                   <LogIn className="h-5 w-5 text-primary" />
-                  <span className="font-bold">{t('login')}</span>
+                  <span className="font-bold" suppressHydrationWarning>{t('login')}</span>
                 </Link>
               </SidebarMenuButton>
             </SidebarMenuItem>
@@ -139,7 +151,7 @@ export function SidebarNav() {
                 <SidebarMenuButton asChild tooltip={t('settings')} className="rounded-xl h-11 hover:bg-primary/10 hover:text-primary">
                   <Link href="/settings" className="flex items-center gap-3 px-4">
                     <Settings className="h-5 w-5 text-primary" />
-                    <span className="font-bold">{t('settings')}</span>
+                    <span className="font-bold" suppressHydrationWarning>{t('settings')}</span>
                   </Link>
                 </SidebarMenuButton>
               </SidebarMenuItem>
@@ -147,7 +159,7 @@ export function SidebarNav() {
                 <SidebarMenuButton tooltip={t('logout')} onClick={handleSignOut} className="rounded-xl h-11 hover:bg-destructive/10 hover:text-destructive text-muted-foreground">
                   <div className="flex items-center gap-3 px-4 w-full">
                     <LogOut className="h-5 w-5" />
-                    <span className="font-bold">{t('logout')}</span>
+                    <span className="font-bold" suppressHydrationWarning>{t('logout')}</span>
                   </div>
                 </SidebarMenuButton>
               </SidebarMenuItem>

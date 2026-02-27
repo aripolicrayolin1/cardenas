@@ -77,6 +77,14 @@ export function SensorStats({ sensorValues, isOnline, lastUpdate }: SensorStatsP
     },
   ];
 
+  if (!mounted) {
+    return (
+      <div className="space-y-4 min-h-[200px] flex items-center justify-center">
+        <RefreshCw className="h-8 w-8 animate-spin text-primary/30" />
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-4">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 px-1">
@@ -85,33 +93,36 @@ export function SensorStats({ sensorValues, isOnline, lastUpdate }: SensorStatsP
             {isOnline ? (
               <>
                 <Wifi className="h-3.5 w-3.5 text-white animate-pulse" />
-                {t('online').toUpperCase()}
+                <span suppressHydrationWarning>{t('online').toUpperCase()}</span>
               </>
             ) : (
               <>
                 <WifiOff className="h-3.5 w-3.5" />
-                {t('offline').toUpperCase()}
+                <span suppressHydrationWarning>{t('offline').toUpperCase()}</span>
               </>
             )}
           </Badge>
           <Badge variant="outline" className="gap-1.5 py-1.5 px-4 rounded-full bg-white/40 backdrop-blur-sm border-primary/20 font-black text-[10px] tracking-widest text-primary shadow-sm">
             <Zap className={`h-3.5 w-3.5 ${isOnline ? 'text-primary' : 'text-muted-foreground'}`} />
-            {t('status').toUpperCase()}: {sensorValues.status_text.toUpperCase()}
+            <span suppressHydrationWarning>
+              {t('status').toUpperCase()}: {sensorValues.status_text.toUpperCase()}
+            </span>
           </Badge>
         </div>
-        {mounted && (
-          <div className="flex items-center gap-2 bg-white/40 backdrop-blur-sm px-3 py-1 rounded-full text-[10px] font-bold text-muted-foreground shadow-sm">
-            <RefreshCw className={`h-3 w-3 text-primary ${isOnline ? 'animate-spin-slow' : ''}`} />
+        
+        <div className="flex items-center gap-2 bg-white/40 backdrop-blur-sm px-3 py-1 rounded-full text-[10px] font-bold text-muted-foreground shadow-sm">
+          <RefreshCw className={`h-3 w-3 text-primary ${isOnline ? 'animate-spin-slow' : ''}`} />
+          <span suppressHydrationWarning>
             {t('sync').toUpperCase()}: {lastUpdate ? lastUpdate.toLocaleTimeString() : "--:--:--"}
-          </div>
-        )}
+          </span>
+        </div>
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
         {sensors.map((sensor) => (
           <Card key={sensor.label} className="glass-card overflow-hidden transition-all duration-300 hover:-translate-y-1 hover:shadow-xl group">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-[10px] font-black text-muted-foreground uppercase tracking-widest group-hover:text-primary transition-colors">
+              <CardTitle className="text-[10px] font-black text-muted-foreground uppercase tracking-widest group-hover:text-primary transition-colors" suppressHydrationWarning>
                 {sensor.label}
               </CardTitle>
               <div className={`p-2 rounded-xl bg-white/50 shadow-inner ${sensor.color} transition-all group-hover:scale-110`}>
@@ -126,7 +137,7 @@ export function SensorStats({ sensorValues, isOnline, lastUpdate }: SensorStatsP
                 </span>
               </div>
               {sensor.isAnalog && (
-                 <p className="text-[9px] text-blue-500 font-bold mt-1 uppercase tracking-tighter">CRUDO: {sensorValues.humidity_soil}</p>
+                 <p className="text-[9px] text-blue-500 font-bold mt-1 uppercase tracking-tighter" suppressHydrationWarning>CRUDO: {sensorValues.humidity_soil}</p>
               )}
               <div className="mt-4 relative">
                 <Progress 
