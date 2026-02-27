@@ -16,7 +16,8 @@ import {
   Leaf, 
   Clock,
   ShieldCheck,
-  Zap
+  Zap,
+  FileText
 } from "lucide-react";
 import { useState } from "react";
 import { diagnoseCropDisease, type CropDiagnosisOutput } from "@/ai/flows/crop-disease-photo-diagnosis-flow";
@@ -45,12 +46,19 @@ export default function DiagnosisPage() {
   };
 
   const startDiagnosis = async () => {
-    if (!selectedImage) return;
+    if (!selectedImage && !description.trim()) {
+      toast({
+        title: "Faltan datos",
+        description: "Por favor sube una foto o escribe una descripción de lo que ves.",
+        variant: "destructive"
+      });
+      return;
+    }
     setLoading(true);
 
     try {
       const result = await diagnoseCropDisease({
-        photoDataUri: selectedImage,
+        photoDataUri: selectedImage || undefined,
         description: description
       });
       setDiagnosis(result);
@@ -58,8 +66,7 @@ export default function DiagnosisPage() {
       if (result.diagnosis.isFallback) {
         toast({
           title: "Diagnóstico Local Activado",
-          description: "La IA está saturada, usamos el motor de respaldo.",
-          variant: "default"
+          description: "Usando motor de respaldo basado en tu descripción.",
         });
       } else {
         toast({
@@ -105,7 +112,7 @@ export default function DiagnosisPage() {
                     Identificador de Problemas
                   </CardTitle>
                   <CardDescription>
-                    Sube una foto y describe qué ves para obtener una solución.
+                    Sube una foto **O** describe los síntomas para obtener una solución inmediata.
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-6 pt-6">
@@ -120,36 +127,36 @@ export default function DiagnosisPage() {
                       <div className="bg-primary/10 p-6 rounded-full mb-4 group-hover:scale-110 transition-transform">
                         <Camera className="h-12 w-12 text-primary" />
                       </div>
-                      <p className="font-bold text-lg text-primary">Haz clic para subir o tomar foto</p>
-                      <p className="text-sm text-muted-foreground mt-2">Formatos aceptados: JPG, PNG</p>
+                      <p className="font-bold text-lg text-primary text-center">Toma una foto del cultivo (Opcional)</p>
+                      <p className="text-sm text-muted-foreground mt-2 text-center">Puedes saltar este paso y solo escribir abajo</p>
                     </div>
                   ) : (
                     <div className="relative aspect-video rounded-xl overflow-hidden shadow-2xl bg-black group">
                        <Image src={selectedImage} alt="Preview" fill className="object-contain" />
-                       <Button variant="destructive" size="icon" className="absolute top-4 right-4 h-10 w-10 rounded-full opacity-0 group-hover:opacity-100 transition-opacity" onClick={reset}>
+                       <Button variant="destructive" size="icon" className="absolute top-4 right-4 h-10 w-10 rounded-full opacity-0 group-hover:opacity-100 transition-opacity" onClick={() => setSelectedImage(null)}>
                          <X className="h-5 w-5" />
                        </Button>
                     </div>
                   )}
 
                   <div className="space-y-3">
-                    <Label htmlFor="symptoms" className="text-base font-bold">Describe lo que ves (Opcional)</Label>
+                    <Label htmlFor="symptoms" className="text-base font-bold">¿Qué problemas observas?</Label>
                     <Input 
                       id="symptoms" 
                       className="h-12 text-lg border-primary/20 focus:ring-primary"
-                      placeholder="Ej: manchas amarillas, bichitos blancos, hojas comidas..." 
+                      placeholder="Ej: hojas comidas por gusanos, manchas color café, polvo blanco..." 
                       value={description}
                       onChange={(e) => setDescription(e.target.value)}
                     />
-                    <p className="text-xs text-muted-foreground italic">
-                      * Una descripción detallada ayuda si la conexión con Google es inestable.
+                    <p className="text-[10px] text-muted-foreground italic">
+                      * El sistema local usará estas palabras clave si la IA está saturada.
                     </p>
                   </div>
                 </CardContent>
                 <CardFooter className="bg-muted/5 border-t p-6">
                   <Button 
                     className="w-full h-14 text-xl font-black shadow-xl rounded-xl"
-                    disabled={!selectedImage || loading}
+                    disabled={(!selectedImage && !description.trim()) || loading}
                     onClick={startDiagnosis}
                   >
                     {loading ? (
@@ -169,11 +176,18 @@ export default function DiagnosisPage() {
             ) : (
               <div className="grid gap-6 lg:grid-cols-3">
                 <Card className="lg:col-span-1 border-none shadow-lg overflow-hidden h-fit">
-                   <div className="relative aspect-square">
-                      <Image src={selectedImage!} alt="Preview" fill className="object-cover" />
+                   <div className="relative aspect-square bg-muted flex items-center justify-center">
+                      {selectedImage ? (
+                        <Image src={selectedImage} alt="Preview" fill className="object-cover" />
+                      ) : (
+                        <div className="flex flex-col items-center text-muted-foreground p-6 text-center">
+                          <FileText className="h-12 w-12 mb-2 opacity-20" />
+                          <p className="text-xs font-bold">Diagnóstico por Texto</p>
+                        </div>
+                      )}
                       {diagnosis.diagnosis.isFallback && (
-                        <div className="absolute top-0 left-0 w-full p-2 bg-orange-600/90 text-white text-[10px] text-center font-bold">
-                          MODO RESPALDO ACTIVADO
+                        <div className="absolute top-0 left-0 w-full p-2 bg-orange-600/90 text-white text-[10px] text-center font-bold uppercase tracking-tighter">
+                          MODO RESPALDO ACTIVO
                         </div>
                       )}
                    </div>
@@ -187,7 +201,7 @@ export default function DiagnosisPage() {
                 <div className="lg:col-span-2 space-y-6">
                   <Card className="border-none shadow-xl animate-in fade-in slide-in-from-bottom-4 duration-500">
                     <CardHeader className="flex flex-row items-start justify-between border-b pb-4">
-                      <div>
+                      <div className="max-w-[70%]">
                         <div className="flex items-center gap-2 mb-1">
                           {diagnosis.diagnosis.isFallback ? (
                             <ShieldCheck className="h-5 w-5 text-orange-500" />
@@ -195,14 +209,14 @@ export default function DiagnosisPage() {
                             <CheckCircle2 className="h-5 w-5 text-primary" />
                           )}
                           <span className="text-xs font-bold uppercase tracking-widest text-muted-foreground">
-                            {diagnosis.diagnosis.isFallback ? "Diagnóstico de Respaldo" : "Diagnóstico IA Real"}
+                            {diagnosis.diagnosis.isFallback ? "Respaldo Local" : "Inteligencia Artificial"}
                           </span>
                         </div>
-                        <CardTitle className="text-3xl font-black text-primary">
+                        <CardTitle className="text-3xl font-black text-primary leading-tight">
                           {diagnosis.diagnosis.identifiedProblem}
                         </CardTitle>
                       </div>
-                      <Badge className="px-3 py-1 text-sm">{diagnosis.diagnosis.confidence} Confianza</Badge>
+                      <Badge className="px-3 py-1 text-sm bg-accent text-accent-foreground">{diagnosis.diagnosis.confidence} Confianza</Badge>
                     </CardHeader>
                     <CardContent className="space-y-8 pt-6">
                       <div className="grid grid-cols-2 gap-4">
@@ -219,12 +233,12 @@ export default function DiagnosisPage() {
                       <Tabs defaultValue="actions" className="w-full">
                         <TabsList className="grid w-full grid-cols-3 h-12">
                           <TabsTrigger value="actions" className="text-sm font-bold">Acciones</TabsTrigger>
-                          <TabsTrigger value="commercial" className="text-sm font-bold">Tratamiento</TabsTrigger>
+                          <TabsTrigger value="commercial" className="text-sm font-bold">Comercial</TabsTrigger>
                           <TabsTrigger value="homemade" className="text-sm font-bold">Orgánico</TabsTrigger>
                         </TabsList>
                         <TabsContent value="actions" className="mt-6 space-y-4">
-                          <h4 className="font-black flex items-center gap-2 text-lg">
-                            <Leaf className="h-5 w-5 text-primary" /> Pasos a seguir:
+                          <h4 className="font-black flex items-center gap-2 text-lg text-primary">
+                            <Leaf className="h-5 w-5" /> Pasos Recomendados:
                           </h4>
                           <ul className="grid gap-3">
                             {diagnosis.diagnosis.recommendedActions.map((action, idx) => (
@@ -241,7 +255,7 @@ export default function DiagnosisPage() {
                               <h5 className="font-black text-xl text-primary mb-1">{product.name}</h5>
                               <p className="text-base text-muted-foreground mb-3">{product.description}</p>
                               <div className="inline-flex items-center px-3 py-1 bg-primary/10 text-primary rounded-full text-xs font-bold">
-                                Disponible en: {product.localStores}
+                                Localizar en: {product.localStores}
                               </div>
                             </div>
                           ))}
@@ -250,13 +264,19 @@ export default function DiagnosisPage() {
                           {diagnosis.diagnosis.homeMadeRemedies.map((remedy, idx) => (
                             <div key={idx} className="p-6 bg-green-50 rounded-2xl border-2 border-green-200 shadow-sm relative overflow-hidden">
                               <div className="absolute top-0 right-0 p-4 opacity-10">
-                                <Leaf className="h-12 w-12" />
+                                <Leaf className="h-12 w-12 text-green-800" />
                               </div>
                               <h5 className="font-black text-xl text-green-800 mb-2">{remedy.name}</h5>
-                              <p className="text-sm font-bold text-green-700 mb-1">Ingredientes:</p>
-                              <p className="text-sm mb-4">{remedy.ingredients.join(", ")}</p>
-                              <p className="text-sm font-bold text-green-700 mb-1">Instrucciones:</p>
-                              <p className="text-sm italic">{remedy.instructions}</p>
+                              <div className="space-y-3">
+                                <div>
+                                  <p className="text-[10px] font-bold text-green-700 uppercase mb-1">Ingredientes:</p>
+                                  <p className="text-sm font-medium">{remedy.ingredients.join(", ")}</p>
+                                </div>
+                                <div>
+                                  <p className="text-[10px] font-bold text-green-700 uppercase mb-1">Instrucciones:</p>
+                                  <p className="text-sm italic text-foreground/80">{remedy.instructions}</p>
+                                </div>
+                              </div>
                             </div>
                           ))}
                         </TabsContent>
