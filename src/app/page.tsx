@@ -35,6 +35,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
+import { useTranslation } from "@/hooks/use-translation";
 
 const firebaseConfig = {
   databaseURL: "https://studio-3066950614-ac5b0-default-rtdb.firebaseio.com",
@@ -47,18 +48,9 @@ const chartConfig = {
   health: { label: "Salud del Cultivo (%)", color: "hsl(var(--primary))" },
 };
 
-interface Notification {
-  id: string | number;
-  title: string;
-  description: string;
-  time: string;
-  type: 'alert' | 'info' | 'message' | 'success';
-  icon: any;
-  color: string;
-}
-
 export default function Home() {
   const { user, loading: userLoading } = useUser();
+  const { t } = useTranslation();
   const [sensorValues, setSensorValues] = useState({
     humidity_soil: 0, temp: 0, uv: 0, humidity_air: 0, et: 0, dew_point: 0, status_text: "Conectando..."
   });
@@ -126,7 +118,7 @@ export default function Home() {
         <header className="flex h-16 shrink-0 items-center justify-between px-6 border-b bg-white/80 backdrop-blur-md sticky top-0 z-10">
           <div className="flex items-center gap-2">
             <SidebarTrigger />
-            <h1 className="text-xl font-bold">Panel de Control</h1>
+            <h1 className="text-xl font-bold">{t('dashboard')}</h1>
           </div>
           <div className="flex items-center gap-4">
             <Sheet>
@@ -146,7 +138,7 @@ export default function Home() {
                   <div className="space-y-4">
                     {proximityAlert && (
                       <div className="p-4 bg-destructive/10 border border-destructive/20 rounded-xl">
-                        <p className="text-xs font-bold text-destructive mb-1">RADAR ACTIVO</p>
+                        <p className="text-xs font-bold text-destructive mb-1">{t('radar_active')}</p>
                         <p className="text-sm font-bold">{proximityAlert.problem}</p>
                         <p className="text-[10px] text-muted-foreground">{proximityAlert.region} • {proximityAlert.distance}</p>
                       </div>
@@ -159,7 +151,7 @@ export default function Home() {
 
             <div className="flex items-center gap-2 border-l pl-4">
               <div className="text-right hidden sm:block">
-                <p className="text-sm font-bold">{user?.displayName || "Agricultor"}</p>
+                <p className="text-sm font-bold">{user?.displayName || t('farmer')}</p>
                 <p className="text-[10px] text-muted-foreground uppercase">Hidalgo, MX</p>
               </div>
               <Avatar className="h-8 w-8">
@@ -180,7 +172,7 @@ export default function Home() {
               >
                 <X className="h-5 w-5" />
               </button>
-              <AlertTitle className="font-black text-lg">⚠️ RADAR DE PLAGAS: AMENAZA CERCANA</AlertTitle>
+              <AlertTitle className="font-black text-lg">⚠️ {t('radar_active')}</AlertTitle>
               <AlertDescription className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mt-2 pr-8">
                 <p className="font-medium">
                   Se ha reportado <span className="underline">{proximityAlert.problem}</span> en <span className="font-black">{proximityAlert.region}</span>. 
@@ -197,7 +189,7 @@ export default function Home() {
 
           <section className="space-y-4">
             <div className="flex items-center justify-between">
-              <h2 className="text-2xl font-bold tracking-tight">Estación IoT</h2>
+              <h2 className="text-2xl font-bold tracking-tight">{t('iot_station')}</h2>
               <p className="text-sm text-muted-foreground flex items-center gap-1">
                 <Activity className="h-4 w-4 text-primary animate-pulse" /> Live
               </p>

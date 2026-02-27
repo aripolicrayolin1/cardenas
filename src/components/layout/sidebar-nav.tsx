@@ -10,7 +10,8 @@ import {
   LogOut,
   Leaf,
   LogIn,
-  User
+  User,
+  Languages
 } from "lucide-react";
 import {
   Sidebar,
@@ -29,19 +30,22 @@ import { useUser } from "@/firebase/auth/use-user";
 import { auth } from "@/firebase/config";
 import { signOut } from "firebase/auth";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-
-const navItems = [
-  { title: "Dashboard", icon: LayoutDashboard, href: "/" },
-  { title: "Monitoreo", icon: Activity, href: "/monitoring" },
-  { title: "Diagnóstico IA", icon: Camera, href: "/diagnosis" },
-  { title: "Comunidad", icon: Users, href: "/community" },
-  { title: "Fincas", icon: Leaf, href: "/farms" },
-];
+import { useTranslation } from "@/hooks/use-translation";
+import { Button } from "@/components/ui/button";
 
 export function SidebarNav() {
   const pathname = usePathname();
   const router = useRouter();
   const { user, loading } = useUser();
+  const { t, lang, toggleLanguage } = useTranslation();
+
+  const navItems = [
+    { title: t('dashboard'), icon: LayoutDashboard, href: "/" },
+    { title: t('monitoring'), icon: Activity, href: "/monitoring" },
+    { title: t('diagnosis'), icon: Camera, href: "/diagnosis" },
+    { title: t('community'), icon: Users, href: "/community" },
+    { title: t('farms'), icon: Leaf, href: "/farms" },
+  ];
 
   const handleSignOut = async () => {
     await signOut(auth);
@@ -72,7 +76,7 @@ export function SidebarNav() {
                 </AvatarFallback>
               </Avatar>
               <div className="flex flex-col min-w-0">
-                <p className="text-xs font-bold truncate">{user.displayName || "Agricultor"}</p>
+                <p className="text-xs font-bold truncate">{user.displayName || t('farmer')}</p>
                 <p className="text-[10px] text-muted-foreground truncate">{user.email}</p>
               </div>
             </div>
@@ -98,6 +102,18 @@ export function SidebarNav() {
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
+
+        <div className="px-4 mt-4 group-data-[collapsible=icon]:hidden">
+          <Button 
+            variant="outline" 
+            size="sm" 
+            className="w-full gap-2 border-primary/20 text-[10px] h-8"
+            onClick={toggleLanguage}
+          >
+            <Languages className="h-3.5 w-3.5" />
+            {lang === 'es' ? 'Cambiar a Hñähñu' : 'Mpengi ja Español'}
+          </Button>
+        </div>
       </SidebarContent>
       <SidebarFooter className="border-t p-4">
         <SidebarMenu>
@@ -113,15 +129,15 @@ export function SidebarNav() {
           ) : (
             <>
               <SidebarMenuItem>
-                <SidebarMenuButton asChild tooltip="Ajustes">
+                <SidebarMenuButton asChild tooltip={t('settings')}>
                   <Link href="/settings">
                     <Settings className="h-5 w-5" />
-                    <span>Configuración</span>
+                    <span>{t('settings')}</span>
                   </Link>
                 </SidebarMenuButton>
               </SidebarMenuItem>
               <SidebarMenuItem>
-                <SidebarMenuButton tooltip="Cerrar Sesión" onClick={handleSignOut}>
+                <SidebarMenuButton tooltip="Salir" onClick={handleSignOut}>
                   <LogOut className="h-5 w-5" />
                   <span>Salir</span>
                 </SidebarMenuButton>
