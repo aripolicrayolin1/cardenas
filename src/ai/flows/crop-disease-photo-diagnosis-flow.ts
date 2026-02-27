@@ -1,6 +1,6 @@
 'use server';
 /**
- * @fileOverview Diagnóstico de enfermedades de cultivos con rotación de llaves API.
+ * @fileOverview Diagnóstico de enfermedades de cultivos con rotación de llaves y delays.
  */
 
 import {getAIInstance} from '@/ai/genkit';
@@ -37,16 +37,17 @@ const CropDiagnosisOutputSchema = z.object({
 });
 export type CropDiagnosisOutput = z.infer<typeof CropDiagnosisOutputSchema>;
 
+const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+
 export async function diagnoseCropDisease(input: CropDiagnosisInput): Promise<CropDiagnosisOutput> {
-  const maxRetries = 3;
   let lastError = null;
 
-  for (let i = 0; i < maxRetries; i++) {
+  for (let i = 0; i < 3; i++) {
     try {
       const ai = getAIInstance(i);
       
       const prompt = ai.definePrompt({
-        name: `cropDiagnosisPrompt_v2_${i}`,
+        name: `cropDiagnosisPrompt_v3_${i}`,
         input: {schema: CropDiagnosisInputSchema},
         output: {schema: CropDiagnosisOutputSchema},
         prompt: `Eres un experto fitopatólogo en Hidalgo, México. Analiza la imagen y diagnostica el problema.
@@ -63,11 +64,12 @@ export async function diagnoseCropDisease(input: CropDiagnosisInput): Promise<Cr
     } catch (e: any) {
       lastError = e;
       const isQuotaError = e.message?.includes('RESOURCE_EXHAUSTED') || e.status === 429;
-      if (!isQuotaError) {
-        console.error("Error no relacionado con cuota:", e.message);
-        break; 
+      if (isQuotaError) {
+        console.warn(`Llave ${i + 1} agotada. Esperando 1.5s antes de rotar...`);
+        await sleep(1500);
+        continue;
       }
-      console.warn(`Diagnóstico: Llave ${i + 1} agotada, intentando con la siguiente...`);
+      break; 
     }
   }
 
@@ -78,13 +80,13 @@ export async function diagnoseCropDisease(input: CropDiagnosisInput): Promise<Cr
       severity: "Medium",
       confidence: "Low",
       recommendedActions: [
-        "El servicio está experimentando alta demanda.",
-        "Estamos rotando las llaves de acceso para procesar tu solicitud.",
-        "Por favor, presiona el botón de 'Iniciar Análisis' una vez más."
+        "Google ha limitado temporalmente el acceso por alta demanda.",
+        "Estamos rotando tus 3 llaves de acceso para procesar la solicitud.",
+        "Por favor, espera 10 segundos y presiona 'Iniciar Análisis' de nuevo."
       ],
       commercialProducts: [],
       homeMadeRemedies: [],
-      additionalNotes: `Nota técnica: ${lastError?.message || 'Rotación de seguridad activada'}`,
+      additionalNotes: `Error Técnico: ${lastError?.message || 'Límite de cuota excedido'}`,
       isWaiting: true
     }
   };

@@ -12,7 +12,6 @@ export function getAIInstance(keyIndex: number = 0) {
     "AIzaSyAruza-Wafz78L5YeLtvF5ATBB1P5uMKCo"  // Llave 3
   ];
 
-  // Si el usuario configuró variables de entorno, tienen prioridad
   const envKeys = [
     process.env.GEMINI_API_KEY,
     process.env.GEMINI_API_KEY_2,
@@ -24,9 +23,9 @@ export function getAIInstance(keyIndex: number = 0) {
 
   return genkit({
     plugins: [googleAI({apiKey})],
-    model: 'googleai/gemini-1.5-flash',
+    model: 'googleai/gemini-2.0-flash-001',
   });
 }
 
-// Instancia por defecto (usa la primera llave)
+// Instancia por defecto
 export const ai = getAIInstance(0);
