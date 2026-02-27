@@ -1,3 +1,4 @@
+
 {
   "placeholderImages": [
     {
@@ -17,6 +18,24 @@
       "description": "Plant leaf with fungal spots",
       "imageUrl": "https://picsum.photos/seed/crop-disease/600/400",
       "imageHint": "leaf disease"
+    },
+    {
+      "id": "expert-agronomist",
+      "description": "Professional agronomist in the field",
+      "imageUrl": "https://picsum.photos/seed/agronomist-expert/400/300",
+      "imageHint": "agronomist field"
+    },
+    {
+      "id": "agro-store",
+      "description": "Agricultural supply store interior",
+      "imageUrl": "https://picsum.photos/seed/agri-store/400/300",
+      "imageHint": "farm store"
+    },
+    {
+      "id": "agro-seeds",
+      "description": "Various types of agricultural seeds",
+      "imageUrl": "https://picsum.photos/seed/agricultural-seeds/400/300",
+      "imageHint": "farm seeds"
     }
   ]
 }

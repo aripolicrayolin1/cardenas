@@ -25,15 +25,12 @@ export function AIRiskAlert({ sensorValues }: AIRiskAlertProps) {
 
   useEffect(() => {
     async function getPrediction() {
-      // Normalización para la IA
       const normalizedHumidity = sensorValues.humidity_soil > 100 
         ? Math.max(0, Math.min(100, (sensorValues.humidity_soil / 4095) * 100))
         : Math.max(0, Math.min(100, sensorValues.humidity_soil));
       
       const normalizedTemp = Math.max(-10, Math.min(60, sensorValues.temp));
       
-      // Solo actualizamos si el cambio es significativo (ej: cambia más de 2 unidades)
-      // Esto ahorra muchísima cuota de IA en Wokwi
       const currentValuesKey = `${Math.round(normalizedHumidity / 2)}-${Math.round(normalizedTemp / 2)}`;
       
       if (lastAnalyzedValues.current === currentValuesKey && prediction) return;
@@ -57,8 +54,8 @@ export function AIRiskAlert({ sensorValues }: AIRiskAlertProps) {
       }
     }
 
-    // Debounce de 5 segundos para proteger la cuota de la API gratuita
-    const timeout = setTimeout(getPrediction, 5000);
+    // Aumentamos el debounce a 15 segundos para dar prioridad a la cuota del diagnóstico manual
+    const timeout = setTimeout(getPrediction, 15000);
     return () => clearTimeout(timeout);
   }, [sensorValues, prediction]);
 

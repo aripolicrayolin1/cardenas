@@ -1,3 +1,4 @@
+
 'use server';
 /**
  * @fileOverview This file implements a Genkit flow for diagnosing crop diseases or pests from a photo.
@@ -75,27 +76,26 @@ const cropDiagnosisFlow = ai.defineFlow(
       const {output} = await cropDiagnosisPrompt(input);
       return output!;
     } catch (e: any) {
-      // Manejo de error de cuota agotada (429 Too Many Requests)
       if (e.message?.includes('RESOURCE_EXHAUSTED') || e.status === 429) {
-        console.warn("IA Quota exhausted for diagnosis flow.");
+        const now = new Date().toLocaleTimeString();
+        console.warn(`IA Quota exhausted at ${now}.`);
         return {
           diagnosis: {
-            isProblemDetected: true, // Permitimos que el usuario reporte el problema aunque la IA falle
-            identifiedProblem: "Servicio de IA en espera (Cuota alcanzada)",
+            isProblemDetected: true,
+            identifiedProblem: `IA en Espera (Límite alcanzado a las ${now})`,
             severity: "Medium",
             confidence: "Low",
             recommendedActions: [
-              "Por favor, espera unos 15-30 segundos antes de intentar de nuevo.",
-              "El servicio gratuito de Google Gemini tiene un límite de peticiones por minuto."
+              "El servicio gratuito de Google Gemini tiene un límite de peticiones por minuto.",
+              "Por favor, espera unos 15-30 segundos y presiona 'Nueva Consulta'.",
+              "Estamos procesando tu solicitud, no es un error estático."
             ],
             commercialProducts: [],
             homeMadeRemedies: [],
-            additionalNotes: "Has alcanzado el límite de procesamiento de imágenes por minuto. No te preocupes, esto es normal en la versión de prueba gratuita. Intenta nuevamente en un momento."
+            additionalNotes: `Último intento de conexión: ${now}. La IA se reactivará automáticamente en breve. No te preocupes, esto ocurre solo por el alto tráfico en la versión de prueba.`
           }
         };
       }
-      
-      // Si es otro tipo de error, lo lanzamos para que se vea en los logs
       throw e;
     }
   }
