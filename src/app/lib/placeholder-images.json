@@ -1,4 +1,3 @@
-
 {
   "placeholderImages": [
     {
@@ -22,19 +21,19 @@
     {
       "id": "expert-agronomist",
       "description": "Professional agronomist in the field",
-      "imageUrl": "https://picsum.photos/seed/agronomist-expert/400/300",
-      "imageHint": "agronomist field"
+      "imageUrl": "https://picsum.photos/seed/field-expert-agro/400/300",
+      "imageHint": "agronomist"
     },
     {
       "id": "agro-store",
       "description": "Agricultural supply store interior",
-      "imageUrl": "https://picsum.photos/seed/agri-store/400/300",
+      "imageUrl": "https://picsum.photos/seed/agri-center-hidalgo/400/300",
       "imageHint": "farm store"
     },
     {
       "id": "agro-seeds",
       "description": "Various types of agricultural seeds",
-      "imageUrl": "https://picsum.photos/seed/agricultural-seeds/400/300",
+      "imageUrl": "https://picsum.photos/seed/corn-seeds-agro/400/300",
       "imageHint": "farm seeds"
     }
   ]

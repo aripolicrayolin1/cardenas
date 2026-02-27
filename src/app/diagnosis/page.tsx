@@ -20,9 +20,10 @@ import {
   Info,
   ArrowRight,
   MessageSquare,
-  Share2
+  Share2,
+  Clock
 } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { diagnoseCropDisease, type CropDiagnosisOutput } from "@/ai/flows/crop-disease-photo-diagnosis-flow";
 import Image from "next/image";
 import { Badge } from "@/components/ui/badge";
@@ -38,6 +39,7 @@ export default function DiagnosisPage() {
   const [diagnosis, setDiagnosis] = useState<CropDiagnosisOutput | null>(null);
   const [loading, setLoading] = useState(false);
   const [description, setDescription] = useState("");
+  const [lastAttemptTime, setLastAttemptTime] = useState<string | null>(null);
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -54,12 +56,23 @@ export default function DiagnosisPage() {
   const startDiagnosis = async () => {
     if (!selectedImage) return;
     setLoading(true);
+    // Marcamos la hora local del intento justo antes de llamar a la IA
+    const now = new Date().toLocaleTimeString();
+    setLastAttemptTime(now);
+
     try {
       const result = await diagnoseCropDisease({
         photoDataUri: selectedImage,
         description: description
       });
       setDiagnosis(result);
+      
+      if (result.diagnosis.isWaiting) {
+        toast({
+          title: "IA en Espera",
+          description: `Límite alcanzado a las ${now}. Por favor reintenta en un momento.`,
+        });
+      }
     } catch (error) {
       console.error("Diagnosis failed", error);
       toast({
@@ -101,7 +114,6 @@ export default function DiagnosisPage() {
   const handleContactAgronomist = () => {
     if (!diagnosis) return;
 
-    // Crear un mensaje en el chat del agrónomo (ID: 99)
     const expertChatKey = "chat_99";
     const existingChat = localStorage.getItem(expertChatKey);
     const chatHistory = existingChat ? JSON.parse(existingChat) : [
@@ -120,7 +132,6 @@ export default function DiagnosisPage() {
       description: "Tu diagnóstico ha sido enviado al Ing. Ricardo. Revisa la sección de Comunidad.",
     });
 
-    // Redirigir opcionalmente después de un pequeño retraso
     setTimeout(() => {
       router.push("/community");
     }, 1500);
@@ -130,6 +141,7 @@ export default function DiagnosisPage() {
     setSelectedImage(null);
     setDiagnosis(null);
     setDescription("");
+    setLastAttemptTime(null);
   };
 
   return (
@@ -236,28 +248,37 @@ export default function DiagnosisPage() {
                     <CardHeader className="flex flex-row items-start justify-between">
                       <div>
                         <CardTitle className="text-2xl flex items-center gap-2">
-                          {diagnosis.diagnosis.isProblemDetected ? (
+                          {diagnosis.diagnosis.isWaiting ? (
+                            <Clock className="text-orange-500 h-7 w-7" />
+                          ) : diagnosis.diagnosis.isProblemDetected ? (
                             <AlertTriangle className="text-accent-foreground h-7 w-7 fill-accent" />
                           ) : (
                             <CheckCircle2 className="text-primary h-7 w-7" />
                           )}
-                          Resultados del Análisis
+                          {diagnosis.diagnosis.isWaiting ? "IA en Espera" : "Resultados del Análisis"}
                         </CardTitle>
                         <CardDescription>
-                          Diagnóstico generado mediante IA avanzada
+                          {diagnosis.diagnosis.isWaiting 
+                            ? `Último intento a las ${lastAttemptTime} (Hora Local)` 
+                            : "Diagnóstico generado mediante IA avanzada"}
                         </CardDescription>
                       </div>
                       <Badge variant={diagnosis.diagnosis.confidence === 'High' ? 'default' : 'secondary'}>
-                        Confianza: {diagnosis.diagnosis.confidence}
+                        {diagnosis.diagnosis.isWaiting ? "Reintentando..." : `Confianza: ${diagnosis.diagnosis.confidence}`}
                       </Badge>
-                    </CardHeader>
+                    </Header>
                     <CardContent className="space-y-6">
                       <div>
                         <h4 className="text-sm font-bold text-muted-foreground uppercase tracking-widest mb-3">Identificación</h4>
-                        <div className="p-4 bg-primary/5 rounded-xl border border-primary/20">
-                           <p className="text-xl font-bold text-primary">{diagnosis.diagnosis.identifiedProblem}</p>
+                        <div className={`p-4 rounded-xl border ${diagnosis.diagnosis.isWaiting ? 'bg-orange-50 border-orange-200' : 'bg-primary/5 border-primary/20'}`}>
+                           <p className={`text-xl font-bold ${diagnosis.diagnosis.isWaiting ? 'text-orange-700' : 'text-primary'}`}>
+                             {diagnosis.diagnosis.identifiedProblem}
+                           </p>
                            <div className="flex items-center gap-2 mt-2">
                              <Badge variant="outline">Severidad: {diagnosis.diagnosis.severity}</Badge>
+                             {diagnosis.diagnosis.isWaiting && (
+                               <span className="text-xs text-orange-600 animate-pulse font-medium">Límite de Google alcanzado. Reintenta en 15 seg.</span>
+                             )}
                            </div>
                         </div>
                       </div>
@@ -339,7 +360,9 @@ export default function DiagnosisPage() {
                               ))}
                             </div>
                           ) : (
-                            <p className="text-sm text-center py-8 text-muted-foreground italic">Cultivo sano. No se requieren remedios preventivos en este momento.</p>
+                            <p className="text-sm text-center py-8 text-muted-foreground italic">
+                              {diagnosis.diagnosis.isWaiting ? "Reintentando conectar para obtener remedios..." : "Cultivo sano. No se requieren remedios preventivos en este momento."}
+                            </p>
                           )}
                         </TabsContent>
                       </Tabs>
@@ -354,6 +377,7 @@ export default function DiagnosisPage() {
                       <Button 
                         className="flex-1 font-bold gap-2" 
                         onClick={handleSendRegionalAlert}
+                        disabled={diagnosis.diagnosis.isWaiting}
                       >
                         <Share2 className="h-4 w-4" /> Enviar Alerta Regional
                       </Button>
@@ -361,6 +385,7 @@ export default function DiagnosisPage() {
                         variant="outline" 
                         className="flex-1 font-bold gap-2" 
                         onClick={handleContactAgronomist}
+                        disabled={diagnosis.diagnosis.isWaiting}
                       >
                         <MessageSquare className="h-4 w-4" /> Contactar Agrónomo
                       </Button>

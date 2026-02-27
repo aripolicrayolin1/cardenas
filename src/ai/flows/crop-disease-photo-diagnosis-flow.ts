@@ -1,4 +1,3 @@
-
 'use server';
 /**
  * @fileOverview This file implements a Genkit flow for diagnosing crop diseases or pests from a photo.
@@ -39,6 +38,7 @@ const CropDiagnosisOutputSchema = z.object({
       instructions: z.string().describe('Cómo prepararlo y aplicarlo.')
     })).describe('Alternativas caseras y naturales de bajo costo.'),
     additionalNotes: z.string().optional().describe('Any additional notes or observations regarding the diagnosis.'),
+    isWaiting: z.boolean().optional().describe('Flag indicating if the system is waiting due to quota limits.'),
   }).describe('The detailed diagnosis of the crop.'),
 });
 export type CropDiagnosisOutput = z.infer<typeof CropDiagnosisOutputSchema>;
@@ -74,25 +74,31 @@ const cropDiagnosisFlow = ai.defineFlow(
   async input => {
     try {
       const {output} = await cropDiagnosisPrompt(input);
-      return output!;
+      return {
+        ...output!,
+        diagnosis: {
+          ...output!.diagnosis,
+          isWaiting: false
+        }
+      };
     } catch (e: any) {
       if (e.message?.includes('RESOURCE_EXHAUSTED') || e.status === 429) {
-        const now = new Date().toLocaleTimeString();
-        console.warn(`IA Quota exhausted at ${now}.`);
+        console.warn(`IA Quota exhausted.`);
         return {
           diagnosis: {
             isProblemDetected: true,
-            identifiedProblem: `IA en Espera (Límite alcanzado a las ${now})`,
+            identifiedProblem: "IA en Espera (Límite de Google)",
             severity: "Medium",
             confidence: "Low",
             recommendedActions: [
               "El servicio gratuito de Google Gemini tiene un límite de peticiones por minuto.",
-              "Por favor, espera unos 15-30 segundos y presiona 'Nueva Consulta'.",
+              "Por favor, espera unos 15-30 segundos y presiona 'Iniciar Análisis' de nuevo.",
               "Estamos procesando tu solicitud, no es un error estático."
             ],
             commercialProducts: [],
             homeMadeRemedies: [],
-            additionalNotes: `Último intento de conexión: ${now}. La IA se reactivará automáticamente en breve. No te preocupes, esto ocurre solo por el alto tráfico en la versión de prueba.`
+            additionalNotes: "La IA se reactivará automáticamente en breve. No te preocupes, esto ocurre solo por el alto tráfico en la versión de prueba.",
+            isWaiting: true
           }
         };
       }
