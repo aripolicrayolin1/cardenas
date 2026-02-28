@@ -1,7 +1,6 @@
-
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { AlertCircle, ShieldCheck, Zap, Info, WifiOff, Loader2, RefreshCw } from "lucide-react";
 import { predictivePestDiseaseAlerts, type PredictiveAlertOutput } from "@/ai/flows/predictive-pest-disease-alerts";
@@ -20,28 +19,39 @@ interface AIRiskAlertProps {
 
 export function AIRiskAlert({ sensorValues }: AIRiskAlertProps) {
   const { t } = useTranslation();
-  
-  // Inicialmente en null para que el usuario deba presionar el botón
   const [prediction, setPrediction] = useState<PredictiveAlertOutput | null>(null);
   const [loading, setLoading] = useState(false);
 
   const handleManualScan = async () => {
     setLoading(true);
     
-    // Simulamos un retraso de 2.5 segundos para que la animación de escaneo se vea en el video
-    await new Promise(resolve => setTimeout(resolve, 2500));
-    
-    // Resultado estático de alta calidad optimizado para el pitch del Hackathon
-    setPrediction({
-      alertNeeded: true,
-      alertMessage: "Análisis inteligente detecta condiciones de riesgo por exceso de humedad en el suelo (Hñähñu: De’mthe Hoi) y temperatura estable. Existe posibilidad de proliferación de hongos en la raíz.",
-      predictedRisk: 'Medium',
-      potentialProblem: "Hongo por humedad",
-      recommendation: "Se recomienda suspender el riego automático por las próximas 12 horas y verificar el drenaje en la zona norte de la parcela.",
-      isFallback: false
-    });
-    
-    setLoading(false);
+    try {
+      // Intentamos la llamada real a la IA
+      const result = await predictivePestDiseaseAlerts({
+        soilHumidity: sensorValues.humidity_soil,
+        temperature: sensorValues.temp,
+        uvRadiation: sensorValues.uv,
+        cropType: "Maíz (Däthä)",
+        region: "Valle del Mezquital, Hidalgo"
+      });
+      
+      // Simulamos un pequeño retraso visual para que se vea el escaneo en el video
+      await new Promise(resolve => setTimeout(resolve, 2000));
+      
+      setPrediction(result);
+    } catch (error) {
+      // Si falla la red por completo
+      setPrediction({
+        alertNeeded: true,
+        alertMessage: "Error de conexión con el núcleo de IA. Activando motor experto local de respaldo.",
+        predictedRisk: 'Medium',
+        potentialProblem: "Análisis Local Activado",
+        recommendation: "Verifica manualmente los niveles de humedad en el envés de las hojas.",
+        isFallback: true
+      });
+    } finally {
+      setLoading(false);
+    }
   };
 
   const isRisk = prediction?.alertNeeded;
@@ -92,9 +102,12 @@ export function AIRiskAlert({ sensorValues }: AIRiskAlertProps) {
           </CardDescription>
         </div>
         {prediction && (
-          <Badge variant={prediction.predictedRisk === 'High' ? 'destructive' : 'default'} className="uppercase font-black text-[9px] px-3 py-1 rounded-full shadow-lg">
-            {t('risk')}: {translateRisk(prediction.predictedRisk)}
-          </Badge>
+          <div className="flex flex-col items-end gap-1">
+            <Badge variant={prediction.predictedRisk === 'High' ? 'destructive' : 'default'} className="uppercase font-black text-[9px] px-3 py-1 rounded-full shadow-lg">
+              {t('risk')}: {translateRisk(prediction.predictedRisk)}
+            </Badge>
+            {isFallback && <Badge variant="secondary" className="text-[8px] font-black bg-orange-500/10 text-orange-600 border-orange-500/20">{t('fallback_mode')}</Badge>}
+          </div>
         )}
       </CardHeader>
       
