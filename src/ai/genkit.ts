@@ -7,6 +7,7 @@ import {googleAI} from '@genkit-ai/google-genai';
  */
 
 const keys = [
+  "AIzaSyDaCIrKjEp7VudNePBRNSQvMbxCpAs4lUU", // Nueva llave proporcionada
   "AIzaSyAN_DszwX0FLg_25hacO8HJHSbqIn2L59s",
   "AIzaSyCvEPqyhH2lWBWZrhpZy_vWalAH9Yhc4Zc",
   "AIzaSyAruza-Wafz78L5YeLtvF5ATBB1P5uMKCo"
@@ -20,14 +21,13 @@ const envKeys = [
 
 const finalKeys = envKeys.length > 0 ? envKeys : keys;
 
-// Creamos 3 instancias distintas de Genkit, una por cada llave
-// Usamos gemini-1.5-flash que es el más estable para cuotas gratuitas
+// Creamos instancias distintas de Genkit, una por cada llave
 export const aiInstances = finalKeys.map(key => genkit({
   plugins: [googleAI({apiKey: key})],
   model: 'googleai/gemini-1.5-flash',
 }));
 
-// Instancia por defecto
+// Instancia por defecto (usará la primera llave de la lista)
 export const ai = aiInstances[0];
 
 /**

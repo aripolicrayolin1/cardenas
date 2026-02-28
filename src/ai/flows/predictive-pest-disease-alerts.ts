@@ -3,7 +3,7 @@
  * @fileOverview Alertas predictivas usando Gemini 1.5 Flash con rotación agresiva de llaves.
  */
 
-import {getAIInstance} from '@/ai/genkit';
+import {aiInstances, getAIInstance} from '@/ai/genkit';
 import {z} from 'genkit';
 
 const PredictiveAlertInputSchema = z.object({
@@ -28,13 +28,13 @@ export type PredictiveAlertOutput = z.infer<typeof PredictiveAlertOutputSchema>;
 export async function predictivePestDiseaseAlerts(input: PredictiveAlertInput): Promise<PredictiveAlertOutput> {
   const sleep = (ms: number) => new Promise(res => setTimeout(res, ms));
 
-  // Intentamos con las 3 llaves disponibles
-  for (let i = 0; i < 3; i++) {
+  // Intentamos con todas las llaves disponibles en rotación
+  for (let i = 0; i < aiInstances.length; i++) {
     try {
       const ai = getAIInstance(i);
       
       const prompt = ai.definePrompt({
-        name: `predictiveAlertPrompt_v7_rotation_${i}`,
+        name: `predictiveAlertPrompt_v8_rotation_${i}`,
         input: {schema: PredictiveAlertInputSchema},
         output: {schema: PredictiveAlertOutputSchema},
         prompt: `Eres un experto agrónomo en el Valle del Mezquital, Hidalgo.
@@ -53,12 +53,11 @@ export async function predictivePestDiseaseAlerts(input: PredictiveAlertInput): 
       if (output) return { ...output, isFallback: false };
     } catch (e: any) {
       console.warn(`Llave ${i + 1} agotada o bloqueada, rotando...`);
-      // Esperamos un poco antes de reintentar con la siguiente llave para evitar spam
-      if (i < 2) await sleep(2500); 
+      if (i < aiInstances.length - 1) await sleep(2000); 
     }
   }
 
-  // Fallback de alta calidad si todas las llaves fallan (Optimizado para el video)
+  // Fallback de alta calidad si todas las llaves fallan
   const isHighHumidity = input.soilHumidity > 75;
   
   return {
