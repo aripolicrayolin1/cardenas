@@ -2,7 +2,7 @@
 "use client";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Users, MapPin, Calendar, ArrowRight, Plus, AlertTriangle, X, Info, Loader2, ShieldCheck, Radio, Zap, Target } from "lucide-react";
+import { Users, MapPin, Calendar, ArrowRight, Plus, AlertTriangle, X, Info, Loader2, ShieldCheck, Radio, Zap, Target, CheckCircle2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { useState, useEffect, useMemo } from "react";
@@ -244,7 +244,6 @@ export function CommunityAlerts() {
       <Dialog open={isMapOpen} onOpenChange={setIsMapOpen}>
         <DialogContent className="sm:max-w-5xl p-0 overflow-hidden border-none bg-background/95 backdrop-blur-xl">
           <div className="flex flex-col md:flex-row h-[650px]">
-            {/* Panel de Localizaciones Similares */}
             <div className="w-full md:w-96 border-r border-primary/10 p-6 flex flex-col bg-white/60">
               <DialogHeader className="mb-6">
                 <div className="flex items-center gap-2 text-destructive font-black text-[10px] uppercase tracking-widest mb-2">
@@ -301,7 +300,6 @@ export function CommunityAlerts() {
               </Button>
             </div>
 
-            {/* Mapa de Vigilancia Unificada */}
             <div className="flex-1 relative bg-slate-200 group overflow-hidden">
               <div className="absolute top-6 left-6 z-10 flex flex-col gap-2">
                 <Badge className="bg-destructive/90 text-white font-black text-[10px] px-5 py-2 shadow-2xl animate-pulse flex items-center gap-2 uppercase tracking-widest rounded-full">
@@ -312,7 +310,6 @@ export function CommunityAlerts() {
                 </div>
               </div>
 
-              {/* Efecto visual de Radar sobre el mapa */}
               <div className="absolute inset-0 pointer-events-none z-0">
                 <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-primary/5 rounded-full border-2 border-primary/10 animate-ping opacity-20"></div>
                 <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[400px] h-[400px] bg-primary/10 rounded-full border-2 border-primary/20 animate-pulse opacity-20"></div>

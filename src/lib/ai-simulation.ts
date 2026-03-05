@@ -1,7 +1,8 @@
+
 /**
  * @fileOverview Motor de diagnóstico experto para AgroTech Hidalgo.
  * Simula el razonamiento de una IA basado en reglas agronómicas reales para la región.
- * Genera mensajes dinámicos que integran los valores de los sensores.
+ * Genera mensajes dinámicos que integran los valores de los sensores para el concurso.
  */
 
 export interface DiagnosticoResultado {
@@ -20,27 +21,27 @@ export const obtenerDiagnosticoIA = (
   puntoRocio: number
 ): DiagnosticoResultado => {
   
-  // Normalización de humedad del suelo para el motor (si viene de sensor analógico 0-4095)
-  const normSuelo = suelo > 100 ? (suelo / 4095) * 100 : suelo;
+  // Normalización para el motor: Usamos los valores tal como vienen del sensor.
+  // El usuario proporcionó umbrales como suelo < 600 o suelo > 4000.
 
-  // 1. PRIORIDAD CRÍTICA: Helada y Sequía (Basado en el ejemplo del usuario)
-  if (t <= 6.0 && normSuelo < 10) {
+  // 1. Prioridad Crítica: Helada y Sequía Extrema (Combinado para el concurso)
+  if (t < 7 && suelo < 600) {
     return {
       titulo: "RIESGO DE HELADA Y DESHIDRATACIÓN", 
       otomi: "¡Xue t'o̲ho̲!",
-      desc: `Análisis térmico crítico: La temperatura actual de ${t.toFixed(1)}°C indica un riesgo inminente de helada advectiva. Con un suelo al ${normSuelo.toFixed(1)}% de humedad, las raíces carecen de inercia térmica, lo que acelerará drásticamente el daño celular por frío en los tejidos vasculares.`,
+      desc: `Análisis térmico crítico: La temperatura de ${t.toFixed(1)}°C indica un riesgo inminente de helada advectiva. Con un suelo al ${suelo.toFixed(1)} de humedad, las raíces carecen de inercia térmica, lo que acelerará el daño celular por frío en los tejidos vasculares.`,
       accion: "Activar riego por aspersión inmediatamente. El agua liberará calor latente al cambiar de fase, creando una capa protectora que mantendrá la temperatura de la planta cerca de los 0°C, evitando el punto de congelación letal.",
       riesgo: 'High'
     };
   }
 
   // 2. Prioridad: Calor Extremo y Sequía
-  if (t > 35 && normSuelo < 20) {
+  if (t > 35 && suelo < 600) {
     return {
       titulo: "ESTRÉS TÉRMICO CRÍTICO", 
       otomi: "¡Däthä hñei xat'i!",
-      desc: `Demanda evaporativa extrema detectada: Con ${t.toFixed(1)}°C y humedad de suelo en ${normSuelo.toFixed(1)}%, la tasa de evapotranspiración de ${et.toFixed(2)} mm/día es insostenible. El balance hídrico negativo sugiere una posible muerte térmica de tejidos apicales.`,
-      accion: "Activar riego de enfriamiento inmediato por pulsos (5 min cada hora) y establecer sombreado temporal si es posible. Priorizar la turgencia celular sobre la fertilización.",
+      desc: `Demanda evaporativa extrema detectada: Con ${t.toFixed(1)}°C y humedad de suelo en ${suelo.toFixed(1)}, la tasa de evapotranspiración de ${et.toFixed(2)} mm/día es insostenible. El balance hídrico negativo sugiere una posible muerte térmica de tejidos apicales.`,
+      accion: "Activar riego de enfriamiento inmediato y establecer sombreado temporal. Priorizar la turgencia celular sobre la fertilización.",
       riesgo: 'High'
     };
   }
@@ -50,95 +51,216 @@ export const obtenerDiagnosticoIA = (
     return {
       titulo: "ALERTA DE CONDENSACIÓN", 
       otomi: "¡M'e̲di ar dehe hñäki!",
-      desc: `Saturación atmosférica detectada: La temperatura de ${t.toFixed(1)}°C ha convergido con el punto de rocío (${puntoRocio.toFixed(1)}°C). El algoritmo detecta agua líquida persistente en el follaje, condición ideal para la germinación de esporas fitopatógenas.`,
-      accion: "Incrementar la ventilación mecánica de forma inmediata. Realizar una aplicación preventiva de fungicida de contacto para romper la película de agua en las hojas.",
+      desc: `Saturación atmosférica detectada: La temperatura de ${t.toFixed(1)}°C ha convergido con el punto de rocío (${puntoRocio.toFixed(1)}°C). Detecto agua líquida persistente en el follaje, condición ideal para la germinación de esporas de hongos.`,
+      accion: "Incrementar la ventilación y realizar una aplicación preventiva de fungicida para romper la película de agua en las hojas.",
       riesgo: 'High'
     };
   }
 
   // 4. Saturación Hídrica / Asfixia Radicular
-  if (normSuelo > 85) {
+  if (suelo > 3800) {
     return {
       titulo: "SATURACIÓN / ANOXIA RADICULAR", 
       otomi: "¡Dä dehe / M'e̲di ar ndähi!",
-      desc: `Estado de anoxia detectado: Humedad de suelo al ${normSuelo.toFixed(1)}%. El intercambio gaseoso en la rizosfera se ha detenido, lo que provocará la muerte de las raíces por falta de oxígeno si el encharcamiento persiste.`,
-      accion: "Suspender cualquier programa de irrigación. Abrir drenajes de emergencia y remover ligeramente la capa superficial del suelo para favorecer la aireación.",
+      desc: `Estado de anoxia detectado: Humedad de suelo elevada (${suelo.toFixed(0)}). Las raíces se asfixian por falta de oxígeno, lo que detiene el intercambio gaseoso en la rizosfera.`,
+      accion: "Suspender cualquier programa de irrigación. Abrir drenajes de emergencia para favorecer la aireación del suelo.",
       riesgo: 'High'
     };
   }
 
-  // 5. Riesgo de Roya / Tizón (Condiciones óptimas)
+  // 5. Riesgo de Roya / Tizón
   if (h > 75 && t >= 18 && t <= 24) {
     return {
       titulo: "RIESGO DE ROYA / TIZÓN", 
       otomi: "¡Nts'o hñäki yä xi!",
-      desc: `Microclima de incubación: Los niveles de humedad (${h.toFixed(1)}%) y temperatura (${t.toFixed(1)}°C) coinciden en un 92% con patrones históricos de proliferación de Roya en el Valle del Mezquital.`,
-      accion: "Inspección exhaustiva en busca de pústulas o manchas necróticas. Se recomienda la aplicación de bio-fungicidas a base de cobre o Bacillus subtilis.",
+      desc: `Microclima de incubación: Los niveles de humedad (${h.toFixed(1)}%) y temperatura (${t.toFixed(1)}°C) coinciden con patrones históricos de esporas de hongos fitopatógenos en el Valle del Mezquital.`,
+      accion: "Inspección visual de manchas y aplicación de bio-fungicida. Mantener vigilancia en el envés de las hojas.",
       riesgo: 'Medium'
     };
   }
 
   // 6. Estrés por Desequilibrio Hídrico (Viento Seco)
-  if (t > 30 && h < 20) {
+  if (t > 32 && h < 15) {
     return {
-      titulo: "DESEQUILIBRIO HÍDRICO (VPD)", 
+      titulo: "DESEQUILIBRIO HÍDRICO", 
       otomi: "¡Ar ndähi xat'i!",
-      desc: `Diferencial de presión de vapor elevado: Con aire al ${h.toFixed(1)}% de humedad, la raíz no logra bombear agua a la velocidad que la atmósfera la extrae. Riesgo de marchitamiento temporal.`,
-      accion: "Establecer barreras cortavientos y utilizar nebulizadores si se dispone de ellos para restaurar la humedad relativa local sobre el 40%.",
+      desc: `Diferencial de presión de vapor elevado: Con aire al ${h.toFixed(1)}% de humedad, la raíz no bombea agua tan rápido como la hoja la pierde por el aire seco del Valle.`,
+      accion: "Reducir exposición al viento y usar nebulizadores para restaurar la humedad relativa local.",
       riesgo: 'Medium'
     };
   }
 
   // 7. Bloqueo Nutricional por Frío
-  if (t < 14 && normSuelo > 40) {
+  if (t < 14 && suelo > 1500) {
     return {
-      titulo: "BLOQUEO NUTRICIONAL POR FRÍO", 
+      titulo: "BLOQUEO POR FRÍO", 
       otomi: "¡Ar tse̲ häi!",
-      desc: `Ralentización metabólica: La temperatura de ${t.toFixed(1)}°C ha bloqueado la absorción de fósforo y micronutrientes, a pesar de que el suelo tiene humedad (${normSuelo.toFixed(1)}%).`,
-      accion: "Evitar el riego con agua fría. Se recomienda nutrición foliar de emergencia con quelatados para saltar el bloqueo radicular hasta que el suelo caliente.",
+      desc: `Ralentización metabólica: La temperatura de ${t.toFixed(1)}°C ha bloqueado la absorción de Fósforo, a pesar de que el suelo tiene humedad (${suelo.toFixed(0)}).`,
+      accion: "Evitar el riego frío. Se recomienda nutrición foliar de emergencia hasta que el suelo recupere temperatura térmica.",
       riesgo: 'Medium'
     };
   }
 
   // 8. Ventana de Polinización (Ideal)
-  if (t >= 22 && t <= 27 && h >= 45 && h <= 65) {
+  if (t >= 22 && t <= 26 && h >= 40 && h <= 60) {
     return {
-      titulo: "VENTANA DE POLINIZACIÓN IDEAL", 
+      titulo: "VENTANA DE POLINIZACIÓN", 
       otomi: "¡Hño m'u̲i ar ndonni!",
-      desc: `Optimización biológica: Las condiciones actuales (${t.toFixed(1)}°C, ${h.toFixed(1)}% HR) garantizan la máxima viabilidad del polen y la actividad de polinizadores en la región.`,
-      accion: "Fomentar la presencia de polinizadores. Restricción total de insecticidas o aplicaciones químicas durante las próximas 18 horas.",
+      desc: `Optimización biológica: Las condiciones actuales (${t.toFixed(1)}°C, ${h.toFixed(1)}% HR) garantizan la máxima viabilidad del polen y la actividad de polinizadores.`,
+      accion: "Proteger polinizadores y abejas. Restricción total de aplicaciones químicas durante las próximas horas.",
       riesgo: 'None'
     };
   }
 
-  // 9. Fotosíntesis Óptima
+  // 9. Gasto Energético Nocturno
+  if (t > 22 && h > 80) {
+    return {
+      titulo: "GASTO NOCTURNO ALTO", 
+      otomi: "¡Nxui xat'i!",
+      desc: `Respiración acelerada detectada: La planta consume sus reservas de azúcar demasiado rápido debido al calor nocturno de ${t.toFixed(1)}°C.`,
+      accion: "Asegurar ventilación constante para bajar la temperatura del follaje y estabilizar el metabolismo.",
+      riesgo: 'Medium'
+    };
+  }
+
+  // 10. Demanda Evaporativa Extrema
+  if (et > 6.0) {
+    return {
+      titulo: "DEMANDA EVAPORATIVA MÁXIMA", 
+      otomi: "¡Dä nt'o̲ni ar nuni!",
+      desc: `La atmósfera extrae agua a una tasa crítica de ${et.toFixed(2)} mm/día según el modelo de Penman-Monteith.`,
+      accion: "Realizar riego de auxilio para compensar la transpiración excesiva del mediodía.",
+      riesgo: 'High'
+    };
+  }
+
+  // 11. Estomas Cerrados (Supervivencia)
+  if (et < 1.0 && suelo < 700) {
+    return {
+      titulo: "ESTOMAS CERRADOS", 
+      otomi: "¡Ar nuni otho ar dehe!",
+      desc: `Modo de supervivencia activado: La planta ha detenido su crecimiento para no morir por deshidratación ante la falta de agua en el suelo.`,
+      accion: "Riego profundo urgente. La planta requiere recuperación hídrica inmediata para salir del modo ahorro.",
+      riesgo: 'High'
+    };
+  }
+
+  // 12. Fotosíntesis Óptima
   if (t >= 20 && t <= 28 && h >= 50 && h <= 70) {
     return {
       titulo: "FOTOSÍNTESIS ÓPTIMA", 
       otomi: "¡Hño m'u̲i ar nuni!",
-      desc: `Estado metabólico máximo: Sincronía perfecta entre temperatura (${t.toFixed(1)}°C) y humedad. El cultivo está operando a su máxima eficiencia teórica de fijación de carbono.`,
-      accion: "Momento ideal para la aplicación de bioestimulantes y fertilizantes foliares para potenciar el crecimiento vegetativo.",
+      desc: `Estado metabólico máximo: Balance térmico (${t.toFixed(1)}°C) y hídrico ideal para el máximo crecimiento vegetativo.`,
+      accion: "Momento ideal para la aplicación de bioestimulantes o fertilizantes foliares para potenciar el rendimiento.",
       riesgo: 'None'
     };
   }
 
-  // 10. Capacidad de Campo (Perfecto)
-  if (normSuelo > 40 && normSuelo < 65 && t < 32) {
+  // 13. Aire Extremadamente Seco
+  if (h < 20) {
     return {
-      titulo: "CAPACIDAD DE CAMPO ALCANZADA", 
+      titulo: "SEQUEDAD ATMOSFÉRICA", 
+      otomi: "¡Dä nt'o̲ni ar ndähi!",
+      desc: `Humedad del aire crítica (${h.toFixed(1)}%). Riesgo de marchitamiento foliar inminente por falta de humedad ambiental.`,
+      accion: "Pulverización foliar para elevar la humedad relativa local y proteger el follaje.",
+      riesgo: 'Medium'
+    };
+  }
+
+  // 14. Riesgo de Bacteriosis
+  if (t < 12 && h > 85) {
+    return {
+      titulo: "RIESGO DE BACTERIOSIS", 
+      otomi: "¡Ar tse̲ hñäki!",
+      desc: `Condiciones pro-bacterianas: El frío (${t.toFixed(1)}°C) y la alta humedad favorecen la proliferación de bacterias y mohos grises.`,
+      accion: "Eliminar restos vegetales y evitar realizar podas o heridas en los tallos durante este periodo.",
+      riesgo: 'Medium'
+    };
+  }
+
+  // 15. Capacidad de Campo (Perfecto)
+  if (suelo > 1500 && suelo < 2500 && t < 30) {
+    return {
+      titulo: "CAPACIDAD DE CAMPO", 
       otomi: "¡Hño dehe ar häi!",
-      desc: `Balance hídrico perfecto: El suelo al ${normSuelo.toFixed(1)}% retiene la proporción ideal de agua y aire. Las raíces tienen acceso total a nutrientes sin estrés hídrico.`,
-      accion: "Mantener el programa actual de monitoreo pasivo. No se requiere intervención de riego en las próximas 24 horas.",
+      desc: `Balance hídrico perfecto: El suelo (${suelo.toFixed(0)}) retiene la cantidad justa de agua y aire. Nutrición fluyendo correctamente.`,
+      accion: "Mantener el monitoreo pasivo. No se requiere intervención de riego adicional en las próximas 24 horas.",
       riesgo: 'None'
     };
   }
 
-  // 11. Sistema Estable (Default)
+  // 16. Baja Actividad (Día Nublado)
+  if (et < 2.0 && h > 70 && t < 22) {
+    return {
+      titulo: "BAJA ACTIVIDAD", 
+      otomi: "¡Nts'u̲ n'u̲i!",
+      desc: `Ralentización fotosintética: Baja tasa de evaporación (${et.toFixed(2)}). El consumo hídrico de la planta es mínimo hoy.`,
+      accion: "Reducir la frecuencia de riego para evitar posibles encharcamientos o enfermedades radiculares.",
+      riesgo: 'Low'
+    };
+  }
+
+  // 17. Saturación por Rocío
+  if (t > 10 && t < 16 && h > 90) {
+    return {
+      titulo: "SATURACIÓN POR ROCÍO", 
+      otomi: "¡Ar dehe n'u̲i!",
+      desc: `Humedad foliar persistente: Se ha detectado rocío sobre las hojas, lo que puede lavar los nutrientes recién aplicados.`,
+      accion: "Posponer aplicaciones foliares hasta que el sol seque el follaje por completo.",
+      riesgo: 'Low'
+    };
+  }
+
+  // 18. Salinidad / Conductividad Alta
+  if (suelo > 3500) {
+    return {
+      titulo: "RIESGO DE SALINIDAD", 
+      otomi: "¡U̲gi ar häi!",
+      desc: `Análisis de sustrato: Posible acumulación excesiva de sales en la zona radicular (suelo en ${suelo.toFixed(0)}).`,
+      accion: "Realizar un riego de lavado (leaching) con agua limpia para desplazar las sales fuera del área radicular.",
+      riesgo: 'Medium'
+    };
+  }
+
+  // 19. Madrugada Húmeda
+  if (h > 80 && t < 15) {
+    return {
+      titulo: "RECUPERACIÓN NOCTURNA", 
+      otomi: "¡Ts'u̲ dehe nxui!",
+      desc: `Restauración de turgencia: La planta está recuperando agua eficientemente bajo estas condiciones estables.`,
+      accion: "Continuar con el monitoreo de rutina. Sistema en estado de equilibrio hídrico.",
+      riesgo: 'None'
+    };
+  }
+
+  // 20. Viento Seco / Deshidratación
+  if (h < 30 && t > 25) {
+    return {
+      titulo: "BAJA HUMEDAD RELATIVA", 
+      otomi: "¡Ot'i ndähi!",
+      desc: `Diferencial de vapor elevado: Deshidratación rápida detectada por el aire seco a ${t.toFixed(1)}°C.`,
+      accion: "Aumentar la frecuencia de riego y considerar el uso de barreras cortavientos.",
+      riesgo: 'Medium'
+    };
+  }
+
+  // 21. Estrés por Frío Húmedo
+  if (t < 10 && h > 70) {
+    return {
+      titulo: "ESTRÉS POR FRÍO HÚMEDO", 
+      otomi: "¡Tse̲ dehe!",
+      desc: `Debilitamiento inmune: La combinación de frío (${t.toFixed(1)}°C) y humedad compromete la resistencia natural del cultivo.`,
+      accion: "Revisar signos de pudrición en la base del tallo y asegurar drenaje óptimo.",
+      riesgo: 'Medium'
+    };
+  }
+
+  // 22. Sistema Estable (Default)
   return {
     titulo: "SISTEMA ESTABLE", 
     otomi: "¡Hño m'u̲i!",
-    desc: `Monitoreo de rutina: Los sensores indican que las variables ambientales (${t.toFixed(1)}°C y ${normSuelo.toFixed(1)}% de humedad) se mantienen dentro de los umbrales de seguridad para Hidalgo.`,
-    accion: "Continuar con el programa de manejo preventivo estándar. Los algoritmos de riesgo no detectan amenazas inmediatas.",
+    desc: `Monitoreo de rutina: Todas las variables (${t.toFixed(1)}°C, suelo en ${suelo.toFixed(0)}) están dentro de los umbrales de seguridad.`,
+    accion: "Mantener el cronograma de manejo preventivo estándar para la región.",
     riesgo: 'None'
   };
 };
