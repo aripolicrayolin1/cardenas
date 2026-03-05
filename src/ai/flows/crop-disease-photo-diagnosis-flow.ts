@@ -66,7 +66,7 @@ export async function diagnoseCropDisease(input: CropDiagnosisInput): Promise<Cr
       }
 
       const { output } = await currentAi.generate({
-        model: 'googleAI/gemini-1.5-flash',
+        model: 'googleai/gemini-1.5-flash',
         prompt: parts,
         output: { schema: CropDiagnosisOutputSchema },
       });
@@ -78,7 +78,6 @@ export async function diagnoseCropDisease(input: CropDiagnosisInput): Promise<Cr
     } catch (e: any) {
       console.error(`[ERROR-IA] Intento ${i + 1} falló.`);
       console.error(`Mensaje: ${e.message}`);
-      if (e.status) console.error(`Status HTTP: ${e.status}`);
     }
   }
 
