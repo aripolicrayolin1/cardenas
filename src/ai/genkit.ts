@@ -13,16 +13,15 @@ const envKeys = [
 
 /**
  * Instancias de Genkit con rotación de llaves. 
- * Se utiliza el identificador 'googleAI/gemini-1.5-flash' para asegurar la ruta correcta en la API.
  */
 export const aiInstances = envKeys.length > 0 
   ? envKeys.map((key) => genkit({
       plugins: [googleAI({ apiKey: key })],
-      model: 'googleAI/gemini-1.5-flash'
+      model: 'googleai/gemini-1.5-flash'
     }))
   : [genkit({
       plugins: [googleAI()],
-      model: 'googleAI/gemini-1.5-flash'
+      model: 'googleai/gemini-1.5-flash'
     })];
 
 export const ai = aiInstances[0];
