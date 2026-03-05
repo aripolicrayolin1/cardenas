@@ -7,7 +7,7 @@ import {googleAI} from '@genkit-ai/google-genai';
  */
 
 const keys = [
-  "AIzaSyDj_O26XGivdJQvjbLdhBK3woU-FRK3avg", // Nueva llave proporcionada por el usuario
+  "AIzaSyDj_O26XGivdJQvjbLdhBK3woU-FRK3avg", // Nueva llave principal proporcionada
   "AIzaSyDaCIrKjEp7VudNePBRNSQvMbxCpAs4lUU",
   "AIzaSyAN_DszwX0FLg_25hacO8HJHSbqIn2L59s",
   "AIzaSyCvEPqyhH2lWBWZrhpZy_vWalAH9Yhc4Zc",
