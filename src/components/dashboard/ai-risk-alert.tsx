@@ -26,7 +26,7 @@ export function AIRiskAlert({ sensorValues }: AIRiskAlertProps) {
 
   const handleManualScan = () => {
     setLoading(true);
-    // Simulamos un tiempo de procesamiento para que parezca una IA real
+    // Simulación de procesamiento de red neuronal
     setTimeout(() => {
       const result = obtenerDiagnosticoIA(
         sensorValues.temp,
@@ -37,7 +37,7 @@ export function AIRiskAlert({ sensorValues }: AIRiskAlertProps) {
       );
       setPrediction(result);
       setLoading(false);
-    }, 2500);
+    }, 2800);
   };
 
   const translateRisk = (risk?: string) => {
@@ -64,7 +64,7 @@ export function AIRiskAlert({ sensorValues }: AIRiskAlertProps) {
           <div className="absolute inset-0 flex flex-col items-center justify-center bg-white/60 backdrop-blur-md">
             <BrainCircuit className="h-16 w-16 animate-pulse text-primary mb-4" />
             <p className="text-sm font-black uppercase tracking-widest text-primary animate-bounce">
-              PROCESANDO DATOS IoT CON IA...
+              ANALIZANDO RED NEURONAL AGRÍCOLA...
             </p>
           </div>
         </div>
@@ -109,13 +109,22 @@ export function AIRiskAlert({ sensorValues }: AIRiskAlertProps) {
         ) : prediction ? (
           <div className="space-y-4 animate-in fade-in slide-in-from-bottom-4 duration-500">
             <div className="bg-white/40 backdrop-blur-md p-5 rounded-2xl border border-white/60 shadow-inner">
-              <h4 className="font-black text-[10px] mb-2 flex items-center gap-2 text-primary uppercase tracking-widest">
-                <BrainCircuit className="h-3 w-3" />
-                {lang === 'hn' ? prediction.otomi : prediction.titulo}
-              </h4>
-              <p className="text-sm font-medium text-foreground/80 leading-relaxed italic">
-                "{prediction.desc}"
-              </p>
+              <div className="flex flex-col mb-3">
+                <h4 className="font-black text-sm text-primary uppercase tracking-tighter">
+                  {prediction.titulo}
+                </h4>
+                <span className="text-[10px] font-black text-accent uppercase tracking-widest">
+                  {prediction.otomi}
+                </span>
+              </div>
+              <div className="flex gap-3">
+                <div className="bg-primary/10 p-2 rounded-lg h-fit">
+                   <BrainCircuit className="h-5 w-5 text-primary" />
+                </div>
+                <p className="text-sm font-medium text-foreground/80 leading-relaxed italic">
+                  "{prediction.desc}"
+                </p>
+              </div>
             </div>
             
             <div className="bg-primary/10 backdrop-blur-sm p-5 rounded-2xl border border-primary/20 shadow-sm">
@@ -129,7 +138,7 @@ export function AIRiskAlert({ sensorValues }: AIRiskAlertProps) {
             </div>
 
             <Button variant="ghost" size="sm" onClick={handleManualScan} className="w-full text-[9px] h-8 font-black uppercase tracking-widest text-muted-foreground hover:text-primary rounded-xl">
-              <RefreshCw className="h-3.5 w-3.5 mr-2" /> RE-ESCANEAR PARCELA
+              <RefreshCw className="h-3.5 w-3.5 mr-2" /> RE-ESCANEAR VARIABLES IoT
             </Button>
           </div>
         ) : null}
