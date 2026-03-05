@@ -25,7 +25,7 @@ import {
 import { useState, useRef, useEffect } from "react";
 import { diagnoseCropDisease, type CropDiagnosisOutput } from "@/ai/flows/crop-disease-photo-diagnosis-flow";
 import Image from "next/image";
-import { Badge } from "@/badge";
+import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 import { useTranslation } from "@/hooks/use-translation";
@@ -158,7 +158,7 @@ export default function DiagnosisPage() {
         <main className="flex-1 p-4 md:p-8 space-y-6">
           <div className="max-w-5xl mx-auto space-y-6">
             {!diagnosis ? (
-              <Card className="border-none shadow-xl overflow-hidden">
+              <Card className="glass-card border-none shadow-xl overflow-hidden">
                 <CardHeader className="bg-primary/5">
                   <CardTitle className="text-2xl flex items-center gap-2">
                     <Camera className="h-6 w-6 text-primary" />
@@ -217,7 +217,7 @@ export default function DiagnosisPage() {
               </Card>
             ) : (
               <div className="grid gap-6 lg:grid-cols-3">
-                <Card className="lg:col-span-1 border-none shadow-lg h-fit">
+                <Card className="lg:col-span-1 glass-card border-none shadow-lg h-fit">
                    <div className="relative aspect-square bg-muted flex items-center justify-center overflow-hidden rounded-t-lg">
                       {selectedImage ? (
                         <Image src={selectedImage} alt="Preview" fill className="object-cover" />
@@ -239,7 +239,7 @@ export default function DiagnosisPage() {
                 </Card>
 
                 <div className="lg:col-span-2 space-y-6">
-                  <Card className="border-none shadow-xl animate-in fade-in slide-in-from-bottom-4 duration-500">
+                  <Card className="glass-card border-none shadow-xl animate-in fade-in slide-in-from-bottom-4 duration-500">
                     <CardHeader className="border-b">
                       <div className="flex items-center gap-2 text-primary font-bold text-xs uppercase mb-2">
                         <ShieldCheck className="h-4 w-4" /> {t('precision_diagnosis')}

@@ -55,7 +55,7 @@ export function AIRiskAlert({ sensorValues }: AIRiskAlertProps) {
   };
 
   const safeUpper = (str: any) => {
-    if (typeof str !== 'string') return "";
+    if (typeof str !== 'string' || !str) return "";
     return str.toUpperCase();
   };
 
@@ -67,7 +67,7 @@ export function AIRiskAlert({ sensorValues }: AIRiskAlertProps) {
           <div className="absolute inset-0 flex flex-col items-center justify-center bg-white/40 backdrop-blur-sm">
             <RefreshCw className="h-12 w-12 animate-spin text-primary opacity-20" />
             <p className="mt-4 text-[10px] font-black uppercase tracking-widest text-primary animate-pulse">
-              {safeUpper(t('analyze_ai') || "Analizando")}...
+              {safeUpper(t('analyze_ai'))}...
             </p>
           </div>
         </div>
@@ -83,16 +83,16 @@ export function AIRiskAlert({ sensorValues }: AIRiskAlertProps) {
             ) : (
               <ShieldCheck className="text-primary h-5 w-5" />
             )}
-            {t('risk_analysis') || "Análisis de Riesgo"}
+            {t('risk_analysis')}
           </CardTitle>
           <CardDescription className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
-            {t('risk_prediction') || "Predicción de Riesgo"}
+            {t('risk_prediction')}
           </CardDescription>
         </div>
         {prediction && (
           <div className="flex flex-col items-end gap-1">
             <Badge variant={prediction.predictedRisk === 'High' ? 'destructive' : 'default'} className="uppercase font-black text-[9px] px-3 py-1 rounded-full shadow-lg">
-              {t('risk') || "Riesgo"}: {translateRisk(prediction.predictedRisk)}
+              {t('risk')}: {translateRisk(prediction.predictedRisk)}
             </Badge>
           </div>
         )}
@@ -108,7 +108,7 @@ export function AIRiskAlert({ sensorValues }: AIRiskAlertProps) {
               Presiona para iniciar el análisis inteligente de tus sensores.
             </p>
             <Button onClick={handleManualScan} className="gap-2 font-black rounded-xl px-10 py-6 bg-primary hover:bg-primary/90 shadow-lg">
-               <Zap className="h-5 w-5 fill-white" /> {safeUpper(t('analyze_ai') || "Analizar con IA")}
+               <Zap className="h-5 w-5 fill-white" /> {safeUpper(t('analyze_ai'))}
             </Button>
           </div>
         ) : prediction ? (
@@ -126,7 +126,7 @@ export function AIRiskAlert({ sensorValues }: AIRiskAlertProps) {
             <div className="bg-primary/10 backdrop-blur-sm p-5 rounded-2xl border border-primary/20 shadow-sm">
               <h4 className="font-black text-[10px] mb-2 text-primary flex items-center gap-2 uppercase tracking-widest">
                 <Info className="h-3 w-3" />
-                {safeUpper(t('recommended_action') || "Acción Recomendada")}
+                {safeUpper(t('recommended_action'))}
               </h4>
               <p className="text-xs font-bold leading-snug text-primary/80">
                 {prediction.recommendation}

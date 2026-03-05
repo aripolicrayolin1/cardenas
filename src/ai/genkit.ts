@@ -2,7 +2,7 @@ import { genkit } from 'genkit';
 import { googleAI } from '@genkit-ai/google-genai';
 
 /**
- * @fileOverview Configuración centralizada de Genkit con soporte multi-llave.
+ * @fileOverview Configuración centralizada de Genkit optimizada para evitar errores 404.
  */
 
 const envKeys = [
@@ -12,17 +12,19 @@ const envKeys = [
 ].filter(Boolean) as string[];
 
 /**
- * Instancias de Genkit con rotación de llaves para evitar límites de cuota y errores 404.
+ * Instancias de Genkit con rotación de llaves. 
+ * Se utiliza el identificador 'googleAI/gemini-1.5-flash' para asegurar la ruta correcta en la API.
  */
 export const aiInstances = envKeys.length > 0 
   ? envKeys.map((key) => genkit({
       plugins: [googleAI({ apiKey: key })],
+      model: 'googleAI/gemini-1.5-flash'
     }))
   : [genkit({
       plugins: [googleAI()],
+      model: 'googleAI/gemini-1.5-flash'
     })];
 
-// Instancia por defecto (siempre disponible)
 export const ai = aiInstances[0];
 
 export function getAIInstance(index: number) {

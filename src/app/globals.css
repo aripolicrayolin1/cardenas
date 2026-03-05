@@ -1,23 +1,22 @@
-
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 @layer base {
   :root {
-    --background: 120 25% 97%; /* Un fondo más suave */
+    --background: 120 25% 97%;
     --foreground: 120 40% 10%;
-    --card: 0 0% 100% / 0.6; /* Transparencia por defecto */
+    --card: 0 0% 100% / 0.6;
     --card-foreground: 120 40% 10%;
     --popover: 0 0% 100% / 0.9;
     --popover-foreground: 120 40% 10%;
-    --primary: 142 76% 36%; /* Un verde más vibrante */
+    --primary: 142 76% 36%;
     --primary-foreground: 0 0% 100%;
     --secondary: 120 20% 90% / 0.5;
     --secondary-foreground: 120 50% 30%;
     --muted: 120 10% 90% / 0.5;
     --muted-foreground: 120 20% 40%;
-    --accent: 48 100% 50%; /* Amarillo ámbar */
+    --accent: 48 100% 50%;
     --accent-foreground: 120 50% 10%;
     --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 98%;
@@ -41,30 +40,12 @@
   }
 }
 
-/* Clases de utilidad para Glassmorphism */
 .glass-card {
   @apply bg-white/40 backdrop-blur-xl border border-white/40 shadow-[0_8px_32px_0_rgba(31,38,135,0.07)];
 }
 
 .glass-nav {
   @apply bg-white/20 backdrop-blur-md border-r border-white/20;
-}
-
-@media print {
-  .no-print {
-    display: none !important;
-  }
-  .only-print {
-    display: block !important;
-  }
-}
-
-.animate-float {
-  animation: float 6s ease-in-out infinite;
-}
-
-.animate-scan {
-  animation: scan 3s linear infinite;
 }
 
 @keyframes float {
@@ -76,4 +57,16 @@
 @keyframes scan {
   0% { top: 0; }
   100% { top: 100%; }
+}
+
+.animate-float {
+  animation: float 6s ease-in-out infinite;
+}
+
+.animate-scan {
+  animation: scan 3s linear infinite;
+}
+
+.animate-spin-slow {
+  animation: spin 8s linear infinite;
 }
