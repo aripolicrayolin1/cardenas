@@ -3,11 +3,11 @@ import {googleAI} from '@genkit-ai/google-genai';
 
 /**
  * Configuración de Genkit con soporte para rotación de llaves.
- * Usamos Gemini 1.5 Flash por ser el modelo con mayor cuota en el plan gratuito.
+ * Se prioriza la llave más reciente proporcionada por el usuario.
  */
 
 const keys = [
-  "AIzaSyDdXZUpzQNtcANQgWjhAIMPvA2nr64q5Ho", // Nueva llave principal proporcionada
+  "AIzaSyDdXZUpzQNtcANQgWjhAIMPvA2nr64q5Ho", // Llave principal actual
   "AIzaSyDj_O26XGivdJQvjbLdhBK3woU-FRK3avg",
   "AIzaSyDaCIrKjEp7VudNePBRNSQvMbxCpAs4lUU",
   "AIzaSyAN_DszwX0FLg_25hacO8HJHSbqIn2L59s",
@@ -28,7 +28,7 @@ export const aiInstances = finalKeys.map(key => genkit({
   model: 'googleai/gemini-1.5-flash',
 }));
 
-// Instancia por defecto (usará la primera llave de la lista)
+// Instancia por defecto
 export const ai = aiInstances[0];
 
 /**

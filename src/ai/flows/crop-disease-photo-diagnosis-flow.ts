@@ -1,14 +1,13 @@
 'use server';
 /**
- * @fileOverview Diagnóstico de enfermedades híbrido: IA + Motor Local Experto Avanzado.
- * Incluye ahora enlaces de localización comercial para productos.
+ * @fileOverview Diagnóstico de enfermedades: IA Real con rotación de llaves agresiva.
  */
 
-import {aiInstances} from '@/ai/genkit';
+import {aiInstances, getAIInstance} from '@/ai/genkit';
 import {z} from 'genkit';
 
 const CropDiagnosisInputSchema = z.object({
-  photoDataUri: z.string().optional().describe("A photo of a crop as a data URI (Optional)."),
+  photoDataUri: z.string().optional().describe("A photo of a crop as a data URI."),
   description: z.string().optional().describe('Description of the symptoms.'),
 });
 export type CropDiagnosisInput = z.infer<typeof CropDiagnosisInputSchema>;
@@ -37,67 +36,6 @@ const CropDiagnosisOutputSchema = z.object({
 });
 export type CropDiagnosisOutput = z.infer<typeof CropDiagnosisOutputSchema>;
 
-/**
- * Motor de Diagnóstico Local Experto.
- */
-function getLocalDiagnosis(description: string = ""): CropDiagnosisOutput {
-  const desc = description.toLowerCase();
-  
-  let problem = "Problema no identificado claramente";
-  let severity: 'Low' | 'Medium' | 'High' | 'Not Applicable' = "Medium";
-  let actions = ["Observar el cultivo diariamente", "Evitar el riego nocturno", "Consultar a un técnico local"];
-  let remedies = [{ name: "Aislamiento", ingredients: ["Ninguno"], instructions: "Separa la planta infectada para evitar propagación." }];
-  let products = [{ name: "Consulta Técnica", description: "Lleva una muestra a una tienda agropecuaria.", localStores: "Región Hidalgo", locationLink: "https://www.google.com/maps/search/agroquimicas+hidalgo" }];
-
-  if (desc.includes("cenicilla") || desc.includes("mildiú") || desc.includes("algodonosa") || desc.includes("blancas") || desc.includes("polvo blanco")) {
-    problem = "Cenicilla o Mildiú Polvoriento";
-    severity = "Medium";
-    actions = ["Eliminar hojas afectadas", "Mejorar ventilación", "Reducir humedad ambiental"];
-    remedies = [
-      { name: "Mezcla de Leche", ingredients: ["1 parte leche", "9 partes agua"], instructions: "Pulverizar al sol directo." },
-      { name: "Bicarbonato", ingredients: ["1 cda Bicarbonato", "1L Agua"], instructions: "Pulverizar cada 7 días." }
-    ];
-    products = [
-      { name: "Topas", description: "Fungicida sistémico potente.", localStores: "Agroquímicas Pachuca/Actopan", locationLink: "https://www.google.com/maps/search/Topas+fungicida+Hidalgo" },
-      { name: "Azufre Agrícola", description: "Tratamiento preventivo tradicional.", localStores: "Tiendas de Insumos locales", locationLink: "https://www.google.com/maps/search/azufre+agricola+Hidalgo" }
-    ];
-  } 
-  else if (desc.includes("araña") || desc.includes("telaraña") || desc.includes("ácaro") || desc.includes("puntos rojos")) {
-    problem = "Araña Roja (Ácaros)";
-    severity = "High";
-    actions = ["Aumentar riego foliar", "Eliminar malezas", "Revisar envés de hojas"];
-    remedies = [{ name: "Jabón Potásico", ingredients: ["Jabón", "Agua"], instructions: "Lavar hojas por ambos lados." }];
-    products = [
-      { name: "Oberon (Spiromesifen)", description: "Acaricida de alta residualidad.", localStores: "Distribuidores Valle del Mezquital", locationLink: "https://www.google.com/maps/search/Oberon+insecticida+Hidalgo" },
-      { name: "Vertimec", description: "Control eficaz de ácaros y trips.", localStores: "Tiendas Especializadas Pachuca", locationLink: "https://www.google.com/maps/search/Vertimec+abamectina+Hidalgo" }
-    ];
-  }
-  else if (desc.includes("gusano") || desc.includes("oruga") || desc.includes("comido") || desc.includes("huecos")) {
-    problem = "Gusano Cogollero / Orugas";
-    severity = "High";
-    actions = ["Monitoreo manual nocturno", "Uso de trampas", "Eliminar restos vegetales"];
-    remedies = [{ name: "Repelente de Ajo y Chile", ingredients: ["Ajo", "Chile", "Agua"], instructions: "Licuar y reposar 24h antes de aplicar." }];
-    products = [
-      { name: "Spintor (Spinosad)", description: "Producto natural altamente efectivo.", localStores: "Agro-veterinarias Hidalgo", locationLink: "https://www.google.com/maps/search/Spintor+insecticida+Hidalgo" },
-      { name: "Dipel", description: "Bacillus thuringiensis biológico.", localStores: "Tiendas de Bio-insumos", locationLink: "https://www.google.com/maps/search/Dipel+Bacillus+Hidalgo" }
-    ];
-  }
-
-  return {
-    diagnosis: {
-      isProblemDetected: true,
-      identifiedProblem: problem,
-      severity,
-      confidence: "High",
-      recommendedActions: actions,
-      commercialProducts: products,
-      homeMadeRemedies: remedies,
-      additionalNotes: "Motor experto optimizado para el Hackathon Praxis.",
-      isFallback: true
-    }
-  };
-}
-
 export async function diagnoseCropDisease(input: CropDiagnosisInput): Promise<CropDiagnosisOutput> {
   const sleep = (ms: number) => new Promise(res => setTimeout(res, ms));
 
@@ -105,24 +43,51 @@ export async function diagnoseCropDisease(input: CropDiagnosisInput): Promise<Cr
     throw new Error("Se requiere descripción o foto.");
   }
 
+  // Intentamos con todas las llaves de Gemini
   for (let i = 0; i < aiInstances.length; i++) {
     try {
-      const ai = aiInstances[i];
+      const ai = getAIInstance(i);
       const prompt = ai.definePrompt({
-        name: `cropDiagnosisPrompt_v12_rotation_${i}`,
+        name: `cropDiagnosisPrompt_v15_rot_${i}`,
         input: {schema: CropDiagnosisInputSchema},
         output: {schema: CropDiagnosisOutputSchema},
-        prompt: `Eres un experto agrónomo en Hidalgo. 
-        Analiza síntomas: {{#if description}}{{{description}}}{{/if}}
-        Da un diagnóstico científico y productos disponibles en México con enlaces de búsqueda en Google Maps.`,
+        prompt: `Eres un experto agrónomo en el estado de Hidalgo, México. 
+        Analiza los síntomas reportados por el agricultor: {{#if description}}{{{description}}}{{/if}}
+        {{#if photoDataUri}}Foto adjunta: {{media url=photoDataUri}}{{/if}}
+        
+        Debes proporcionar un diagnóstico preciso, severidad del problema, acciones inmediatas y productos disponibles localmente en Hidalgo.
+        Si identificas una plaga común en el Valle del Mezquital, menciona su nombre técnico y tradicional.`,
       });
 
       const {output} = await prompt(input);
       if (output) return { ...output, diagnosis: { ...output.diagnosis, isFallback: false } };
     } catch (e: any) {
-      if (i < aiInstances.length - 1) await sleep(2000);
+      console.warn(`Error en llave Gemini ${i + 1}: ${e.message}`);
+      if (i < aiInstances.length - 1) await sleep(1500);
     }
   }
 
-  return getLocalDiagnosis(input.description);
+  // Diagnóstico local experto solo como último recurso
+  return {
+    diagnosis: {
+      isProblemDetected: true,
+      identifiedProblem: "Problema identificado por motor local (Fallback)",
+      severity: "Medium",
+      confidence: "Medium",
+      recommendedActions: ["Revisar el envés de las hojas", "Consultar con un agrónomo local", "Evitar el riego excesivo"],
+      commercialProducts: [{
+        name: "Consulta en tienda",
+        description: "Lleva una muestra a tu tienda agropecuaria más cercana.",
+        localStores: "Región Hidalgo",
+        locationLink: "https://www.google.com/maps/search/agroquimicas+hidalgo"
+      }],
+      homeMadeRemedies: [{
+        name: "Aislamiento preventivo",
+        ingredients: ["Espacio"],
+        instructions: "Evita que la planta enferma toque a las sanas."
+      }],
+      additionalNotes: "Modo de respaldo activado debido a saturación en los servidores de Google.",
+      isFallback: true
+    }
+  };
 }

@@ -1,6 +1,6 @@
 'use server';
 /**
- * @fileOverview Alertas predictivas usando Gemini 1.5 Flash con rotación agresiva de llaves.
+ * @fileOverview Alertas predictivas usando Gemini 1.5 Flash con rotación forzada.
  */
 
 import {aiInstances, getAIInstance} from '@/ai/genkit';
@@ -28,13 +28,13 @@ export type PredictiveAlertOutput = z.infer<typeof PredictiveAlertOutputSchema>;
 export async function predictivePestDiseaseAlerts(input: PredictiveAlertInput): Promise<PredictiveAlertOutput> {
   const sleep = (ms: number) => new Promise(res => setTimeout(res, ms));
 
-  // Intentamos con todas las llaves disponibles en rotación
+  // Intentamos con todas las llaves disponibles, priorizando Gemini
   for (let i = 0; i < aiInstances.length; i++) {
     try {
       const ai = getAIInstance(i);
       
       const prompt = ai.definePrompt({
-        name: `predictiveAlertPrompt_v8_rotation_${i}`,
+        name: `predictiveAlertPrompt_v10_rot_${i}`,
         input: {schema: PredictiveAlertInputSchema},
         output: {schema: PredictiveAlertOutputSchema},
         prompt: `Eres un experto agrónomo en el Valle del Mezquital, Hidalgo.
@@ -52,24 +52,22 @@ export async function predictivePestDiseaseAlerts(input: PredictiveAlertInput): 
       const {output} = await prompt(input);
       if (output) return { ...output, isFallback: false };
     } catch (e: any) {
-      console.warn(`Llave ${i + 1} agotada o bloqueada, rotando...`);
-      if (i < aiInstances.length - 1) await sleep(2000); 
+      console.warn(`Intento ${i + 1} fallido: ${e.message}`);
+      if (i < aiInstances.length - 1) await sleep(1500); 
     }
   }
 
-  // Fallback de alta calidad si todas las llaves fallan
-  const isHighHumidity = input.soilHumidity > 75;
-  
+  // Fallback solo si ABSOLUTAMENTE todas las llaves de Gemini fallan
   return {
-    alertNeeded: isHighHumidity,
-    alertMessage: isHighHumidity 
-      ? "Análisis de respaldo detecta condiciones de riesgo por exceso de humedad (De’mthe Hoi). Existe posibilidad de proliferación de patógenos fúngicos en la base del tallo."
-      : "Condiciones estables detectadas por el motor experto local. El riesgo de plagas es mínimo actualmente.",
-    predictedRisk: isHighHumidity ? "Medium" : "None",
-    potentialProblem: isHighHumidity ? "Hongo por humedad" : "Normal",
-    recommendation: isHighHumidity 
-      ? "Se recomienda suspender el riego automático y verificar el drenaje del terreno."
-      : "Mantén el monitoreo preventivo diario.",
+    alertNeeded: input.soilHumidity > 75,
+    alertMessage: input.soilHumidity > 75 
+      ? "Alerta Crítica: Exceso de humedad detectado (De’mthe Hoi). Riesgo inminente de pudrición radicular y hongos fitopatógenos."
+      : "Condiciones estables. Se recomienda mantener el monitoreo preventivo habitual.",
+    predictedRisk: input.soilHumidity > 75 ? "High" : "None",
+    potentialProblem: input.soilHumidity > 75 ? "Hongo por exceso de agua" : "Saludable",
+    recommendation: input.soilHumidity > 75 
+      ? "Suspender riego inmediato y revisar drenaje del suelo."
+      : "No se requieren acciones correctivas de emergencia.",
     isFallback: true
   };
 }
