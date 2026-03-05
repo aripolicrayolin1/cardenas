@@ -3,7 +3,7 @@
  * @fileOverview Alertas predictivas: Llamadas directas para máxima fiabilidad.
  */
 
-import { aiInstances, getAIInstance } from '@/ai/genkit';
+import { aiInstances, ai } from '@/ai/genkit';
 import { z } from 'genkit';
 
 const PredictiveAlertOutputSchema = z.object({
@@ -44,9 +44,11 @@ export async function predictivePestDiseaseAlerts(input: PredictiveAlertInput): 
     "recommendation": string
   }`;
 
-  for (let i = 0; i < aiInstances.length; i++) {
+  const instancesToTry = aiInstances.length > 0 ? aiInstances : [ai];
+
+  for (let i = 0; i < instancesToTry.length; i++) {
     try {
-      const currentAi = getAIInstance(i);
+      const currentAi = instancesToTry[i];
       
       const { output } = await currentAi.generate({
         model: 'googleai/gemini-1.5-flash',

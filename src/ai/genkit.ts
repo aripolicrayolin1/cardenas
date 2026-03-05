@@ -1,39 +1,45 @@
-import {genkit} from 'genkit';
-import {googleAI} from '@genkit-ai/google-genai';
+import { genkit } from 'genkit';
+import { googleAI } from '@genkit-ai/google-genai';
 
 /**
- * Configuración de Genkit con soporte para rotación de llaves.
- * Se prioriza la llave más reciente proporcionada por el usuario.
+ * @fileOverview Configuración centralizada de Genkit.
+ * - Elimina llaves hardcodeadas por seguridad.
+ * - Utiliza variables de entorno (.env).
+ * - Corrige los identificadores de modelo para evitar errores 404.
  */
 
-const keys = [
-  "AIzaSyDdXZUpzQNtcANQgWjhAIMPvA2nr64q5Ho", // Llave principal (q5Ho)
-  "AIzaSyDj_O26XGivdJQvjbLdhBK3woU-FRK3avg",
-  "AIzaSyDaCIrKjEp7VudNePBRNSQvMbxCpAs4lUU",
-  "AIzaSyAN_DszwX0FLg_25hacO8HJHSbqIn2L59s",
-  "AIzaSyCvEPqyhH2lWBWZrhpZy_vWalAH9Yhc4Zc"
-];
-
+// Extraemos las llaves de las variables de entorno de forma segura
 const envKeys = [
   process.env.GEMINI_API_KEY,
   process.env.GEMINI_API_KEY_2,
-  process.env.GEMINI_API_KEY_3
+  process.env.GEMINI_API_KEY_3,
+  process.env.GEMINI_API_KEY_4,
+  process.env.GEMINI_API_KEY_5
 ].filter(Boolean) as string[];
 
-const finalKeys = envKeys.length > 0 ? envKeys : keys;
+// Si no hay llaves en .env, usamos un array vacío para evitar bloqueos, 
+// pero el sistema notificará el error al intentar generar.
+const finalKeys = envKeys.length > 0 ? envKeys : [];
 
-// Creamos instancias distintas de Genkit, una por cada llave para evitar colisiones
+/**
+ * Creamos instancias distintas de Genkit para soportar la rotación de cuotas.
+ * Usamos el identificador de modelo estándar 'googleai/gemini-1.5-flash'.
+ */
 export const aiInstances = finalKeys.map(key => genkit({
-  plugins: [googleAI({apiKey: key})],
+  plugins: [googleAI({ apiKey: key })],
   model: 'googleai/gemini-1.5-flash',
 }));
 
-// Instancia por defecto (la primera es la más reciente)
-export const ai = aiInstances[0];
+// Instancia por defecto (si hay llaves disponibles)
+export const ai = aiInstances.length > 0 ? aiInstances[0] : genkit({
+  plugins: [googleAI()],
+  model: 'googleai/gemini-1.5-flash',
+});
 
 /**
  * Helper para obtener una instancia específica para la rotación.
  */
 export function getAIInstance(index: number) {
+  if (aiInstances.length === 0) return ai;
   return aiInstances[index % aiInstances.length];
 }

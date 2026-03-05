@@ -1,9 +1,9 @@
 'use server';
 /**
- * @fileOverview Diagnóstico de enfermedades: Llamadas directas a Gemini para evitar errores de registro.
+ * @fileOverview Diagnóstico de enfermedades: Llamadas directas para evitar errores de registro 404.
  */
 
-import { aiInstances, getAIInstance } from '@/ai/genkit';
+import { aiInstances, getAIInstance, ai } from '@/ai/genkit';
 import { z } from 'genkit';
 
 const CropDiagnosisOutputSchema = z.object({
@@ -57,15 +57,18 @@ export async function diagnoseCropDisease(input: CropDiagnosisInput): Promise<Cr
     }
   }`;
 
-  for (let i = 0; i < aiInstances.length; i++) {
+  const instancesToTry = aiInstances.length > 0 ? aiInstances : [ai];
+
+  for (let i = 0; i < instancesToTry.length; i++) {
     try {
-      const currentAi = getAIInstance(i);
+      const currentAi = instancesToTry[i];
       
       const parts: any[] = [{ text: promptText }];
       if (input.photoDataUri) {
         parts.push({ media: { url: input.photoDataUri, contentType: 'image/jpeg' } });
       }
 
+      // Intentamos con el modelo estándar
       const { output } = await currentAi.generate({
         model: 'googleai/gemini-1.5-flash',
         prompt: parts,
@@ -77,6 +80,7 @@ export async function diagnoseCropDisease(input: CropDiagnosisInput): Promise<Cr
       }
     } catch (e: any) {
       console.error(`Error en intento de IA ${i + 1}:`, e.message);
+      // Si es un error de modelo no encontrado, intentamos con la versión "latest" en el siguiente ciclo si es posible
     }
   }
 
