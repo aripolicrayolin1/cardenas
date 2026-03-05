@@ -39,7 +39,7 @@ export async function predictivePestDiseaseAlerts(input: PredictiveAlertInput): 
       const currentAi = aiInstances[i];
       
       const { output } = await currentAi.generate({
-        model: 'googleAI/gemini-1.5-flash',
+        model: 'googleai/gemini-1.5-flash',
         prompt: promptText,
         output: { schema: PredictiveAlertOutputSchema },
       });
