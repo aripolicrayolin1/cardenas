@@ -7,11 +7,11 @@ import {googleAI} from '@genkit-ai/google-genai';
  */
 
 const keys = [
-  "AIzaSyDj_O26XGivdJQvjbLdhBK3woU-FRK3avg", // Nueva llave principal proporcionada
+  "AIzaSyDdXZUpzQNtcANQgWjhAIMPvA2nr64q5Ho", // Nueva llave principal proporcionada
+  "AIzaSyDj_O26XGivdJQvjbLdhBK3woU-FRK3avg",
   "AIzaSyDaCIrKjEp7VudNePBRNSQvMbxCpAs4lUU",
   "AIzaSyAN_DszwX0FLg_25hacO8HJHSbqIn2L59s",
-  "AIzaSyCvEPqyhH2lWBWZrhpZy_vWalAH9Yhc4Zc",
-  "AIzaSyAruza-Wafz78L5YeLtvF5ATBB1P5uMKCo"
+  "AIzaSyCvEPqyhH2lWBWZrhpZy_vWalAH9Yhc4Zc"
 ];
 
 const envKeys = [
