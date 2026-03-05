@@ -1,6 +1,6 @@
 'use server';
 /**
- * @fileOverview Alertas predictivas con logs de depuración detallados.
+ * @fileOverview Alertas predictivas basadas en datos de sensores.
  */
 
 import { aiInstances, ai } from '@/ai/genkit';
@@ -8,7 +8,7 @@ import { z } from 'genkit';
 
 const PredictiveAlertOutputSchema = z.object({
   alertNeeded: z.boolean(),
-  alertMessage: z.string(),
+  alertMessage: z.string().describe('Un análisis detallado basado en los sensores.'),
   predictedRisk: z.enum(['None', 'Low', 'Medium', 'High']),
   potentialProblem: z.string(),
   recommendation: z.string(),
@@ -26,14 +26,13 @@ export type PredictiveAlertOutput = z.infer<typeof PredictiveAlertOutputSchema> 
 
 export async function predictivePestDiseaseAlerts(input: PredictiveAlertInput): Promise<PredictiveAlertOutput> {
   const promptText = `Eres un experto agrónomo en el Valle del Mezquital, Hidalgo.
-  Analiza estos datos de sensores en tiempo real:
+  Analiza estos datos de sensores en tiempo real para un cultivo de ${input.cropType} en ${input.region}:
   - Humedad del Suelo: ${input.soilHumidity}%
   - Temperatura: ${input.temperature}°C
   - Radiación UV: ${input.uvRadiation}
-  - Cultivo: ${input.cropType}
-  - Región: ${input.region}
   
-  Determina riesgos de plagas o enfermedades inminentes basándote en estas condiciones climáticas típicas de la zona.`;
+  Determina si existe un riesgo inmediato de plagas, hongos o estrés hídrico. 
+  Proporciona un mensaje de alerta claro y una recomendación técnica específica para el agricultor.`;
 
   const instancesToTry = aiInstances.length > 0 ? aiInstances : [ai];
 
@@ -48,23 +47,20 @@ export async function predictivePestDiseaseAlerts(input: PredictiveAlertInput): 
       });
 
       if (output) {
-        console.log(`[EXITO] Alerta generada con llave ${i + 1}`);
         return { ...output, isFallback: false };
       }
     } catch (e: any) {
-      console.error(`[ERROR-IA] Alerta intento ${i + 1} falló.`);
-      console.error(`Mensaje: ${e.message}`);
-      if (e.status) console.error(`Status HTTP: ${e.status}`);
+      console.error(`[ERROR-IA] Intento ${i + 1} falló: ${e.message}`);
     }
   }
 
-  console.log(`[FALLBACK] Activando alerta local de respaldo.`);
+  // Fallback local en caso de error de red o cuota
   return {
-    alertNeeded: input.soilHumidity > 75,
-    alertMessage: "Aviso: Sensores detectan niveles de alerta. (Análisis Local de Respaldo)",
-    predictedRisk: input.soilHumidity > 75 ? "High" : "Low",
-    potentialProblem: input.soilHumidity > 75 ? "Humedad Excesiva" : "Normal",
-    recommendation: "Monitorea el drenaje de tu parcela y busca signos de hongos.",
+    alertNeeded: input.soilHumidity > 80 || input.temperature > 35,
+    alertMessage: "El sistema de IA está saturado. Basado en el análisis local: Niveles de humedad/temperatura fuera de rango óptimo.",
+    predictedRisk: input.soilHumidity > 80 ? "High" : "Medium",
+    potentialProblem: "Posible Estrés Térmico o Humedad Excesiva",
+    recommendation: "Realiza una inspección manual de la parcela y verifica el drenaje.",
     isFallback: true
   };
 }

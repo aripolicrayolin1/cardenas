@@ -2,34 +2,27 @@ import { genkit } from 'genkit';
 import { googleAI } from '@genkit-ai/google-genai';
 
 /**
- * @fileOverview Configuración centralizada de Genkit con logs de depuración.
+ * @fileOverview Configuración centralizada de Genkit.
  */
 
 const envKeys = [
   process.env.GEMINI_API_KEY,
   process.env.GEMINI_API_KEY_2,
   process.env.GEMINI_API_KEY_3,
-  process.env.GEMINI_API_KEY_4,
-  process.env.GEMINI_API_KEY_5
 ].filter(Boolean) as string[];
 
-// Log para verificar carga de llaves en la terminal del servidor
-console.log(`[AGROTECH-IA] Sistema iniciado. Llaves detectadas: ${envKeys.length}`);
-
 /**
- * Instancias de Genkit con rotación de llaves.
+ * Instancias de Genkit con rotación de llaves para evitar límites de cuota.
  */
-export const aiInstances = envKeys.map((key, index) => {
+export const aiInstances = envKeys.map((key) => {
   return genkit({
     plugins: [googleAI({ apiKey: key })],
-    model: 'googleAI/gemini-1.5-flash',
   });
 });
 
-// Instancia por defecto (usará GEMINI_API_KEY si existe, o las del entorno)
+// Instancia por defecto
 export const ai = aiInstances.length > 0 ? aiInstances[0] : genkit({
   plugins: [googleAI()],
-  model: 'googleAI/gemini-1.5-flash',
 });
 
 export function getAIInstance(index: number) {
