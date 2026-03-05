@@ -286,7 +286,7 @@ export function CommunityAlerts() {
                           </div>
                           <p className="text-xs font-black text-foreground/80 mb-1">{a.problem}</p>
                           <div className="flex items-center justify-between mt-2">
-                            <span className="text-[9px] font-bold text-muted-foreground uppercase">{a.distance}</span>
+                            <span className="text-9px font-bold text-muted-foreground uppercase">{a.distance}</span>
                             <div className="h-2 w-2 rounded-full bg-destructive animate-pulse" />
                           </div>
                         </div>
