@@ -1,9 +1,9 @@
 'use server';
 /**
- * @fileOverview Alertas predictivas usando Gemini 1.5 Flash con rotación forzada.
+ * @fileOverview Alertas predictivas: Definiciones estables para evitar 404.
  */
 
-import {aiInstances, getAIInstance} from '@/ai/genkit';
+import {aiInstances, getAIInstance, ai} from '@/ai/genkit';
 import {z} from 'genkit';
 
 const PredictiveAlertInputSchema = z.object({
@@ -26,48 +26,33 @@ const PredictiveAlertOutputSchema = z.object({
 export type PredictiveAlertOutput = z.infer<typeof PredictiveAlertOutputSchema>;
 
 export async function predictivePestDiseaseAlerts(input: PredictiveAlertInput): Promise<PredictiveAlertOutput> {
-  const sleep = (ms: number) => new Promise(res => setTimeout(res, ms));
-
-  // Intentamos con todas las llaves disponibles, priorizando Gemini
+  // Intentamos con todas las instancias de IA
   for (let i = 0; i < aiInstances.length; i++) {
     try {
-      const ai = getAIInstance(i);
+      const currentAi = getAIInstance(i);
       
-      const prompt = ai.definePrompt({
-        name: `predictiveAlertPrompt_v10_rot_${i}`,
-        input: {schema: PredictiveAlertInputSchema},
-        output: {schema: PredictiveAlertOutputSchema},
+      const {output} = await currentAi.generate({
         prompt: `Eres un experto agrónomo en el Valle del Mezquital, Hidalgo.
         Analiza estos datos de sensores:
-        - Humedad del Suelo: {{{soilHumidity}}}%
-        - Temperatura: {{{temperature}}}°C
-        - Radiación UV: {{{uvRadiation}}}
-        - Cultivo: {{{cropType}}}
-        - Región: {{{region}}}
-
-        Determina si hay riesgo de plagas o enfermedades. Sé específico pero conciso. 
-        Si el riesgo es alto, menciona términos en Hñähñu para enfermedades (ej: De’mthe Hoi para humedad).`,
+        - Humedad: ${input.soilHumidity}%
+        - Temp: ${input.temperature}°C
+        - Cultivo: ${input.cropType}
+        Determina riesgos de plagas.`,
+        output: {schema: PredictiveAlertOutputSchema},
       });
 
-      const {output} = await prompt(input);
       if (output) return { ...output, isFallback: false };
     } catch (e: any) {
-      console.warn(`Intento ${i + 1} fallido: ${e.message}`);
-      if (i < aiInstances.length - 1) await sleep(1500); 
+      console.warn(`Error en llave ${i + 1}: ${e.message}`);
     }
   }
 
-  // Fallback solo si ABSOLUTAMENTE todas las llaves de Gemini fallan
   return {
     alertNeeded: input.soilHumidity > 75,
-    alertMessage: input.soilHumidity > 75 
-      ? "Alerta Crítica: Exceso de humedad detectado (De’mthe Hoi). Riesgo inminente de pudrición radicular y hongos fitopatógenos."
-      : "Condiciones estables. Se recomienda mantener el monitoreo preventivo habitual.",
-    predictedRisk: input.soilHumidity > 75 ? "High" : "None",
-    potentialProblem: input.soilHumidity > 75 ? "Hongo por exceso de agua" : "Saludable",
-    recommendation: input.soilHumidity > 75 
-      ? "Suspender riego inmediato y revisar drenaje del suelo."
-      : "No se requieren acciones correctivas de emergencia.",
+    alertMessage: "Aviso: Sensores detectan niveles de alerta. (Análisis Local)",
+    predictedRisk: input.soilHumidity > 75 ? "High" : "Low",
+    potentialProblem: input.soilHumidity > 75 ? "Humedad Excesiva" : "Normal",
+    recommendation: "Monitorea el drenaje de tu parcela.",
     isFallback: true
   };
 }

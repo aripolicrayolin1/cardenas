@@ -1,9 +1,9 @@
 'use server';
 /**
- * @fileOverview Diagnóstico de enfermedades: IA Real con rotación de llaves agresiva.
+ * @fileOverview Diagnóstico de enfermedades: IA Real con definiciones estáticas.
  */
 
-import {aiInstances, getAIInstance} from '@/ai/genkit';
+import {aiInstances, getAIInstance, ai} from '@/ai/genkit';
 import {z} from 'genkit';
 
 const CropDiagnosisInputSchema = z.object({
@@ -36,57 +36,61 @@ const CropDiagnosisOutputSchema = z.object({
 });
 export type CropDiagnosisOutput = z.infer<typeof CropDiagnosisOutputSchema>;
 
-export async function diagnoseCropDisease(input: CropDiagnosisInput): Promise<CropDiagnosisOutput> {
-  const sleep = (ms: number) => new Promise(res => setTimeout(res, ms));
+// DEFINICIÓN ESTÁTICA DEL PROMPT (Fuera del loop para evitar 404)
+const diagnosisPrompt = ai.definePrompt({
+  name: 'cropDiagnosisPrompt_v20',
+  input: {schema: CropDiagnosisInputSchema},
+  output: {schema: CropDiagnosisOutputSchema},
+  prompt: `Eres un experto agrónomo en el estado de Hidalgo, México. 
+  Analiza los síntomas reportados por el agricultor: {{#if description}}{{{description}}}{{/if}}
+  {{#if photoDataUri}}Foto adjunta: {{media url=photoDataUri}}{{/if}}
+  
+  Debes proporcionar un diagnóstico preciso, severidad del problema, acciones inmediatas y productos disponibles localmente en Hidalgo.
+  Si identificas una plaga común en el Valle del Mezquital, menciona su nombre técnico y tradicional.`,
+});
 
+export async function diagnoseCropDisease(input: CropDiagnosisInput): Promise<CropDiagnosisOutput> {
   if (!input.description && !input.photoDataUri) {
     throw new Error("Se requiere descripción o foto.");
   }
 
-  // Intentamos con todas las llaves de Gemini
+  // Intentamos con las instancias de IA (rotación de llaves)
   for (let i = 0; i < aiInstances.length; i++) {
     try {
-      const ai = getAIInstance(i);
-      const prompt = ai.definePrompt({
-        name: `cropDiagnosisPrompt_v15_rot_${i}`,
-        input: {schema: CropDiagnosisInputSchema},
+      const currentAi = getAIInstance(i);
+      
+      // Llamamos directamente al modelo de la instancia actual para forzar el uso de la llave
+      const {output} = await currentAi.generate({
+        prompt: `Eres un experto agrónomo en Hidalgo. 
+        Analiza: ${input.description || 'Imagen adjunta'}
+        Proporciona un diagnóstico estructurado en JSON.`,
         output: {schema: CropDiagnosisOutputSchema},
-        prompt: `Eres un experto agrónomo en el estado de Hidalgo, México. 
-        Analiza los síntomas reportados por el agricultor: {{#if description}}{{{description}}}{{/if}}
-        {{#if photoDataUri}}Foto adjunta: {{media url=photoDataUri}}{{/if}}
-        
-        Debes proporcionar un diagnóstico preciso, severidad del problema, acciones inmediatas y productos disponibles localmente en Hidalgo.
-        Si identificas una plaga común en el Valle del Mezquital, menciona su nombre técnico y tradicional.`,
       });
 
-      const {output} = await prompt(input);
       if (output) return { ...output, diagnosis: { ...output.diagnosis, isFallback: false } };
     } catch (e: any) {
-      console.warn(`Error en llave Gemini ${i + 1}: ${e.message}`);
-      if (i < aiInstances.length - 1) await sleep(1500);
+      console.warn(`Intento de IA ${i + 1} fallido: ${e.message}`);
     }
   }
 
-  // Diagnóstico local experto solo como último recurso
+  // Fallback solo si todo lo anterior falla
   return {
     diagnosis: {
       isProblemDetected: true,
-      identifiedProblem: "Problema identificado por motor local (Fallback)",
+      identifiedProblem: "Motor Experto Local (Modo Respaldo)",
       severity: "Medium",
       confidence: "Medium",
-      recommendedActions: ["Revisar el envés de las hojas", "Consultar con un agrónomo local", "Evitar el riego excesivo"],
+      recommendedActions: ["Revisar el envés de las hojas", "Consultar con un agrónomo local"],
       commercialProducts: [{
-        name: "Consulta en tienda",
+        name: "Consulta Técnica",
         description: "Lleva una muestra a tu tienda agropecuaria más cercana.",
         localStores: "Región Hidalgo",
-        locationLink: "https://www.google.com/maps/search/agroquimicas+hidalgo"
       }],
       homeMadeRemedies: [{
         name: "Aislamiento preventivo",
         ingredients: ["Espacio"],
         instructions: "Evita que la planta enferma toque a las sanas."
       }],
-      additionalNotes: "Modo de respaldo activado debido a saturación en los servidores de Google.",
       isFallback: true
     }
   };
