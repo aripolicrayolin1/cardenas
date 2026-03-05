@@ -5,18 +5,17 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { 
   Users, 
   MapPin, 
-  Calendar, 
   ArrowRight, 
   Plus, 
   AlertTriangle, 
-  X, 
-  Info, 
   Loader2, 
   ShieldCheck, 
   Radio, 
   Zap, 
   Target, 
-  CheckCircle2 
+  CheckCircle2,
+  Search,
+  Info
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -40,6 +39,7 @@ interface Alert {
   region: string;
   crop: string;
   problem: string;
+  description: string;
   severity: string;
   distance: string;
   date: string;
@@ -53,6 +53,7 @@ const initialAlerts: Alert[] = [
     region: "Actopan",
     crop: "Maíz",
     problem: "Gusano Cogollero",
+    description: "Detección de larvas en el envés de las hojas jóvenes.",
     severity: "Alta",
     distance: "A 5km de ti",
     date: "Hace 2h",
@@ -61,25 +62,27 @@ const initialAlerts: Alert[] = [
   },
   {
     id: "2",
-    region: "Ixmiquilpan",
+    region: "Tulancingo",
     crop: "Hortalizas",
-    problem: "Mosca Blanca",
+    problem: "Plaga de Hoja con Bicho",
+    description: "Manchas necróticas y presencia de insectos masticadores.",
     severity: "Media",
-    distance: "A 12km de ti",
-    date: "Hace 5h",
-    lat: 20.4849,
-    lng: -99.2192
+    distance: "Región Tulancingo",
+    date: "Hace 4h",
+    lat: 20.0811,
+    lng: -98.3664
   },
   {
     id: "3",
-    region: "El Arenal",
+    region: "Ixmiquilpan",
     crop: "Maíz",
-    problem: "Gusano Cogollero",
+    problem: "Piojo Blanco",
+    description: "Colonias algodonosas en la base de la mazorca.",
     severity: "Alta",
-    distance: "A 8km de ti",
+    distance: "Valle del Mezquital",
     date: "Hace 1h",
-    lat: 20.2222,
-    lng: -98.9111
+    lat: 20.4849,
+    lng: -99.2192
   }
 ];
 
@@ -96,7 +99,8 @@ export function CommunityAlerts() {
   const [newAlert, setNewAlert] = useState({
     region: "",
     crop: "",
-    problem: ""
+    problem: "",
+    description: ""
   });
 
   useEffect(() => {
@@ -122,9 +126,8 @@ export function CommunityAlerts() {
           lat: position.coords.latitude,
           lng: position.coords.longitude
         });
-        setNewAlert(prev => ({ ...prev, region: "Ubicación GPS fijada" }));
         setLoadingLocation(false);
-        toast({ title: "GPS Listo", description: "Coordenadas fijadas automáticamente." });
+        toast({ title: "GPS Listo", description: "Ubicación fijada automáticamente." });
       },
       () => {
         setLoadingLocation(false);
@@ -144,11 +147,12 @@ export function CommunityAlerts() {
       region: userCoords ? "Zona Local (GPS)" : newAlert.region,
       crop: newAlert.crop || "Varios",
       problem: newAlert.problem,
+      description: newAlert.description || "Reporte ciudadano preventivo.",
       severity: "Alta",
       distance: userCoords ? "Aquí mismo" : "Hidalgo, MX",
       date: "Recién reportado",
-      lat: userCoords?.lat || (20.2 + (Math.random() * 0.2)),
-      lng: userCoords?.lng || (-98.9 - (Math.random() * 0.2))
+      lat: userCoords?.lat || (20.1 + (Math.random() * 0.4)),
+      lng: userCoords?.lng || (-98.5 - (Math.random() * 0.4))
     };
 
     const updated = [alert, ...alerts];
@@ -156,20 +160,15 @@ export function CommunityAlerts() {
     localStorage.setItem("community_alerts", JSON.stringify(updated));
     
     setIsReportOpen(false);
-    setNewAlert({ region: "", crop: "", problem: "" });
+    setNewAlert({ region: "", crop: "", problem: "", description: "" });
     setUserCoords(null);
-    toast({ title: "Alerta Enviada", description: "El radar regional se ha actualizado." });
+    toast({ title: "Radar Actualizado", description: "Tu reporte ya es visible para toda la comunidad." });
   };
 
-  const openMap = (alert: Alert) => {
+  const openRadar = (alert: Alert) => {
     setSelectedAlert(alert);
     setIsMapOpen(true);
   };
-
-  const similarAlerts = useMemo(() => {
-    if (!selectedAlert) return [];
-    return alerts.filter(a => a.problem === selectedAlert.problem);
-  }, [selectedAlert, alerts]);
 
   return (
     <Card className="border-none shadow-md overflow-hidden flex flex-col h-full glass-card">
@@ -185,7 +184,11 @@ export function CommunityAlerts() {
       <CardContent className="p-0 flex-1 overflow-auto max-h-[400px]">
         <div className="divide-y divide-primary/10">
           {alerts.map((alert) => (
-            <div key={alert.id} className="p-4 hover:bg-primary/5 transition-all group cursor-pointer border-l-4 border-transparent hover:border-primary" onClick={() => openMap(alert)}>
+            <div 
+              key={alert.id} 
+              className={`p-4 hover:bg-primary/5 transition-all group cursor-pointer border-l-4 ${selectedAlert?.id === alert.id ? 'border-primary bg-primary/5' : 'border-transparent'}`} 
+              onClick={() => openRadar(alert)}
+            >
               <div className="flex items-center justify-between mb-2">
                 <div className="flex items-center gap-2 text-[10px] font-black text-muted-foreground uppercase tracking-widest">
                   <MapPin className="h-3 w-3 text-primary" />
@@ -196,8 +199,8 @@ export function CommunityAlerts() {
               <h4 className="font-black text-sm text-foreground/80">{alert.problem}</h4>
               <div className="flex items-center justify-between mt-3">
                 <span className="text-[9px] font-bold text-muted-foreground uppercase">{alert.date}</span>
-                <Button variant="ghost" size="sm" className="h-7 text-[10px] px-2 gap-1 font-black text-primary">
-                  VER RADAR <ArrowRight className="h-3 w-3" />
+                <Button variant="ghost" size="sm" className="h-7 text-[10px] px-2 gap-1 font-black text-primary group-hover:bg-primary group-hover:text-white rounded-lg">
+                  VER EN MAPA <ArrowRight className="h-3 w-3" />
                 </Button>
               </div>
             </div>
@@ -206,55 +209,66 @@ export function CommunityAlerts() {
       </CardContent>
       
       <div className="p-4 bg-primary/5 border-t border-primary/10">
-        <Button className="w-full font-black text-xs uppercase tracking-widest rounded-xl h-11" onClick={() => setIsReportOpen(true)}>
+        <Button className="w-full font-black text-xs uppercase tracking-widest rounded-xl h-11 shadow-lg shadow-primary/20" onClick={() => setIsReportOpen(true)}>
           <Plus className="h-4 w-4 mr-2" /> {t('report_outbreak')}
         </Button>
       </div>
 
-      {/* MODAL DEL MAPA (RADAR) */}
+      {/* MODAL DEL RADAR CON GOOGLE MAPS */}
       <Dialog open={isMapOpen} onOpenChange={setIsMapOpen}>
         <DialogContent className="max-w-[95vw] sm:max-w-6xl p-0 overflow-hidden border-none bg-background/95 backdrop-blur-xl">
           <div className="flex flex-col lg:flex-row h-[85vh] lg:h-[700px]">
-            {/* LADO IZQUIERDO: LISTA DE BROTES */}
-            <div className="w-full lg:w-96 border-r border-primary/10 p-6 flex flex-col bg-white/80 z-10">
+            {/* PANEL DE CONTROL DEL RADAR */}
+            <div className="w-full lg:w-96 border-r border-primary/10 p-6 flex flex-col bg-white/90 z-10 shadow-xl">
               <DialogHeader className="mb-6">
                 <div className="flex items-center gap-2 text-destructive font-black text-[10px] uppercase tracking-widest mb-1">
-                  <Target className="h-4 w-4 animate-pulse" /> VIGILANCIA ACTIVA
+                  <Target className="h-4 w-4 animate-pulse" /> VIGILANCIA COMUNITARIA
                 </div>
-                <DialogTitle className="text-2xl font-black text-primary tracking-tighter">
-                  {selectedAlert?.problem}
+                <DialogTitle className="text-2xl font-black text-primary tracking-tighter uppercase">
+                  Radar de Brotes
                 </DialogTitle>
                 <DialogDescription className="text-xs font-bold text-muted-foreground">
-                  Ola de contagio detectada en el Valle del Mezquital.
+                  Selecciona un punto para ver la descripción técnica.
                 </DialogDescription>
               </DialogHeader>
 
-              <ScrollArea className="flex-1 pr-2">
+              <ScrollArea className="flex-1 -mx-2 px-2">
                 <div className="space-y-3">
-                  {similarAlerts.map(a => (
-                    <div key={a.id} className="p-4 bg-white border-2 border-primary/5 rounded-2xl shadow-sm">
+                  {alerts.map(a => (
+                    <div 
+                      key={a.id} 
+                      className={`p-4 rounded-2xl border-2 cursor-pointer transition-all ${selectedAlert?.id === a.id ? 'border-primary bg-primary/5 shadow-md scale-[1.02]' : 'border-transparent bg-white hover:border-primary/20'}`}
+                      onClick={() => setSelectedAlert(a)}
+                    >
                       <div className="flex items-center justify-between mb-1">
                         <span className="text-[10px] font-black text-primary uppercase flex items-center gap-1">
                           <MapPin className="h-3 w-3" /> {a.region}
                         </span>
-                        <Badge variant="outline" className="text-[8px] h-4">{a.date}</Badge>
+                        <Badge variant="outline" className="text-[8px] h-4 font-black">{a.date}</Badge>
                       </div>
-                      <p className="text-xs font-black text-foreground/80">{a.problem}</p>
+                      <p className="text-sm font-black text-foreground/80 mb-2">{a.problem}</p>
+                      {selectedAlert?.id === a.id && (
+                        <div className="mt-2 pt-2 border-t border-primary/10 animate-in fade-in duration-300">
+                          <p className="text-[10px] font-bold text-muted-foreground italic">
+                            "{a.description}"
+                          </p>
+                        </div>
+                      )}
                     </div>
                   ))}
                 </div>
               </ScrollArea>
               
-              <Button className="mt-4 w-full font-black text-xs uppercase rounded-xl" variant="outline" onClick={() => setIsMapOpen(false)}>
-                Cerrar Radar
+              <Button className="mt-6 w-full font-black text-xs uppercase rounded-xl h-12" variant="outline" onClick={() => setIsMapOpen(false)}>
+                Cerrar Vigilancia
               </Button>
             </div>
 
-            {/* LADO DERECHO: MAPA DE GOOGLE REAL */}
-            <div className="flex-1 relative bg-slate-100 overflow-hidden min-h-[300px]">
+            {/* MAPA DINÁMICO DE GOOGLE */}
+            <div className="flex-1 relative bg-slate-100 overflow-hidden min-h-[400px]">
               <div className="absolute top-4 left-4 z-10 flex flex-col gap-2">
-                <Badge className="bg-destructive/90 text-white font-black text-[10px] px-4 py-1.5 shadow-2xl animate-pulse flex items-center gap-2 rounded-full">
-                  <Zap className="h-3 w-3 fill-white" /> ESCUDO REGIONAL ACTIVO
+                <Badge className="bg-destructive/90 text-white font-black text-[10px] px-4 py-2 shadow-2xl animate-pulse flex items-center gap-2 rounded-full border-none">
+                  <Zap className="h-3.5 w-3.5 fill-white" /> ESCUDO REGIONAL ACTIVO
                 </Badge>
               </div>
 
@@ -262,19 +276,23 @@ export function CommunityAlerts() {
                 <iframe
                   width="100%"
                   height="100%"
-                  className="absolute inset-0 border-0"
+                  className="absolute inset-0 border-0 grayscale-[0.2] contrast-[1.1]"
                   loading="lazy"
                   allowFullScreen
-                  src={`https://maps.google.com/maps?q=${selectedAlert.lat},${selectedAlert.lng}&z=13&output=embed`}
+                  src={`https://maps.google.com/maps?q=${selectedAlert.lat},${selectedAlert.lng}&z=14&t=m&output=embed`}
                 />
               )}
               
-              {/* CAPA DE DATOS IA SOBRE EL MAPA */}
-              <div className="absolute bottom-4 left-4 right-4 z-10">
-                <div className="bg-white/90 backdrop-blur-md p-3 rounded-xl shadow-xl border border-white/50 flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <ShieldCheck className="h-5 w-5 text-primary" />
-                    <p className="text-[10px] font-bold text-foreground/70">Sincronizado con Firebase Hidalgo en tiempo real.</p>
+              <div className="absolute bottom-6 left-6 right-6 z-10">
+                <div className="bg-white/90 backdrop-blur-md p-4 rounded-2xl shadow-2xl border border-white/50 flex items-center justify-between animate-in slide-in-from-bottom-4">
+                  <div className="flex items-center gap-3">
+                    <div className="bg-primary/20 p-2 rounded-xl">
+                      <ShieldCheck className="h-6 w-6 text-primary" />
+                    </div>
+                    <div>
+                      <p className="text-[10px] font-black text-primary uppercase tracking-widest">Estado del Radar</p>
+                      <p className="text-xs font-bold text-foreground/70">Sincronizado con Firebase Hidalgo • {alerts.length} Amenazas</p>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -283,51 +301,53 @@ export function CommunityAlerts() {
         </DialogContent>
       </Dialog>
 
-      {/* MODAL DE REPORTE (GPS) */}
+      {/* MODAL DE REPORTE INTELIGENTE */}
       <Dialog open={isReportOpen} onOpenChange={setIsReportOpen}>
-        <DialogContent className="max-w-[90vw] sm:max-w-md">
+        <DialogContent className="max-w-[90vw] sm:max-w-md glass-card border-none">
           <DialogHeader>
-            <DialogTitle className="flex items-center gap-2 text-destructive font-black tracking-tighter uppercase">
-              <AlertTriangle className="h-5 w-5" /> REPORTE RADAR
+            <DialogTitle className="flex items-center gap-2 text-destructive font-black tracking-tighter uppercase text-xl">
+              <AlertTriangle className="h-6 w-6" /> REPORTAR AMENAZA
             </DialogTitle>
+            <DialogDescription className="font-bold">Ayuda a proteger el Valle del Mezquital.</DialogDescription>
           </DialogHeader>
           
-          <div className="space-y-4 py-4">
-            <div className={`p-4 rounded-2xl border transition-all flex flex-col items-center gap-2 ${userCoords ? 'bg-green-50 border-green-200' : 'bg-primary/5 border-primary/10'}`}>
+          <div className="space-y-5 py-4">
+            <div className={`p-4 rounded-2xl border-2 transition-all flex flex-col items-center gap-3 ${userCoords ? 'bg-green-50 border-green-400 shadow-inner' : 'bg-primary/5 border-primary/20'}`}>
               {loadingLocation ? (
-                <div className="flex items-center gap-2 text-primary font-black text-[10px] tracking-widest">
-                  <Loader2 className="h-4 w-4 animate-spin" /> LOCALIZANDO...
+                <div className="flex items-center gap-2 text-primary font-black text-[11px] tracking-widest py-2">
+                  <Loader2 className="h-5 w-5 animate-spin" /> OBTENIENDO COORDENADAS GPS...
                 </div>
               ) : userCoords ? (
-                <div className="flex flex-col items-center gap-1 text-green-600 font-black text-[10px] tracking-widest">
+                <div className="flex flex-col items-center gap-2 text-green-700 font-black text-[11px] tracking-widest">
                   <div className="flex items-center gap-2">
-                    <CheckCircle2 className="h-4 w-4" /> GPS FIJADO CON ÉXITO
+                    <CheckCircle2 className="h-5 w-5" /> UBICACIÓN GPS FIJADA
                   </div>
-                  <span className="text-[8px] opacity-60">No necesitas escribir tu municipio</span>
+                  <p className="text-[9px] font-bold opacity-70">Detectamos tu campo automáticamente.</p>
                 </div>
               ) : (
-                <Button variant="outline" size="sm" className="font-black text-[10px] uppercase rounded-xl border-primary/20 text-primary" onClick={handleGetLocation}>
-                  <MapPin className="h-4 w-4 mr-2" /> USAR MI POSICIÓN REAL (GPS)
+                <Button variant="outline" className="w-full font-black text-[11px] uppercase rounded-xl border-primary/30 text-primary h-12 hover:bg-primary hover:text-white transition-all" onClick={handleGetLocation}>
+                  <MapPin className="h-5 w-5 mr-2" /> USAR MI POSICIÓN REAL (GPS)
                 </Button>
               )}
             </div>
 
             <div className="space-y-2">
-              <Label className="text-[10px] font-black uppercase text-muted-foreground">¿Qué plaga detectaste?</Label>
+              <Label className="text-[10px] font-black uppercase text-muted-foreground tracking-widest">¿Qué plaga detectaste?</Label>
               <Input 
-                placeholder="Ej: Gusano Cogollero" 
-                className="rounded-xl h-11 font-bold"
+                placeholder="Ej: Gusano Cogollero o Piojo" 
+                className="rounded-xl h-12 font-bold bg-white/50 border-primary/10"
                 value={newAlert.problem}
                 onChange={(e) => setNewAlert({...newAlert, problem: e.target.value})}
               />
             </div>
 
+            {/* OCULTAR MUNICIPIO SI HAY GPS */}
             {!userCoords && (
-              <div className="space-y-2">
-                <Label className="text-[10px] font-black uppercase text-muted-foreground">Municipio (Solo si no usas GPS)</Label>
+              <div className="space-y-2 animate-in fade-in duration-300">
+                <Label className="text-[10px] font-black uppercase text-muted-foreground tracking-widest">Municipio / Localidad</Label>
                 <Input 
-                  placeholder="Ej: Actopan" 
-                  className="rounded-xl h-11 font-bold"
+                  placeholder="Ej: Tulancingo o Actopan" 
+                  className="rounded-xl h-12 font-bold bg-white/50 border-primary/10"
                   value={newAlert.region}
                   onChange={(e) => setNewAlert({...newAlert, region: e.target.value})}
                 />
@@ -335,19 +355,19 @@ export function CommunityAlerts() {
             )}
 
             <div className="space-y-2">
-              <Label className="text-[10px] font-black uppercase text-muted-foreground">Cultivo Afectado</Label>
+              <Label className="text-[10px] font-black uppercase text-muted-foreground tracking-widest">Descripción del Daño</Label>
               <Input 
-                placeholder="Ej: Maíz" 
-                className="rounded-xl h-11 font-bold"
-                value={newAlert.crop}
-                onChange={(e) => setNewAlert({...newAlert, crop: e.target.value})}
+                placeholder="Ej: Hojas comidas, bichos blancos..." 
+                className="rounded-xl h-12 font-bold bg-white/50 border-primary/10"
+                value={newAlert.description}
+                onChange={(e) => setNewAlert({...newAlert, description: e.target.value})}
               />
             </div>
           </div>
           
           <DialogFooter className="gap-2">
             <Button variant="ghost" className="rounded-xl font-bold" onClick={() => setIsReportOpen(false)}>Cancelar</Button>
-            <Button variant="destructive" className="rounded-xl font-black uppercase h-11 px-8" onClick={handleReport}>
+            <Button variant="destructive" className="rounded-xl font-black uppercase h-12 px-8 shadow-lg shadow-destructive/20" onClick={handleReport}>
               ACTIVAR ALERTA REGIONAL
             </Button>
           </DialogFooter>
