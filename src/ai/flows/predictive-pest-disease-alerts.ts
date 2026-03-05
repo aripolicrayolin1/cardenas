@@ -3,7 +3,7 @@
  * @fileOverview Alertas predictivas basadas en datos de sensores.
  */
 
-import { aiInstances, ai } from '@/ai/genkit';
+import { aiInstances } from '@/ai/genkit';
 import { z } from 'genkit';
 
 const PredictiveAlertOutputSchema = z.object({
@@ -34,14 +34,12 @@ export async function predictivePestDiseaseAlerts(input: PredictiveAlertInput): 
   Determina si existe un riesgo inmediato de plagas, hongos o estrés hídrico. 
   Proporciona un mensaje de alerta claro y una recomendación técnica específica para el agricultor.`;
 
-  const instancesToTry = aiInstances.length > 0 ? aiInstances : [ai];
-
-  for (let i = 0; i < instancesToTry.length; i++) {
+  for (let i = 0; i < aiInstances.length; i++) {
     try {
-      const currentAi = instancesToTry[i];
+      const currentAi = aiInstances[i];
       
       const { output } = await currentAi.generate({
-        model: 'googleAI/gemini-1.5-flash',
+        model: 'googleai/gemini-1.5-flash',
         prompt: promptText,
         output: { schema: PredictiveAlertOutputSchema },
       });
@@ -50,14 +48,14 @@ export async function predictivePestDiseaseAlerts(input: PredictiveAlertInput): 
         return { ...output, isFallback: false };
       }
     } catch (e: any) {
-      console.error(`[ERROR-IA] Intento ${i + 1} falló: ${e.message}`);
+      console.error(`[ERROR-IA] Intento con llave ${i + 1} falló: ${e.message}`);
     }
   }
 
-  // Fallback local en caso de error de red o cuota
+  // Fallback local solo si todas las llaves fallan
   return {
     alertNeeded: input.soilHumidity > 80 || input.temperature > 35,
-    alertMessage: "El sistema de IA está saturado. Basado en el análisis local: Niveles de humedad/temperatura fuera de rango óptimo.",
+    alertMessage: "Aviso: Sensores detectan niveles de alerta. (Análisis Local de Respaldo por saturación de red)",
     predictedRisk: input.soilHumidity > 80 ? "High" : "Medium",
     potentialProblem: "Posible Estrés Térmico o Humedad Excesiva",
     recommendation: "Realiza una inspección manual de la parcela y verifica el drenaje.",

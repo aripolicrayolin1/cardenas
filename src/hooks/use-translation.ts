@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -232,18 +231,24 @@ export function useTranslation() {
   const [lang, setLang] = useState<Language>('es');
 
   useEffect(() => {
-    const saved = localStorage.getItem('app_lang') as Language;
-    if (saved && (saved === 'es' || saved === 'hn')) setLang(saved);
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('app_lang') as Language;
+      if (saved && (saved === 'es' || saved === 'hn')) setLang(saved);
+    }
   }, []);
 
   const toggleLanguage = () => {
     const next = lang === 'es' ? 'hn' : 'es';
     setLang(next);
-    localStorage.setItem('app_lang', next);
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('app_lang', next);
+    }
   };
 
   const t = (key: keyof typeof translations['es']) => {
-    return translations[lang][key] || translations['es'][key] || "";
+    if (!key) return "";
+    const translation = translations[lang][key] || translations['es'][key];
+    return translation || "";
   };
 
   return { t, lang, toggleLanguage };

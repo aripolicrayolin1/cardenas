@@ -1,4 +1,3 @@
-
 "use client";
 
 import { SidebarProvider, SidebarInset, SidebarTrigger } from "@/components/ui/sidebar";
@@ -7,30 +6,26 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter }
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import { 
   Camera, 
   CheckCircle2, 
-  AlertTriangle, 
   Loader2, 
   X, 
   RefreshCcw, 
-  Leaf, 
-  Clock,
-  ShieldCheck,
-  Zap,
-  FileText,
-  Mic,
-  MicOff,
-  MapPin,
-  ExternalLink,
-  ShoppingBag,
-  Users,
-  Share2
+  ShieldCheck, 
+  Zap, 
+  FileText, 
+  Mic, 
+  MicOff, 
+  MapPin, 
+  ShoppingBag, 
+  Users 
 } from "lucide-react";
 import { useState, useRef, useEffect } from "react";
 import { diagnoseCropDisease, type CropDiagnosisOutput } from "@/ai/flows/crop-disease-photo-diagnosis-flow";
 import Image from "next/image";
-import { Badge } from "@/components/ui/badge";
+import { Badge } from "@/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 import { useTranslation } from "@/hooks/use-translation";
@@ -143,32 +138,6 @@ export default function DiagnosisPage() {
     }
   };
 
-  const handleShareWithCommunity = () => {
-    if (!diagnosis) return;
-
-    const savedAlerts = localStorage.getItem("community_alerts");
-    const alerts = savedAlerts ? JSON.parse(savedAlerts) : [];
-    
-    const newAlert = {
-      id: Date.now().toString(),
-      region: "Reporte Directo (Hidalgo)",
-      crop: "Detectado por IA",
-      problem: diagnosis.diagnosis.identifiedProblem,
-      severity: diagnosis.diagnosis.severity === 'High' ? 'Alta' : 'Media',
-      distance: "En tu zona",
-      date: "Hace un momento",
-      lat: 20.1 + (Math.random() * 0.4),
-      lng: -98.8 - (Math.random() * 0.4)
-    };
-
-    localStorage.setItem("community_alerts", JSON.stringify([newAlert, ...alerts]));
-    
-    toast({
-      title: "Reporte Enviado",
-      description: "La comunidad ha sido alertada sobre este brote.",
-    });
-  };
-
   const reset = () => {
     setSelectedImage(null);
     setDiagnosis(null);
@@ -230,9 +199,9 @@ export default function DiagnosisPage() {
                         {isListening ? t('listening') : t('dictate_symptoms')}
                       </Button>
                     </div>
-                    <Input 
+                    <Textarea 
                       id="symptoms" 
-                      className="h-14 text-lg border-primary/20"
+                      className="min-h-[120px] text-lg border-primary/20 rounded-2xl bg-white/50"
                       placeholder={t('placeholder_symptoms')} 
                       value={description}
                       onChange={(e) => setDescription(e.target.value)}
@@ -240,7 +209,7 @@ export default function DiagnosisPage() {
                   </div>
                 </CardContent>
                 <CardFooter className="bg-muted/5 border-t p-6">
-                  <Button className="w-full h-14 text-xl font-black rounded-xl" disabled={loading} onClick={startDiagnosis}>
+                  <Button className="w-full h-14 text-xl font-black rounded-xl shadow-lg" disabled={loading} onClick={startDiagnosis}>
                     {loading ? <Loader2 className="mr-2 h-6 w-6 animate-spin" /> : <Zap className="mr-2 h-6 w-6 fill-white" />}
                     {t('obtaining_solution')}
                   </Button>
@@ -263,7 +232,7 @@ export default function DiagnosisPage() {
                      <Button variant="outline" className="w-full font-bold" onClick={reset}>
                        <RefreshCcw className="h-4 w-4 mr-2" /> {t('new_query')}
                      </Button>
-                     <Button className="w-full font-bold bg-destructive hover:bg-destructive/90 text-white" onClick={handleShareWithCommunity}>
+                     <Button className="w-full font-bold bg-destructive hover:bg-destructive/90 text-white">
                         <Users className="h-4 w-4 mr-2" /> {t('report_outbreak_btn')}
                      </Button>
                    </CardContent>

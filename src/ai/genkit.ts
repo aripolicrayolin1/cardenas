@@ -2,7 +2,7 @@ import { genkit } from 'genkit';
 import { googleAI } from '@genkit-ai/google-genai';
 
 /**
- * @fileOverview Configuración centralizada de Genkit.
+ * @fileOverview Configuración centralizada de Genkit con soporte multi-llave.
  */
 
 const envKeys = [
@@ -12,20 +12,19 @@ const envKeys = [
 ].filter(Boolean) as string[];
 
 /**
- * Instancias de Genkit con rotación de llaves para evitar límites de cuota.
+ * Instancias de Genkit con rotación de llaves para evitar límites de cuota y errores 404.
  */
-export const aiInstances = envKeys.map((key) => {
-  return genkit({
-    plugins: [googleAI({ apiKey: key })],
-  });
-});
+export const aiInstances = envKeys.length > 0 
+  ? envKeys.map((key) => genkit({
+      plugins: [googleAI({ apiKey: key })],
+    }))
+  : [genkit({
+      plugins: [googleAI()],
+    })];
 
-// Instancia por defecto
-export const ai = aiInstances.length > 0 ? aiInstances[0] : genkit({
-  plugins: [googleAI()],
-});
+// Instancia por defecto (siempre disponible)
+export const ai = aiInstances[0];
 
 export function getAIInstance(index: number) {
-  if (aiInstances.length === 0) return ai;
   return aiInstances[index % aiInstances.length];
 }
