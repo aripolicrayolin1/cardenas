@@ -1,6 +1,6 @@
 'use server';
 /**
- * @fileOverview Alertas predictivas: Limpieza de prompt y modelo explícito.
+ * @fileOverview Alertas predictivas con logs de depuración detallados.
  */
 
 import { aiInstances, ai } from '@/ai/genkit';
@@ -47,12 +47,18 @@ export async function predictivePestDiseaseAlerts(input: PredictiveAlertInput): 
         output: { schema: PredictiveAlertOutputSchema },
       });
 
-      if (output) return { ...output, isFallback: false };
+      if (output) {
+        console.log(`[EXITO] Alerta generada con llave ${i + 1}`);
+        return { ...output, isFallback: false };
+      }
     } catch (e: any) {
-      console.error(`Error en alerta IA ${i + 1}:`, e.message);
+      console.error(`[ERROR-IA] Alerta intento ${i + 1} falló.`);
+      console.error(`Mensaje: ${e.message}`);
+      if (e.status) console.error(`Status HTTP: ${e.status}`);
     }
   }
 
+  console.log(`[FALLBACK] Activando alerta local de respaldo.`);
   return {
     alertNeeded: input.soilHumidity > 75,
     alertMessage: "Aviso: Sensores detectan niveles de alerta. (Análisis Local de Respaldo)",

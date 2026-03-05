@@ -1,6 +1,6 @@
 'use server';
 /**
- * @fileOverview Diagnóstico de enfermedades: Llamadas directas con detección dinámica de MIME.
+ * @fileOverview Diagnóstico de enfermedades con logs de depuración detallados.
  */
 
 import { aiInstances, ai } from '@/ai/genkit';
@@ -37,9 +37,6 @@ export type CropDiagnosisOutput = {
   diagnosis: z.infer<typeof CropDiagnosisOutputSchema>['diagnosis'] & { isFallback?: boolean };
 };
 
-/**
- * Extrae el tipo MIME de un Data URI.
- */
 function getMimeType(dataUri: string): string {
   const match = dataUri.match(/^data:([^;]+);base64,/);
   return match ? match[1] : 'image/jpeg';
@@ -75,14 +72,17 @@ export async function diagnoseCropDisease(input: CropDiagnosisInput): Promise<Cr
       });
 
       if (output && output.diagnosis) {
+        console.log(`[EXITO] Diagnóstico generado con llave ${i + 1}`);
         return { diagnosis: { ...output.diagnosis, isFallback: false } };
       }
     } catch (e: any) {
-      console.error(`Error en intento de IA ${i + 1}:`, e.message);
+      console.error(`[ERROR-IA] Intento ${i + 1} falló.`);
+      console.error(`Mensaje: ${e.message}`);
+      if (e.status) console.error(`Status HTTP: ${e.status}`);
     }
   }
 
-  // Fallback definitivo
+  console.log(`[FALLBACK] Activando diagnóstico local de respaldo.`);
   return {
     diagnosis: {
       isProblemDetected: true,
