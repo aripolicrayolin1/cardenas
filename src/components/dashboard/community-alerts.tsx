@@ -14,9 +14,8 @@ import {
   Zap, 
   Target, 
   CheckCircle2,
-  Search,
-  Info,
-  Navigation
+  Navigation,
+  Activity
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -92,7 +91,7 @@ export function CommunityAlerts() {
   const { toast } = useToast();
   const [alerts, setAlerts] = useState<Alert[]>([]);
   const [isReportOpen, setIsReportOpen] = useState(false);
-  const [isMapOpen, setIsMapOpen] = useState(false);
+  const [isRadarOpen, setIsRadarOpen] = useState(false);
   const [selectedAlert, setSelectedAlert] = useState<Alert | null>(null);
   const [loadingLocation, setLoadingLocation] = useState(false);
   const [userCoords, setUserCoords] = useState<{ lat: number, lng: number } | null>(null);
@@ -114,12 +113,9 @@ export function CommunityAlerts() {
     }
   }, []);
 
-  // Al abrir el radar, seleccionamos el primero por defecto
-  const openRadarView = () => {
-    if (alerts.length > 0) {
-      setSelectedAlert(alerts[0]);
-    }
-    setIsMapOpen(true);
+  const openRadar = (alert?: Alert) => {
+    setSelectedAlert(alert || alerts[0]);
+    setIsRadarOpen(true);
   };
 
   const handleGetLocation = () => {
@@ -191,9 +187,9 @@ export function CommunityAlerts() {
             <div 
               key={alert.id} 
               className="p-4 hover:bg-primary/5 transition-all group cursor-pointer border-l-4 border-transparent hover:border-primary"
-              onClick={openRadarView}
+              onClick={() => openRadar(alert)}
             >
-              <div className="flex items-center justify-between mb-2">
+              <div className="flex items-center justify-between mb-1">
                 <div className="flex items-center gap-2 text-[10px] font-black text-muted-foreground uppercase tracking-widest">
                   <MapPin className="h-3 w-3 text-primary" />
                   {alert.region} • {alert.distance}
@@ -218,12 +214,12 @@ export function CommunityAlerts() {
         </Button>
       </div>
 
-      {/* MODAL DEL RADAR UNIFICADO */}
-      <Dialog open={isMapOpen} onOpenChange={setIsMapOpen}>
+      {/* MODAL DEL RADAR UNIFICADO (CENTRO DE MANDO) */}
+      <Dialog open={isRadarOpen} onOpenChange={setIsRadarOpen}>
         <DialogContent className="max-w-[95vw] sm:max-w-6xl p-0 overflow-hidden border-none bg-background/95 backdrop-blur-xl">
           <div className="flex flex-col lg:flex-row h-[85vh] lg:h-[700px]">
             {/* PANEL IZQUIERDO: LISTA DE AMENAZAS */}
-            <div className="w-full lg:w-96 border-r border-primary/10 p-6 flex flex-col bg-white/90 z-10 shadow-xl overflow-hidden">
+            <div className="w-full lg:w-96 border-r border-primary/10 p-6 flex flex-col bg-white/90 z-10 shadow-xl">
               <DialogHeader className="mb-6">
                 <div className="flex items-center gap-2 text-destructive font-black text-[10px] uppercase tracking-widest mb-1">
                   <Target className="h-4 w-4 animate-pulse" /> VIGILANCIA COMUNITARIA
@@ -232,7 +228,7 @@ export function CommunityAlerts() {
                   Radar de Brotes
                 </DialogTitle>
                 <DialogDescription className="text-xs font-bold text-muted-foreground">
-                  Selecciona una amenaza para ver su ubicación y diagnóstico técnico.
+                  Visualiza la ola de contagios en tiempo real en todo Hidalgo.
                 </DialogDescription>
               </DialogHeader>
 
@@ -267,16 +263,16 @@ export function CommunityAlerts() {
                 </div>
               </ScrollArea>
               
-              <Button className="mt-6 w-full font-black text-xs uppercase rounded-xl h-12 shadow-lg" variant="default" onClick={() => setIsMapOpen(false)}>
+              <Button className="mt-6 w-full font-black text-xs uppercase rounded-xl h-12 shadow-lg" onClick={() => setIsRadarOpen(false)}>
                 Cerrar Centro de Mando
               </Button>
             </div>
 
             {/* PANEL DERECHO: EL MAPA UNIFICADO */}
             <div className="flex-1 relative bg-slate-100 overflow-hidden min-h-[400px]">
-              <div className="absolute top-4 left-4 z-10 flex flex-col gap-2">
+              <div className="absolute top-4 left-4 z-10">
                 <Badge className="bg-destructive/90 text-white font-black text-[10px] px-4 py-2 shadow-2xl animate-pulse flex items-center gap-2 rounded-full border-none">
-                  <Zap className="h-3.5 w-3.5 fill-white" /> ESCUDO REGIONAL ACTIVO
+                  <Activity className="h-3.5 w-3.5" /> ESCUDO REGIONAL ACTIVO
                 </Badge>
               </div>
 
@@ -299,11 +295,11 @@ export function CommunityAlerts() {
                     </div>
                     <div>
                       <p className="text-[10px] font-black text-primary uppercase tracking-widest">Sincronización Regional</p>
-                      <p className="text-xs font-bold text-foreground/70">Visualizando {alerts.length} Amenazas Activas • Valle del Mezquital</p>
+                      <p className="text-xs font-bold text-foreground/70">Vigilando {alerts.length} Amenazas Comunitarias</p>
                     </div>
                   </div>
                   <div className="hidden sm:flex items-center gap-2 text-[9px] font-black text-muted-foreground uppercase">
-                    <Radio className="h-3 w-3 animate-pulse text-destructive" /> DATOS VIVOS
+                    <Radio className="h-3 w-3 animate-pulse text-destructive" /> DATOS GPS VIVOS
                   </div>
                 </div>
               </div>
@@ -333,11 +329,11 @@ export function CommunityAlerts() {
                   <div className="flex items-center gap-2">
                     <CheckCircle2 className="h-5 w-5" /> GPS FIJADO CORRECTAMENTE
                   </div>
-                  <p className="text-[8px] font-bold opacity-60">UBICACIÓN CAPTURADA AUTOMÁTICAMENTE</p>
+                  <p className="text-[8px] font-bold opacity-60 uppercase">Ubicación capturada automáticamente</p>
                 </div>
               ) : (
                 <Button variant="outline" className="w-full font-black text-[11px] uppercase rounded-xl border-primary/30 text-primary h-12 hover:bg-primary hover:text-white transition-all" onClick={handleGetLocation}>
-                  <Navigation className="h-5 w-5 mr-2" /> FIJAR MI UBICACIÓN REAL (GPS)
+                  <Navigation className="h-5 w-5 mr-2" /> USAR MI POSICIÓN REAL (GPS)
                 </Button>
               )}
             </div>

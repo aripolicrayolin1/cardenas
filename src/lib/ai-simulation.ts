@@ -21,15 +21,12 @@ export const obtenerDiagnosticoIA = (
   puntoRocio: number
 ): DiagnosticoResultado => {
   
-  // Normalización para el motor: Usamos los valores tal como vienen del sensor.
-  // El usuario proporcionó umbrales como suelo < 600 o suelo > 4000.
-
   // 1. Prioridad Crítica: Helada y Sequía Extrema (Combinado para el concurso)
   if (t < 7 && suelo < 600) {
     return {
       titulo: "RIESGO DE HELADA Y DESHIDRATACIÓN", 
       otomi: "¡Xue t'o̲ho̲!",
-      desc: `Análisis térmico crítico: La temperatura de ${t.toFixed(1)}°C indica un riesgo inminente de helada advectiva. Con un suelo al ${suelo.toFixed(1)} de humedad, las raíces carecen de inercia térmica, lo que acelerará el daño celular por frío en los tejidos vasculares.`,
+      desc: `Análisis térmico crítico: La temperatura de ${t.toFixed(1)}°C indica un riesgo inminente de helada advectiva. Con un suelo al ${suelo.toFixed(1)}% de humedad, las raíces carecen de inercia térmica, lo que acelerará el daño celular por frío en los tejidos vasculares.`,
       accion: "Activar riego por aspersión inmediatamente. El agua liberará calor latente al cambiar de fase, creando una capa protectora que mantendrá la temperatura de la planta cerca de los 0°C, evitando el punto de congelación letal.",
       riesgo: 'High'
     };
@@ -40,7 +37,7 @@ export const obtenerDiagnosticoIA = (
     return {
       titulo: "ESTRÉS TÉRMICO CRÍTICO", 
       otomi: "¡Däthä hñei xat'i!",
-      desc: `Demanda evaporativa extrema detectada: Con ${t.toFixed(1)}°C y humedad de suelo en ${suelo.toFixed(1)}, la tasa de evapotranspiración de ${et.toFixed(2)} mm/día es insostenible. El balance hídrico negativo sugiere una posible muerte térmica de tejidos apicales.`,
+      desc: `Demanda evaporativa extrema detectada: Con ${t.toFixed(1)}°C y humedad de suelo en ${suelo.toFixed(1)}%, la tasa de evapotranspiración de ${et.toFixed(2)} mm/día es insostenible. El balance hídrico negativo sugiere una posible muerte térmica de tejidos apicales.`,
       accion: "Activar riego de enfriamiento inmediato y establecer sombreado temporal. Priorizar la turgencia celular sobre la fertilización.",
       riesgo: 'High'
     };
@@ -62,7 +59,7 @@ export const obtenerDiagnosticoIA = (
     return {
       titulo: "SATURACIÓN / ANOXIA RADICULAR", 
       otomi: "¡Dä dehe / M'e̲di ar ndähi!",
-      desc: `Estado de anoxia detectado: Humedad de suelo elevada (${suelo.toFixed(0)}). Las raíces se asfixian por falta de oxígeno, lo que detiene el intercambio gaseoso en la rizosfera.`,
+      desc: `Estado de anoxia detectado: Humedad de suelo elevada (${suelo.toFixed(0)}%). Las raíces se asfixian por falta de oxígeno, lo que detiene el intercambio gaseoso en la rizosfera.`,
       accion: "Suspender cualquier programa de irrigación. Abrir drenajes de emergencia para favorecer la aireación del suelo.",
       riesgo: 'High'
     };
