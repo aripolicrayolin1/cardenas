@@ -114,7 +114,7 @@ const translations = {
     sev_medium: "Media",
     sev_high: "Alta",
     sev_na: "No Aplica",
-    radar_map_desc: "El RADAR comunitario geolocaliza brotes. Un solo reporte alerta a todos los vecinos, creando un escudo preventivo que salva las cosechas de toda la comunidad."
+    radar_map_desc: "Ar RADAR munthe geolocaliza ya n’u. N’a hñä ma̱ alerti tdu’u ya vecinos, hño escudo preventivo pa hñeti ya b’o̱za ja munthe."
   },
   hn: {
     dashboard: "Ñut’i Ja’i",
@@ -233,7 +233,7 @@ export function useTranslation() {
 
   useEffect(() => {
     const saved = localStorage.getItem('app_lang') as Language;
-    if (saved) setLang(saved);
+    if (saved && (saved === 'es' || saved === 'hn')) setLang(saved);
   }, []);
 
   const toggleLanguage = () => {
@@ -243,7 +243,7 @@ export function useTranslation() {
   };
 
   const t = (key: keyof typeof translations['es']) => {
-    return translations[lang][key] || translations['es'][key];
+    return translations[lang][key] || translations['es'][key] || "";
   };
 
   return { t, lang, toggleLanguage };

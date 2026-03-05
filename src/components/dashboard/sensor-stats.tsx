@@ -97,12 +97,12 @@ export function SensorStats({ sensorValues, isOnline, lastUpdate }: SensorStatsP
             {isOnline ? (
               <>
                 <Wifi className="h-3.5 w-3.5 text-white animate-pulse" />
-                <span suppressHydrationWarning>{t('online').toUpperCase()}</span>
+                <span suppressHydrationWarning>{(t('online') || "").toUpperCase()}</span>
               </>
             ) : (
               <>
                 <WifiOff className="h-3.5 w-3.5" />
-                <span suppressHydrationWarning>{t('offline').toUpperCase()}</span>
+                <span suppressHydrationWarning>{(t('offline') || "").toUpperCase()}</span>
               </>
             )}
           </Badge>
@@ -112,7 +112,7 @@ export function SensorStats({ sensorValues, isOnline, lastUpdate }: SensorStatsP
           >
             <Zap className={`h-3.5 w-3.5 ${isOnline ? 'text-primary' : 'text-muted-foreground'}`} />
             <span suppressHydrationWarning>
-              {t('status').toUpperCase()}: {sensorValues.status_text.toUpperCase()}
+              {(t('status') || "").toUpperCase()}: {(sensorValues.status_text || "").toUpperCase()}
             </span>
           </Badge>
         </div>
@@ -120,7 +120,7 @@ export function SensorStats({ sensorValues, isOnline, lastUpdate }: SensorStatsP
         <div className="flex items-center gap-2 bg-white/40 backdrop-blur-sm px-3 py-1 rounded-full text-[10px] font-bold text-muted-foreground shadow-sm">
           <RefreshCw className={`h-3 w-3 text-primary ${isOnline ? 'animate-spin-slow' : ''}`} />
           <span suppressHydrationWarning>
-            {t('sync').toUpperCase()}: {lastUpdate ? lastUpdate.toLocaleTimeString() : "--:--:--"}
+            {(t('sync') || "").toUpperCase()}: {lastUpdate ? lastUpdate.toLocaleTimeString() : "--:--:--"}
           </span>
         </div>
       </div>

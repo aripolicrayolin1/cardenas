@@ -1,3 +1,4 @@
+
 "use client";
 
 import { SidebarProvider, SidebarInset, SidebarTrigger } from "@/components/ui/sidebar";
@@ -268,7 +269,7 @@ export default function MonitoringPage() {
             </DropdownMenu>
             <Badge variant={isOnline ? "default" : "secondary"} className={`gap-1.5 py-1 px-3 rounded-full font-black text-[10px] tracking-widest ${isOnline ? 'bg-primary' : 'bg-slate-400'}`}>
               {isOnline ? <Wifi className="h-3.5 w-3.5 text-white animate-pulse" /> : <WifiOff className="h-3.5 w-3.5" />}
-              <span suppressHydrationWarning>{isOnline ? t('online').toUpperCase() : t('offline').toUpperCase()}</span>
+              <span suppressHydrationWarning>{isOnline ? (t('online') || "").toUpperCase() : (t('offline') || "").toUpperCase()}</span>
             </Badge>
           </div>
         </header>
@@ -332,7 +333,7 @@ function ChartCard({ title, description, data, dataKey, color, unit, type, confi
       <CardHeader className="pb-0 flex flex-row items-center justify-between">
         <div>
           <CardTitle className="text-sm font-black text-muted-foreground uppercase tracking-widest group-hover:text-primary transition-colors" suppressHydrationWarning>{title}</CardTitle>
-          <CardDescription className="text-[10px] font-bold text-primary/60" suppressHydrationWarning>{description.toUpperCase()}</CardDescription>
+          <CardDescription className="text-[10px] font-bold text-primary/60" suppressHydrationWarning>{(description || "").toUpperCase()}</CardDescription>
         </div>
         <div className="p-2 bg-white/60 rounded-xl shadow-inner">
           <Icon className={`h-5 w-5 text-primary`} />

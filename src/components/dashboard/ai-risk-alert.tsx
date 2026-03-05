@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState } from "react";
@@ -26,7 +27,6 @@ export function AIRiskAlert({ sensorValues }: AIRiskAlertProps) {
     setLoading(true);
     
     try {
-      // Intentamos la llamada real a la IA
       const result = await predictivePestDiseaseAlerts({
         soilHumidity: sensorValues.humidity_soil,
         temperature: sensorValues.temp,
@@ -35,12 +35,9 @@ export function AIRiskAlert({ sensorValues }: AIRiskAlertProps) {
         region: "Valle del Mezquital, Hidalgo"
       });
       
-      // Simulamos un pequeño retraso visual para que se vea el escaneo en el video
       await new Promise(resolve => setTimeout(resolve, 2000));
-      
       setPrediction(result);
     } catch (error) {
-      // Si falla la red por completo
       setPrediction({
         alertNeeded: true,
         alertMessage: "Error de conexión con el núcleo de IA. Activando motor experto local de respaldo.",
@@ -57,7 +54,8 @@ export function AIRiskAlert({ sensorValues }: AIRiskAlertProps) {
   const isRisk = prediction?.alertNeeded;
   const isFallback = prediction?.isFallback;
 
-  const translateRisk = (risk: string) => {
+  const translateRisk = (risk?: string) => {
+    if (!risk) return "";
     switch (risk) {
       case 'High': return t('risk_high');
       case 'Medium': return t('risk_medium');
@@ -69,7 +67,6 @@ export function AIRiskAlert({ sensorValues }: AIRiskAlertProps) {
 
   return (
     <Card className={`glass-card border-none shadow-xl transition-all duration-700 relative overflow-hidden group ${isRisk ? 'ring-2 ring-accent/50' : 'ring-1 ring-primary/20'}`}>
-      {/* Animación de escaneo (solo visible durante la carga) */}
       {loading && (
         <div className="absolute inset-0 bg-primary/10 z-20 pointer-events-none">
           <div className="w-full h-2 bg-primary/60 animate-scan shadow-[0_0_25px_rgba(34,197,94,0.8)]"></div>
@@ -79,7 +76,7 @@ export function AIRiskAlert({ sensorValues }: AIRiskAlertProps) {
               <Zap className="h-8 w-8 text-primary absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 animate-pulse" />
             </div>
             <p className="mt-4 text-xs font-black uppercase tracking-widest text-primary animate-pulse">
-              {t('analyze_ai').toUpperCase()}...
+              {(t('analyze_ai') || "").toUpperCase()}...
             </p>
           </div>
         </div>
