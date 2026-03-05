@@ -3,12 +3,10 @@ import { googleAI } from '@genkit-ai/google-genai';
 
 /**
  * @fileOverview Configuración centralizada de Genkit.
- * - Elimina llaves hardcodeadas por seguridad.
- * - Utiliza variables de entorno (.env).
- * - Corrige los identificadores de modelo para evitar errores 404.
+ * - Utiliza identificadores de cadena para los modelos para evitar errores de importación.
+ * - Soporta múltiples llaves de API para rotación de cuotas.
  */
 
-// Extraemos las llaves de las variables de entorno de forma segura
 const envKeys = [
   process.env.GEMINI_API_KEY,
   process.env.GEMINI_API_KEY_2,
@@ -17,28 +15,22 @@ const envKeys = [
   process.env.GEMINI_API_KEY_5
 ].filter(Boolean) as string[];
 
-// Si no hay llaves en .env, usamos un array vacío para evitar bloqueos, 
-// pero el sistema notificará el error al intentar generar.
 const finalKeys = envKeys.length > 0 ? envKeys : [];
 
 /**
- * Creamos instancias distintas de Genkit para soportar la rotación de cuotas.
- * Usamos el identificador de modelo estándar 'googleai/gemini-1.5-flash'.
+ * Instancias de Genkit con rotación de llaves.
  */
 export const aiInstances = finalKeys.map(key => genkit({
   plugins: [googleAI({ apiKey: key })],
-  model: 'googleai/gemini-1.5-flash',
+  model: 'googleAI/gemini-1.5-flash',
 }));
 
-// Instancia por defecto (si hay llaves disponibles)
+// Instancia por defecto
 export const ai = aiInstances.length > 0 ? aiInstances[0] : genkit({
   plugins: [googleAI()],
-  model: 'googleai/gemini-1.5-flash',
+  model: 'googleAI/gemini-1.5-flash',
 });
 
-/**
- * Helper para obtener una instancia específica para la rotación.
- */
 export function getAIInstance(index: number) {
   if (aiInstances.length === 0) return ai;
   return aiInstances[index % aiInstances.length];

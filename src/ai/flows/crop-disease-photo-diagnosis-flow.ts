@@ -1,9 +1,9 @@
 'use server';
 /**
- * @fileOverview Diagnóstico de enfermedades: Llamadas directas para evitar errores de registro 404.
+ * @fileOverview Diagnóstico de enfermedades: Llamadas directas con detección dinámica de MIME.
  */
 
-import { aiInstances, getAIInstance, ai } from '@/ai/genkit';
+import { aiInstances, ai } from '@/ai/genkit';
 import { z } from 'genkit';
 
 const CropDiagnosisOutputSchema = z.object({
@@ -37,25 +37,20 @@ export type CropDiagnosisOutput = {
   diagnosis: z.infer<typeof CropDiagnosisOutputSchema>['diagnosis'] & { isFallback?: boolean };
 };
 
+/**
+ * Extrae el tipo MIME de un Data URI.
+ */
+function getMimeType(dataUri: string): string {
+  const match = dataUri.match(/^data:([^;]+);base64,/);
+  return match ? match[1] : 'image/jpeg';
+}
+
 export async function diagnoseCropDisease(input: CropDiagnosisInput): Promise<CropDiagnosisOutput> {
   const promptText = `Eres un experto agrónomo en el estado de Hidalgo, México. 
   Analiza los síntomas reportados por el agricultor: ${input.description || 'Sin descripción, analizar imagen.'}
   
   Debes proporcionar un diagnóstico preciso, severidad del problema, acciones inmediatas y productos disponibles localmente en Hidalgo.
-  Si identificas una plaga común en el Valle del Mezquital, menciona su nombre técnico y tradicional.
-  
-  RESPONDE EXCLUSIVAMENTE EN FORMATO JSON QUE CUMPLA CON ESTE ESQUEMA:
-  {
-    "diagnosis": {
-      "isProblemDetected": boolean,
-      "identifiedProblem": string,
-      "severity": "Low" | "Medium" | "High",
-      "confidence": "Low" | "Medium" | "High",
-      "recommendedActions": string[],
-      "commercialProducts": [{ name, description, localStores }],
-      "homeMadeRemedies": [{ name, ingredients: [], instructions: "" }]
-    }
-  }`;
+  Si identificas una plaga común en el Valle del Mezquital, menciona su nombre técnico y tradicional.`;
 
   const instancesToTry = aiInstances.length > 0 ? aiInstances : [ai];
 
@@ -65,12 +60,16 @@ export async function diagnoseCropDisease(input: CropDiagnosisInput): Promise<Cr
       
       const parts: any[] = [{ text: promptText }];
       if (input.photoDataUri) {
-        parts.push({ media: { url: input.photoDataUri, contentType: 'image/jpeg' } });
+        parts.push({ 
+          media: { 
+            url: input.photoDataUri, 
+            contentType: getMimeType(input.photoDataUri) 
+          } 
+        });
       }
 
-      // Intentamos con el modelo estándar
       const { output } = await currentAi.generate({
-        model: 'googleai/gemini-1.5-flash',
+        model: 'googleAI/gemini-1.5-flash',
         prompt: parts,
         output: { schema: CropDiagnosisOutputSchema },
       });
@@ -80,7 +79,6 @@ export async function diagnoseCropDisease(input: CropDiagnosisInput): Promise<Cr
       }
     } catch (e: any) {
       console.error(`Error en intento de IA ${i + 1}:`, e.message);
-      // Si es un error de modelo no encontrado, intentamos con la versión "latest" en el siguiente ciclo si es posible
     }
   }
 

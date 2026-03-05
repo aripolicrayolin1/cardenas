@@ -1,6 +1,6 @@
 'use server';
 /**
- * @fileOverview Alertas predictivas: Llamadas directas para máxima fiabilidad.
+ * @fileOverview Alertas predictivas: Limpieza de prompt y modelo explícito.
  */
 
 import { aiInstances, ai } from '@/ai/genkit';
@@ -33,16 +33,7 @@ export async function predictivePestDiseaseAlerts(input: PredictiveAlertInput): 
   - Cultivo: ${input.cropType}
   - Región: ${input.region}
   
-  Determina riesgos de plagas o enfermedades inminentes basándote en estas condiciones climáticas.
-  
-  RESPONDE EN JSON:
-  {
-    "alertNeeded": boolean,
-    "alertMessage": string,
-    "predictedRisk": "None" | "Low" | "Medium" | "High",
-    "potentialProblem": string,
-    "recommendation": string
-  }`;
+  Determina riesgos de plagas o enfermedades inminentes basándote en estas condiciones climáticas típicas de la zona.`;
 
   const instancesToTry = aiInstances.length > 0 ? aiInstances : [ai];
 
@@ -51,7 +42,7 @@ export async function predictivePestDiseaseAlerts(input: PredictiveAlertInput): 
       const currentAi = instancesToTry[i];
       
       const { output } = await currentAi.generate({
-        model: 'googleai/gemini-1.5-flash',
+        model: 'googleAI/gemini-1.5-flash',
         prompt: promptText,
         output: { schema: PredictiveAlertOutputSchema },
       });
