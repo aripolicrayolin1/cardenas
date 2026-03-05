@@ -23,7 +23,7 @@
     --border: 120 20% 85% / 0.4;
     --input: 120 20% 85% / 0.4;
     --ring: 142 76% 36%;
-    --radius: 1rem;
+    --radius: 1.25rem;
     
     --sidebar-background: 120 20% 95% / 0.8;
     --sidebar-foreground: 120 40% 10%;
@@ -43,14 +43,14 @@
   body {
     @apply bg-background text-foreground font-body antialiased;
     background-image: 
-      radial-gradient(at 0% 0%, hsla(142, 76%, 36%, 0.08) 0px, transparent 50%),
-      radial-gradient(at 100% 100%, hsla(48, 100%, 50%, 0.08) 0px, transparent 50%);
+      radial-gradient(at 0% 0%, hsla(142, 76%, 36%, 0.1) 0px, transparent 50%),
+      radial-gradient(at 100% 100%, hsla(48, 100%, 50%, 0.1) 0px, transparent 50%);
     background-attachment: fixed;
   }
 }
 
 .glass-card {
-  @apply bg-white/40 backdrop-blur-xl border border-white/40 shadow-[0_8px_32px_0_rgba(31,38,135,0.07)];
+  @apply bg-white/40 backdrop-blur-xl border border-white/60 shadow-[0_8px_32px_0_rgba(31,38,135,0.07)];
 }
 
 .glass-nav {

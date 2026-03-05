@@ -39,7 +39,7 @@ export async function predictivePestDiseaseAlerts(input: PredictiveAlertInput): 
       const currentAi = aiInstances[i];
       
       const { output } = await currentAi.generate({
-        model: 'googleai/gemini-1.5-flash',
+        model: 'googleAI/gemini-1.5-flash',
         prompt: promptText,
         output: { schema: PredictiveAlertOutputSchema },
       });
@@ -52,7 +52,6 @@ export async function predictivePestDiseaseAlerts(input: PredictiveAlertInput): 
     }
   }
 
-  // Fallback local solo si todas las llaves fallan
   return {
     alertNeeded: input.soilHumidity > 80 || input.temperature > 35,
     alertMessage: "Aviso: Sensores detectan niveles de alerta. (Análisis Local de Respaldo por saturación de red)",
