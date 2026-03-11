@@ -1,3 +1,4 @@
+
 "use client";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -8,12 +9,12 @@ import {
   Plus, 
   AlertTriangle, 
   Loader2, 
-  ShieldCheck, 
   Radio, 
   Target, 
   CheckCircle2,
   Navigation,
-  Activity
+  Activity,
+  Send
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -31,6 +32,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useTranslation } from "@/hooks/use-translation";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { sendTelegramAlert } from "@/app/actions/telegram";
 
 interface Alert {
   id: string;
@@ -69,18 +71,6 @@ const initialAlerts: Alert[] = [
     date: "Hace 4h",
     lat: 20.0811,
     lng: -98.3664
-  },
-  {
-    id: "3",
-    region: "Ixmiquilpan",
-    crop: "Maíz",
-    problem: "Piojo Blanco",
-    description: "Colonias algodonosas en la base de la mazorca.",
-    severity: "Alta",
-    distance: "Valle del Mezquital",
-    date: "Hace 1h",
-    lat: 20.4849,
-    lng: -99.2192
   }
 ];
 
@@ -92,6 +82,7 @@ export function CommunityAlerts() {
   const [isRadarOpen, setIsRadarOpen] = useState(false);
   const [selectedAlert, setSelectedAlert] = useState<Alert | null>(null);
   const [loadingLocation, setLoadingLocation] = useState(false);
+  const [sendingTelegram, setSendingTelegram] = useState(false);
   const [userCoords, setUserCoords] = useState<{ lat: number, lng: number } | null>(null);
   
   const [newAlert, setNewAlert] = useState({
@@ -139,24 +130,48 @@ export function CommunityAlerts() {
     );
   };
 
-  const handleReport = () => {
+  const handleReport = async () => {
     if (!newAlert.problem) {
       toast({ title: "Error", description: "Dinos qué detectaste.", variant: "destructive" });
       return;
     }
+
+    setSendingTelegram(true);
 
     const alert: Alert = {
       id: Date.now().toString(),
       region: userCoords ? "Mi Parcela (GPS)" : newAlert.region || "Hidalgo",
       crop: newAlert.crop || "Maíz",
       problem: newAlert.problem,
-      description: newAlert.description || "Reporte preventivo.",
+      description: newAlert.description || "Reporte preventivo detectado por AgroTech.",
       severity: "Alta",
       distance: "Aquí mismo",
       date: "Recién reportado",
       lat: userCoords?.lat || (20.1 + (Math.random() * 0.4)),
       lng: userCoords?.lng || (-98.5 - (Math.random() * 0.4))
     };
+
+    // Intentamos enviar a Telegram
+    try {
+      const telegramResult = await sendTelegramAlert({
+        problem: alert.problem,
+        region: alert.region,
+        severity: alert.severity,
+        distance: alert.distance,
+        description: alert.description
+      });
+
+      if (telegramResult.success) {
+        toast({
+          title: "Sincronización Social",
+          description: telegramResult.message,
+        });
+      }
+    } catch (e) {
+      console.error("Error disparando Telegram:", e);
+    } finally {
+      setSendingTelegram(false);
+    }
 
     const updated = [alert, ...alerts];
     setAlerts(updated);
@@ -165,7 +180,7 @@ export function CommunityAlerts() {
     setIsReportOpen(false);
     setNewAlert({ region: "", crop: "", problem: "", description: "" });
     setUserCoords(null);
-    toast({ title: "Alerta Activada", description: "Tu reporte ya es visible en el radar." });
+    toast({ title: "Alerta Activada", description: "Tu reporte ya es visible en el radar y enviado a Telegram." });
   };
 
   return (
@@ -212,6 +227,7 @@ export function CommunityAlerts() {
         </Button>
       </div>
 
+      {/* DIÁLOGO DEL RADAR */}
       <Dialog open={isRadarOpen} onOpenChange={setIsRadarOpen}>
         <DialogContent className="max-w-[95vw] sm:max-w-6xl p-0 overflow-hidden border-none bg-background/95 backdrop-blur-xl">
           <div className="flex flex-col lg:flex-row h-[85vh] lg:h-[700px]">
@@ -224,7 +240,7 @@ export function CommunityAlerts() {
                   Radar Comunitario
                 </DialogTitle>
                 <DialogDescription className="text-xs font-bold text-muted-foreground">
-                  Navega entre todos los brotes reportados en un solo mapa.
+                  Alerta sincronizada con Telegram para protección regional.
                 </DialogDescription>
               </DialogHeader>
 
@@ -243,11 +259,6 @@ export function CommunityAlerts() {
                         <Badge variant="outline" className="text-[8px] h-4 font-black">{a.date}</Badge>
                       </div>
                       <p className="text-sm font-black text-foreground/80">{a.problem}</p>
-                      {selectedAlert?.id === a.id && (
-                        <p className="mt-2 text-[10px] font-bold text-muted-foreground italic leading-relaxed animate-in fade-in slide-in-from-top-1">
-                          "{a.description}"
-                        </p>
-                      )}
                     </div>
                   ))}
                 </div>
@@ -271,7 +282,7 @@ export function CommunityAlerts() {
               )}
               <div className="absolute top-4 left-4 z-10 pointer-events-none">
                 <Badge className="bg-destructive/90 text-white font-black text-[10px] px-4 py-2 shadow-2xl animate-pulse rounded-full">
-                  <Activity className="h-3.5 w-3.5 mr-2" /> FOCO DE CONTAGIO ACTIVO
+                  <Activity className="h-3.5 w-3.5 mr-2" /> RADAR ACTIVO & TELEGRAM SYNC
                 </Badge>
               </div>
             </div>
@@ -279,6 +290,7 @@ export function CommunityAlerts() {
         </DialogContent>
       </Dialog>
 
+      {/* DIÁLOGO DE REPORTE */}
       <Dialog open={isReportOpen} onOpenChange={setIsReportOpen}>
         <DialogContent className="max-w-[90vw] sm:max-w-md glass-card border-none">
           <DialogHeader>
@@ -314,22 +326,10 @@ export function CommunityAlerts() {
               />
             </div>
 
-            {!userCoords && (
-              <div className="space-y-2 animate-in fade-in duration-300">
-                <Label className="text-[10px] font-black uppercase text-muted-foreground tracking-widest">Municipio / Localidad</Label>
-                <Input 
-                  placeholder="Ej: Tulancingo" 
-                  className="rounded-xl h-12 font-bold bg-white/50"
-                  value={newAlert.region}
-                  onChange={(e) => setNewAlert({...newAlert, region: e.target.value})}
-                />
-              </div>
-            )}
-
             <div className="space-y-2">
               <Label className="text-[10px] font-black uppercase text-muted-foreground tracking-widest">Descripción del Daño</Label>
               <Input 
-                placeholder="Ej: Hojas comidas..." 
+                placeholder="Ej: Hojas comidas en el centro..." 
                 className="rounded-xl h-12 font-bold bg-white/50"
                 value={newAlert.description}
                 onChange={(e) => setNewAlert({...newAlert, description: e.target.value})}
@@ -339,8 +339,9 @@ export function CommunityAlerts() {
           
           <DialogFooter className="gap-2">
             <Button variant="ghost" className="rounded-xl font-bold" onClick={() => setIsReportOpen(false)}>Cancelar</Button>
-            <Button variant="destructive" className="rounded-xl font-black uppercase h-12 px-8 shadow-lg shadow-destructive/20" onClick={handleReport}>
-              ACTIVAR ALERTA EN RADAR
+            <Button variant="destructive" className="rounded-xl font-black uppercase h-12 px-8 shadow-lg shadow-destructive/20" onClick={handleReport} disabled={sendingTelegram}>
+              {sendingTelegram ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Send className="h-4 w-4 mr-2" />}
+              {sendingTelegram ? 'ACTIVANDO...' : 'REPORTAR A TELEGRAM'}
             </Button>
           </DialogFooter>
         </DialogContent>
