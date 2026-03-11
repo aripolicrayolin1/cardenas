@@ -6,8 +6,8 @@ import { googleAI } from '@genkit-ai/google-genai';
  * Optimizado para Gemini 1.5 Flash en AgroTech Hidalgo.
  */
 
-// Tu API Key definitiva de Gemini
-const API_KEY = process.env.GEMINI_API_KEY || 'AIzaSyDaCIrKjEp7VudNePBRNSQvMbxCpAs4lUU';
+// Clave API de Gemini definitiva
+const API_KEY = 'AIzaSyDaCIrKjEp7VudNePBRNSQvMbxCpAs4lUU';
 
 /**
  * Instancia principal de Genkit configurada con el plugin de Google AI.

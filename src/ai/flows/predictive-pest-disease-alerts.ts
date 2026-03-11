@@ -1,4 +1,3 @@
-
 'use server';
 /**
  * @fileOverview Alertas predictivas basadas en datos de sensores (IA Pura).

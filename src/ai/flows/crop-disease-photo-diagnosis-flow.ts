@@ -1,7 +1,7 @@
 'use server';
 /**
  * @fileOverview Diagnóstico avanzado de enfermedades y plagas (IA Visual Pura).
- * Procesa imágenes reales utilizando Gemini 1.5 Flash.
+ * Procesa imágenes reales utilizando Gemini 1.5 Flash de forma dinámica.
  */
 
 import { ai } from '@/ai/genkit';

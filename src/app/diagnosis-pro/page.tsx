@@ -57,13 +57,18 @@ export default function DiagnosisProPage() {
     if (videoRef.current && canvasRef.current) {
       const video = videoRef.current;
       const canvas = canvasRef.current;
-      if (video.videoWidth === 0) return;
+      
+      if (video.videoWidth === 0 || video.videoHeight === 0) {
+        toast({ title: "Cámara no lista", description: "Espera a que el video cargue." });
+        return;
+      }
+
       canvas.width = video.videoWidth;
       canvas.height = video.videoHeight;
       const context = canvas.getContext('2d');
       if (context) {
         context.drawImage(video, 0, 0, canvas.width, canvas.height);
-        setSelectedImage(canvas.toDataURL('image/jpeg'));
+        setSelectedImage(canvas.toDataURL('image/jpeg', 0.8));
         setShowCamera(false);
         const tracks = (video.srcObject as MediaStream).getTracks();
         tracks.forEach(t => t.stop());
