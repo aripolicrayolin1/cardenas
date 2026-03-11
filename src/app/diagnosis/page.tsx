@@ -164,8 +164,8 @@ export default function DiagnosisPage() {
       setDiagnosis(result);
     } catch (error: any) {
       toast({ 
-        title: "Error de IA", 
-        description: error.message || "No se pudo realizar el diagnóstico.", 
+        title: "Error de IA Real", 
+        description: error.message || "No se pudo realizar el diagnóstico visual.", 
         variant: "destructive" 
       });
     } finally {
@@ -199,7 +199,7 @@ export default function DiagnosisPage() {
             <h1 className="text-xl font-black text-primary tracking-tight">{t('digital_diagnosis')}</h1>
           </div>
           <Badge variant="outline" className="font-black text-[10px] tracking-widest bg-primary/10 text-primary border-primary/20 px-3">
-            <BrainCircuit className="h-3 w-3 mr-2" /> IA VISUAL ACTIVA
+            <BrainCircuit className="h-3 w-3 mr-2" /> IA PURA ACTIVA (GEMINI)
           </Badge>
         </header>
 
@@ -223,7 +223,7 @@ export default function DiagnosisPage() {
                   <div className="grid md:grid-cols-2 gap-8">
                     <div className="space-y-4">
                       <Label className="text-xs font-black uppercase tracking-widest text-primary flex items-center gap-2">
-                        <Eye className="h-4 w-4" /> ENTRADA VISUAL
+                        <Eye className="h-4 w-4" /> ANÁLISIS VISUAL
                       </Label>
                       
                       {showCamera ? (
@@ -277,7 +277,7 @@ export default function DiagnosisPage() {
                     <div className="space-y-4">
                       <div className="flex items-center justify-between">
                         <Label className="text-xs font-black uppercase tracking-widest text-primary flex items-center gap-2">
-                          <Mic className="h-4 w-4" /> RECONOCIMIENTO DE VOZ
+                          <Mic className="h-4 w-4" /> ENTRADA DE VOZ/TEXTO
                         </Label>
                         <Button 
                           variant={isListening ? "destructive" : "outline"} 
@@ -303,12 +303,12 @@ export default function DiagnosisPage() {
                     {loading ? (
                       <div className="flex items-center gap-3">
                         <Loader2 className="h-8 w-8 animate-spin" /> 
-                        PROCESANDO CON IA...
+                        PROCESANDO CON IA PURA...
                       </div>
                     ) : (
                       <div className="flex items-center gap-3">
                         <Zap className="h-8 w-8 fill-white animate-float" />
-                        IDENTIFICAR Y RESOLVER
+                        IDENTIFICAR CON IA
                       </div>
                     )}
                   </Button>
