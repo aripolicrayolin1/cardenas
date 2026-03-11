@@ -9,25 +9,21 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { 
   Camera, 
-  CheckCircle2, 
   Loader2, 
   X, 
   RefreshCcw, 
-  ShieldCheck, 
   Zap, 
-  FileText, 
   Mic, 
   MicOff, 
-  MapPin, 
-  ShoppingBag, 
-  Users,
   ScanSearch,
   BrainCircuit,
   Eye,
-  Leaf
+  ShieldCheck,
+  Bug,
+  Sprout
 } from "lucide-react";
 import { useState, useRef, useEffect } from "react";
-import { diagnoseCropDisease, type CropDiagnosisOutput } from "@/ai/flows/crop-disease-photo-diagnosis-flow";
+import { diagnoseCropDiseasePro, type CropDiagnosisProOutput } from "@/ai/flows/crop-disease-photo-diagnosis-flow";
 import Image from "next/image";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -39,7 +35,7 @@ export default function DiagnosisPage() {
   const { t } = useTranslation();
   
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
-  const [diagnosis, setDiagnosis] = useState<CropDiagnosisOutput | null>(null);
+  const [diagnosis, setDiagnosis] = useState<CropDiagnosisProOutput | null>(null);
   const [loading, setLoading] = useState(false);
   const [description, setDescription] = useState("");
   
@@ -100,15 +96,18 @@ export default function DiagnosisPage() {
       const video = videoRef.current;
       const canvas = canvasRef.current;
       
-      // Asegurar que el video esté listo y tenga dimensiones
-      if (video.videoWidth === 0) return;
+      // Asegurar que el video tenga dimensiones antes de capturar
+      if (video.videoWidth === 0 || video.videoHeight === 0) {
+        toast({ title: "Cargando Cámara", description: "Espera un momento a que la cámara inicie." });
+        return;
+      }
 
       canvas.width = video.videoWidth;
       canvas.height = video.videoHeight;
       const context = canvas.getContext('2d');
       if (context) {
         context.drawImage(video, 0, 0, canvas.width, canvas.height);
-        const dataUrl = canvas.toDataURL('image/jpeg');
+        const dataUrl = canvas.toDataURL('image/jpeg', 0.8);
         setSelectedImage(dataUrl);
         stopCamera();
         setDiagnosis(null);
@@ -150,7 +149,7 @@ export default function DiagnosisPage() {
     setLoading(true);
 
     try {
-      const result = await diagnoseCropDisease({
+      const result = await diagnoseCropDiseasePro({
         photoDataUri: selectedImage || undefined,
         description: description
       });
@@ -159,7 +158,7 @@ export default function DiagnosisPage() {
       console.error("Diagnosis Error:", error);
       toast({ 
         title: "Error de IA Real", 
-        description: error.message || "No se pudo realizar el diagnóstico. Revisa la consola.", 
+        description: "Verifica que el modelo gemini-1.5-flash esté disponible en tu API Key.", 
         variant: "destructive" 
       });
     } finally {
@@ -172,7 +171,7 @@ export default function DiagnosisPage() {
       case 'High': return "Alta";
       case 'Medium': return "Media";
       case 'Low': return "Baja";
-      default: return "No Aplica";
+      default: return "Normal";
     }
   };
 
@@ -190,10 +189,10 @@ export default function DiagnosisPage() {
         <header className="flex h-16 shrink-0 items-center justify-between px-6 border-b bg-white/80 backdrop-blur-md sticky top-0 z-10">
           <div className="flex items-center gap-2">
             <SidebarTrigger />
-            <h1 className="text-xl font-black text-primary tracking-tight">Diagnóstico Digital</h1>
+            <h1 className="text-xl font-black text-primary tracking-tight">Diagnóstico IA</h1>
           </div>
           <Badge variant="outline" className="font-black text-[10px] tracking-widest bg-primary/10 text-primary border-primary/20 px-3 uppercase">
-            <BrainCircuit className="h-3 w-3 mr-2" /> IA PURA ACTIVA
+            <BrainCircuit className="h-3 w-3 mr-2" /> Gemini 1.5 Activo
           </Badge>
         </header>
 
@@ -204,10 +203,10 @@ export default function DiagnosisPage() {
                 <CardHeader className="bg-primary/5 pb-8">
                   <CardTitle className="text-3xl font-black flex items-center gap-3 text-primary">
                     <ScanSearch className="h-8 w-8" />
-                    Identificador de Plagas
+                    Analizador Visual
                   </CardTitle>
                   <CardDescription className="font-bold text-muted-foreground">
-                    Captura una foto de la zona afectada para que la IA la analice.
+                    Captura o sube una muestra para que la IA la analice.
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-8 pt-8">
@@ -290,24 +289,24 @@ export default function DiagnosisPage() {
                   <Button className="w-full h-16 text-xl font-black rounded-2xl shadow-xl transition-all" disabled={loading} onClick={startDiagnosis}>
                     {loading ? (
                       <div className="flex items-center gap-3">
-                        <Loader2 className="h-6 w-6 animate-spin" /> PROCESANDO CON IA...
+                        <Loader2 className="h-6 w-6 animate-spin" /> ANALIZANDO CON GEMINI...
                       </div>
                     ) : (
                       <div className="flex items-center gap-3">
-                        <Zap className="h-6 w-6 fill-white" /> IDENTIFICAR AHORA
+                        <Zap className="h-6 w-6 fill-white" /> OBTENER DIAGNÓSTICO
                       </div>
                     )}
                   </Button>
                 </CardFooter>
               </Card>
             ) : (
-              <div className="grid gap-6 lg:grid-cols-3">
+              <div className="grid gap-6 lg:grid-cols-3 animate-in fade-in duration-700">
                 <Card className="lg:col-span-1 glass-card border-none shadow-2xl h-fit overflow-hidden">
                    <div className="relative aspect-square bg-muted">
                       {selectedImage ? (
                         <Image src={selectedImage} alt="Preview" fill className="object-cover" />
                       ) : (
-                        <FileText className="h-16 w-16 opacity-10" />
+                        <div className="h-full flex items-center justify-center opacity-10"><ScanSearch className="h-20 w-20" /></div>
                       )}
                    </div>
                    <CardContent className="p-6 space-y-4">
@@ -320,62 +319,71 @@ export default function DiagnosisPage() {
                 <div className="lg:col-span-2 space-y-6">
                   <Card className="glass-card border-none shadow-2xl overflow-hidden">
                     <CardHeader className="border-b bg-white/50">
+                      <div className="flex items-center justify-between mb-2">
+                         <Badge variant="destructive" className="font-black px-3">{translateSeverity(diagnosis.diagnosis.severity)}</Badge>
+                         <div className="flex items-center gap-2 text-[10px] font-black text-primary uppercase tracking-widest">
+                            <ShieldCheck className="h-4 w-4" /> IA VERIFICADA
+                         </div>
+                      </div>
                       <CardTitle className="text-3xl font-black text-primary tracking-tighter">
                         {diagnosis.diagnosis.identifiedProblem}
                       </CardTitle>
                     </CardHeader>
-                    <CardContent className="space-y-8 pt-8">
-                      <div className="grid grid-cols-2 gap-4">
-                         <div className="p-5 rounded-2xl bg-destructive/5 border border-destructive/10">
-                            <p className="text-[10px] font-black uppercase tracking-widest text-destructive mb-1">Severidad</p>
-                            <p className="text-xl font-black">{translateSeverity(diagnosis.diagnosis.severity)}</p>
-                         </div>
-                         <div className="p-5 rounded-2xl bg-primary/5 border border-primary/10">
-                            <p className="text-[10px] font-black uppercase tracking-widest text-primary mb-1">Confianza IA</p>
-                            <p className="text-xl font-black">{diagnosis.diagnosis.confidence === 'High' ? 'ALTA' : 'MEDIA'}</p>
-                         </div>
+                    <CardContent className="space-y-6 pt-6">
+                      <div className="p-4 bg-primary/5 rounded-2xl border border-primary/10">
+                         <p className="text-[10px] font-black uppercase text-primary mb-2 flex items-center gap-2">
+                           <Bug className="h-4 w-4" /> Ciclo Biológico
+                         </p>
+                         <p className="text-sm font-medium leading-relaxed italic text-foreground/80">
+                           {diagnosis.diagnosis.biologicalCycle}
+                         </p>
                       </div>
 
-                      <Tabs defaultValue="actions" className="w-full">
+                      <Tabs defaultValue="control" className="w-full">
                         <TabsList className="grid w-full grid-cols-3 p-1 bg-muted/20 rounded-xl">
-                          <TabsTrigger value="actions" className="font-bold text-xs">Acciones</TabsTrigger>
-                          <TabsTrigger value="commercial" className="font-bold text-xs">Tienda</TabsTrigger>
-                          <TabsTrigger value="homemade" className="font-bold text-xs">Bio</TabsTrigger>
+                          <TabsTrigger value="control" className="font-black text-[10px] uppercase">Control</TabsTrigger>
+                          <TabsTrigger value="prev" className="font-black text-[10px] uppercase">Prevención</TabsTrigger>
+                          <TabsTrigger value="notes" className="font-black text-[10px] uppercase">Notas</TabsTrigger>
                         </TabsList>
                         
-                        <TabsContent value="actions" className="mt-6 space-y-4">
-                          {diagnosis.diagnosis.recommendedActions.map((action, idx) => (
-                            <div key={idx} className="flex items-start gap-4 p-4 bg-white/60 rounded-xl border border-primary/10 shadow-sm">
-                              <CheckCircle2 className="h-5 w-5 text-primary shrink-0 mt-0.5" />
-                              <span className="font-bold text-base text-foreground/80">{action}</span>
-                            </div>
-                          ))}
+                        <TabsContent value="control" className="mt-6 space-y-4">
+                          <div className="grid gap-4">
+                             <div className="p-4 bg-blue-50/50 rounded-xl border border-blue-100">
+                                <h5 className="font-black text-xs text-blue-700 uppercase mb-2">Mecánico</h5>
+                                <ul className="text-xs space-y-1">
+                                  {diagnosis.diagnosis.controlStrategies.mechanical.map((s, i) => <li key={i}>• {s}</li>)}
+                                </ul>
+                             </div>
+                             <div className="p-4 bg-green-50/50 rounded-xl border border-green-100">
+                                <h5 className="font-black text-xs text-green-700 uppercase mb-2">Biológico</h5>
+                                <ul className="text-xs space-y-1">
+                                  {diagnosis.diagnosis.controlStrategies.biological.map((s, i) => <li key={i}>• {s}</li>)}
+                                </ul>
+                             </div>
+                             <div className="p-4 bg-red-50/50 rounded-xl border border-red-100">
+                                <h5 className="font-black text-xs text-red-700 uppercase mb-2">Químico</h5>
+                                <ul className="text-xs space-y-1">
+                                  {diagnosis.diagnosis.controlStrategies.chemical.map((s, i) => <li key={i}>• {s}</li>)}
+                                </ul>
+                             </div>
+                          </div>
                         </TabsContent>
                         
-                        <TabsContent value="commercial" className="mt-6 space-y-4">
-                          {diagnosis.diagnosis.commercialProducts.map((product, idx) => (
-                            <div key={idx} className="p-6 bg-white rounded-2xl border border-primary/10 shadow-sm">
-                              <h5 className="font-black text-xl text-primary mb-2">{product.name}</h5>
-                              <p className="text-sm font-medium text-muted-foreground mb-4">{product.description}</p>
-                              <Button className="w-full font-bold gap-2" variant="outline" asChild>
-                                <a href={product.locationLink || "#"} target="_blank" rel="noopener noreferrer">
-                                  <MapPin className="h-4 w-4" /> Buscar en Hidalgo
-                                </a>
-                              </Button>
-                            </div>
-                          ))}
+                        <TabsContent value="prev" className="mt-6">
+                          <div className="p-5 bg-white rounded-2xl border border-primary/10 shadow-sm space-y-3">
+                             {diagnosis.diagnosis.preventionTips.map((tip, i) => (
+                               <div key={i} className="flex items-start gap-3">
+                                 <Sprout className="h-4 w-4 text-primary shrink-0 mt-0.5" />
+                                 <p className="text-sm font-medium">{tip}</p>
+                               </div>
+                             ))}
+                          </div>
                         </TabsContent>
 
-                        <TabsContent value="homemade" className="mt-6 space-y-4">
-                          {diagnosis.diagnosis.homeMadeRemedies.map((remedy, idx) => (
-                            <div key={idx} className="p-6 bg-green-50/50 rounded-2xl border border-green-200">
-                              <h5 className="font-black text-xl text-green-800 mb-3 flex items-center gap-2">
-                                <Leaf className="h-5 w-5" /> {remedy.name}
-                              </h5>
-                              <p className="text-xs font-black text-green-700 uppercase tracking-widest mb-1">Preparación</p>
-                              <p className="text-sm font-medium text-green-900/70">{remedy.instructions}</p>
-                            </div>
-                          ))}
+                        <TabsContent value="notes" className="mt-6">
+                           <p className="text-sm font-medium p-4 bg-muted/20 rounded-xl border italic">
+                             {diagnosis.diagnosis.expertNotes}
+                           </p>
                         </TabsContent>
                       </Tabs>
                     </CardContent>

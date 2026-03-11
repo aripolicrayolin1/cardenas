@@ -1,4 +1,3 @@
-
 "use client";
 
 import { 
@@ -11,7 +10,8 @@ import {
   Leaf,
   LogIn,
   User,
-  Languages
+  Languages,
+  Microscope
 } from "lucide-react";
 import {
   Sidebar,
@@ -49,6 +49,7 @@ export function SidebarNav() {
     { title: 'dashboard', icon: LayoutDashboard, href: "/" },
     { title: 'monitoring', icon: Activity, href: "/monitoring" },
     { title: 'diagnosis', icon: Camera, href: "/diagnosis" },
+    { title: 'diagnosis_pro', icon: Microscope, href: "/diagnosis-pro" },
     { title: 'community', icon: Users, href: "/community" },
     { title: 'farms', icon: Leaf, href: "/farms" },
   ];

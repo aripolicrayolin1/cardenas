@@ -7,35 +7,28 @@
 import { ai } from '@/ai/genkit';
 import { z } from 'genkit';
 
-const CropDiagnosisOutputSchema = z.object({
+const CropDiagnosisProOutputSchema = z.object({
   diagnosis: z.object({
-    isProblemDetected: z.boolean(),
-    identifiedProblem: z.string().describe('Nombre técnico y común de la plaga o enfermedad.'),
-    severity: z.enum(['Low', 'Medium', 'High', 'Not Applicable']),
-    confidence: z.enum(['Low', 'Medium', 'High']),
-    recommendedActions: z.array(z.string()).describe('Pasos técnicos a seguir de inmediato.'),
-    commercialProducts: z.array(z.object({
-      name: z.string(),
-      description: z.string(),
-      localStores: z.string(),
-      locationLink: z.string().optional()
-    })),
-    homeMadeRemedies: z.array(z.object({
-      name: z.string(),
-      ingredients: z.array(z.string()),
-      instructions: z.string()
-    })).describe('Remedios biológicos y caseros para control orgánico.'),
-    additionalNotes: z.string().optional(),
+    identifiedProblem: z.string().describe('Nombre técnico y común.'),
+    biologicalCycle: z.string().describe('Explicación del ciclo de vida de la plaga/enfermedad.'),
+    severity: z.enum(['Low', 'Medium', 'High']),
+    controlStrategies: z.object({
+      mechanical: z.array(z.string()).describe('Acciones físicas o manuales.'),
+      biological: z.array(z.string()).describe('Depredadores naturales o remedios orgánicos locales.'),
+      chemical: z.array(z.string()).describe('Productos químicos técnicos recomendados.'),
+    }),
+    preventionTips: z.array(z.string()).describe('Consejos para evitar que regrese.'),
+    expertNotes: z.string(),
   }),
 });
 
-export type CropDiagnosisInput = {
+export type CropDiagnosisProInput = {
   photoDataUri?: string;
   description?: string;
 };
 
-export type CropDiagnosisOutput = {
-  diagnosis: z.infer<typeof CropDiagnosisOutputSchema>['diagnosis'];
+export type CropDiagnosisProOutput = {
+  diagnosis: z.infer<typeof CropDiagnosisProOutputSchema>['diagnosis'];
 };
 
 function getMimeType(dataUri: string): string {
@@ -43,18 +36,17 @@ function getMimeType(dataUri: string): string {
   return match ? match[1] : 'image/jpeg';
 }
 
-export async function diagnoseCropDisease(input: CropDiagnosisInput): Promise<CropDiagnosisOutput> {
-  const promptText = `Eres el Agente Experto en Fitopatología de AgroTech Hidalgo. 
-  Tu misión es analizar la imagen proporcionada (y la descripción si existe) para identificar plagas o enfermedades agrícolas.
+export async function diagnoseCropDiseasePro(input: CropDiagnosisProInput): Promise<CropDiagnosisProOutput> {
+  const promptText = `Eres el Agente de Diagnóstico Científico Pro de AgroTech Hidalgo. 
+  Tu misión es analizar la imagen y descripción proporcionada para identificar con precisión científica la plaga o enfermedad.
   
-  SÍNTOMAS REPORTADOS: ${input.description || 'Analizar visualmente la imagen proporcionada.'}
+  SÍNTOMAS: ${input.description || 'Analizar visualmente la imagen.'}
   
-  Analiza la imagen con cuidado buscando daños en hojas, tallos o frutos. Proporciona una respuesta técnica que incluya:
-  1. Identificación precisa.
-  2. Severidad del problema.
-  3. Acciones inmediatas.
-  4. Productos comerciales recomendados.
-  5. Remedios biológicos (bio-preparados) tradicionales de la región.`;
+  Debes proporcionar:
+  1. Identificación técnica.
+  2. Explicación del ciclo biológico de la plaga.
+  3. Estrategias de control divididas en: Mecánicas, Biológicas y Químicas.
+  4. Consejos de prevención a largo plazo.`;
 
   const promptParts: any[] = [{ text: promptText }];
   
@@ -70,11 +62,11 @@ export async function diagnoseCropDisease(input: CropDiagnosisInput): Promise<Cr
   const { output } = await ai.generate({
     model: 'googleai/gemini-1.5-flash',
     prompt: promptParts,
-    output: { schema: CropDiagnosisOutputSchema },
+    output: { schema: CropDiagnosisProOutputSchema },
   });
 
   if (!output || !output.diagnosis) {
-    throw new Error('La IA no pudo procesar la muestra. Verifica la imagen o la API Key.');
+    throw new Error('La IA Pro no pudo procesar la muestra.');
   }
   
   return { diagnosis: output.diagnosis };

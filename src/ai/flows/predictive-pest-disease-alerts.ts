@@ -1,7 +1,7 @@
 'use server';
 /**
  * @fileOverview Alertas predictivas basadas en datos de sensores (IA Pura).
- * Sin modo de respaldo. Analiza variables IoT en tiempo real.
+ * Analiza variables IoT en tiempo real usando Gemini 1.5 Flash.
  */
 
 import { ai } from '@/ai/genkit';

@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -10,6 +9,7 @@ const translations = {
     dashboard: "Panel de Control",
     monitoring: "Monitoreo",
     diagnosis: "Diagnóstico IA",
+    diagnosis_pro: "Análisis IA Pro",
     community: "Comunidad",
     farms: "Fincas",
     settings: "Configuración",
@@ -120,6 +120,7 @@ const translations = {
     dashboard: "Ñut’i Ja’i",
     monitoring: "Hyandi",
     diagnosis: "Pa̱di IA",
+    diagnosis_pro: "Pa̱di Pro",
     community: "Munthe",
     farms: "B’o̱za",
     settings: "Xo̱fo",

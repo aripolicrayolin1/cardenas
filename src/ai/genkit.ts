@@ -2,7 +2,7 @@ import { genkit } from 'genkit';
 import { googleAI } from '@genkit-ai/google-genai';
 
 /**
- * @fileOverview Configuración centralizada de Genkit con la API Key de Google AI proporcionada.
+ * @fileOverview Configuración centralizada de Genkit con la API Key de Google AI Studio.
  */
 
 const API_KEY = process.env.GEMINI_API_KEY || 'AIzaSyDaCIrKjEp7VudNePBRNSQvMbxCpAs4lUU';
