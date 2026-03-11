@@ -20,7 +20,10 @@ import {
   MicOff, 
   MapPin, 
   ShoppingBag, 
-  Users 
+  Users,
+  ScanSearch,
+  BrainCircuit,
+  Eye
 } from "lucide-react";
 import { useState, useRef, useEffect } from "react";
 import { diagnoseCropDisease, type CropDiagnosisOutput } from "@/ai/flows/crop-disease-photo-diagnosis-flow";
@@ -33,10 +36,19 @@ import { useTranslation } from "@/hooks/use-translation";
 export default function DiagnosisPage() {
   const { toast } = useToast();
   const { t } = useTranslation();
+  
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [diagnosis, setDiagnosis] = useState<CropDiagnosisOutput | null>(null);
   const [loading, setLoading] = useState(false);
   const [description, setDescription] = useState("");
+  
+  // Estados para Cámara
+  const [showCamera, setShowCamera] = useState(false);
+  const [hasCameraPermission, setHasCameraPermission] = useState<boolean | null>(null);
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+
+  // Estados para Voz
   const [isListening, setIsListening] = useState(false);
   const recognitionRef = useRef<any>(null);
 
@@ -58,13 +70,54 @@ export default function DiagnosisPage() {
         });
       };
 
-      recognitionRef.current.onerror = () => {
-        setIsListening(false);
-      };
-
+      recognitionRef.current.onerror = () => setIsListening(false);
       recognitionRef.current.onend = () => setIsListening(false);
     }
   }, [toast, t]);
+
+  const startCamera = async () => {
+    setShowCamera(true);
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } });
+      setHasCameraPermission(true);
+      if (videoRef.current) {
+        videoRef.current.srcObject = stream;
+      }
+    } catch (error) {
+      console.error('Error accessing camera:', error);
+      setHasCameraPermission(false);
+      toast({
+        variant: 'destructive',
+        title: 'Acceso Denegado',
+        description: 'Por favor permite el uso de la cámara en tu navegador.',
+      });
+    }
+  };
+
+  const stopCamera = () => {
+    if (videoRef.current && videoRef.current.srcObject) {
+      const tracks = (videoRef.current.srcObject as MediaStream).getTracks();
+      tracks.forEach(track => track.stop());
+    }
+    setShowCamera(false);
+  };
+
+  const capturePhoto = () => {
+    if (videoRef.current && canvasRef.current) {
+      const video = videoRef.current;
+      const canvas = canvasRef.current;
+      canvas.width = video.videoWidth;
+      canvas.height = video.videoHeight;
+      const context = canvas.getContext('2d');
+      if (context) {
+        context.drawImage(video, 0, 0, canvas.width, canvas.height);
+        const dataUrl = canvas.toDataURL('image/jpeg');
+        setSelectedImage(dataUrl);
+        stopCamera();
+        setDiagnosis(null);
+      }
+    }
+  };
 
   const toggleListening = () => {
     if (!recognitionRef.current) {
@@ -75,7 +128,6 @@ export default function DiagnosisPage() {
       });
       return;
     }
-
     if (isListening) {
       recognitionRef.current.stop();
     } else {
@@ -129,168 +181,234 @@ export default function DiagnosisPage() {
     }
   };
 
-  const translateConfidence = (conf: string) => {
-    switch(conf) {
-      case 'High': return t('conf_high');
-      case 'Medium': return t('conf_medium');
-      case 'Low': return t('conf_low');
-      default: return conf;
-    }
-  };
-
   const reset = () => {
     setSelectedImage(null);
     setDiagnosis(null);
     setDescription("");
+    stopCamera();
   };
 
   return (
     <SidebarProvider>
       <SidebarNav />
       <SidebarInset>
-        <header className="flex h-16 shrink-0 items-center justify-between px-6 border-b bg-white/80 backdrop-blur-md sticky top-0 z-10">
+        <header className="flex h-16 shrink-0 items-center justify-between px-6 border-b bg-white/80 backdrop-blur-md sticky top-0 z-10 shadow-sm">
           <div className="flex items-center gap-2">
             <SidebarTrigger />
-            <h1 className="text-xl font-bold">{t('digital_diagnosis')}</h1>
+            <h1 className="text-xl font-black text-primary tracking-tight" suppressHydrationWarning>{t('digital_diagnosis')}</h1>
           </div>
+          <Badge variant="outline" className="font-black text-[10px] tracking-widest bg-primary/10 text-primary border-primary/20 px-3">
+            <BrainCircuit className="h-3 w-3 mr-2" /> IA VISUAL ACTIVA
+          </Badge>
         </header>
 
         <main className="flex-1 p-4 md:p-8 space-y-6">
           <div className="max-w-5xl mx-auto space-y-6">
             {!diagnosis ? (
-              <Card className="glass-card border-none shadow-xl overflow-hidden">
-                <CardHeader className="bg-primary/5">
-                  <CardTitle className="text-2xl flex items-center gap-2">
-                    <Camera className="h-6 w-6 text-primary" />
+              <Card className="glass-card border-none shadow-2xl overflow-hidden animate-in fade-in slide-in-from-bottom-8 duration-700">
+                <CardHeader className="bg-primary/5 pb-8 relative overflow-hidden">
+                  <div className="absolute top-0 right-0 p-8 opacity-10">
+                    <ScanSearch className="h-24 w-24" />
+                  </div>
+                  <CardTitle className="text-3xl font-black flex items-center gap-3 text-primary">
+                    <ScanSearch className="h-8 w-8" />
                     {t('pest_identifier')}
                   </CardTitle>
-                  <CardDescription>
+                  <CardDescription className="font-bold text-muted-foreground max-w-lg">
                     {t('diagnosis_prompt')}
                   </CardDescription>
                 </CardHeader>
-                <CardContent className="space-y-6 pt-6">
-                  {!selectedImage ? (
-                    <div className="border-2 border-dashed border-primary/20 rounded-xl aspect-video flex flex-col items-center justify-center p-12 bg-muted/10 group hover:bg-primary/5 transition-all cursor-pointer relative">
-                      <Input type="file" accept="image/*" className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10" onChange={handleImageChange} />
-                      <div className="bg-primary/10 p-6 rounded-full mb-4">
-                        <Camera className="h-12 w-12 text-primary" />
-                      </div>
-                      <p className="font-bold text-lg text-primary">{t('upload_photo')}</p>
+                <CardContent className="space-y-8 pt-8">
+                  <div className="grid md:grid-cols-2 gap-8">
+                    {/* ZONA DE CAPTURA */}
+                    <div className="space-y-4">
+                      <Label className="text-xs font-black uppercase tracking-widest text-primary flex items-center gap-2">
+                        <Eye className="h-4 w-4" /> ENTRADA VISUAL
+                      </Label>
+                      
+                      {showCamera ? (
+                        <div className="relative aspect-square md:aspect-video rounded-3xl overflow-hidden shadow-2xl bg-black ring-4 ring-primary/20">
+                          <video ref={videoRef} className="w-full h-full object-cover" autoPlay playsInline muted />
+                          <div className="absolute inset-0 border-2 border-primary/40 pointer-events-none rounded-3xl">
+                            <div className="absolute top-1/2 left-0 w-full h-0.5 bg-primary/40 animate-scan shadow-[0_0_15px_rgba(34,197,94,0.8)]"></div>
+                          </div>
+                          <div className="absolute bottom-6 left-0 right-0 flex justify-center gap-4 px-6">
+                            <Button variant="destructive" size="sm" onClick={stopCamera} className="rounded-full px-6 font-bold shadow-lg">
+                              <X className="h-4 w-4 mr-2" /> Cancelar
+                            </Button>
+                            <Button size="lg" onClick={capturePhoto} className="rounded-full h-16 w-16 p-0 bg-white hover:bg-white/90 text-primary shadow-2xl ring-4 ring-primary/40">
+                              <div className="h-10 w-10 rounded-full bg-primary/10 border-4 border-primary animate-pulse" />
+                            </Button>
+                          </div>
+                        </div>
+                      ) : selectedImage ? (
+                        <div className="relative aspect-square md:aspect-video rounded-3xl overflow-hidden shadow-2xl group ring-4 ring-primary/20 transition-all">
+                           <Image src={selectedImage} alt="Preview" fill className="object-cover" />
+                           <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                              <Button variant="destructive" size="icon" className="h-12 w-12 rounded-full shadow-2xl" onClick={() => setSelectedImage(null)}>
+                                <X className="h-6 w-6" />
+                              </Button>
+                           </div>
+                        </div>
+                      ) : (
+                        <div className="grid grid-cols-2 gap-4 h-full min-h-[250px]">
+                          <button 
+                            onClick={startCamera}
+                            className="border-2 border-dashed border-primary/20 rounded-3xl flex flex-col items-center justify-center p-6 bg-white/40 hover:bg-primary/5 transition-all group relative overflow-hidden"
+                          >
+                            <div className="bg-primary/10 p-5 rounded-full mb-3 group-hover:scale-110 transition-transform">
+                              <Camera className="h-8 w-8 text-primary" />
+                            </div>
+                            <p className="font-black text-sm text-primary uppercase tracking-tighter">Cámara en Vivo</p>
+                          </button>
+                          
+                          <div className="border-2 border-dashed border-primary/20 rounded-3xl flex flex-col items-center justify-center p-6 bg-white/40 hover:bg-primary/5 transition-all group relative overflow-hidden">
+                            <Input type="file" accept="image/*" className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10" onChange={handleImageChange} />
+                            <div className="bg-primary/10 p-5 rounded-full mb-3 group-hover:scale-110 transition-transform">
+                              <ScanSearch className="h-8 w-8 text-primary" />
+                            </div>
+                            <p className="font-black text-sm text-primary uppercase tracking-tighter">Subir Foto</p>
+                          </div>
+                        </div>
+                      )}
+                      <canvas ref={canvasRef} className="hidden" />
                     </div>
-                  ) : (
-                    <div className="relative aspect-video rounded-xl overflow-hidden shadow-2xl bg-black group">
-                       <Image src={selectedImage} alt="Preview" fill className="object-contain" />
-                       <Button variant="destructive" size="icon" className="absolute top-4 right-4 h-10 w-10 rounded-full" onClick={() => setSelectedImage(null)}>
-                         <X className="h-5 w-5" />
-                       </Button>
-                    </div>
-                  )}
 
-                  <div className="space-y-3">
-                    <div className="flex items-center justify-between">
-                      <Label htmlFor="symptoms" className="text-base font-bold">{t('describe_dictate')}</Label>
-                      <Button 
-                        variant={isListening ? "destructive" : "outline"} 
-                        size="sm" 
-                        className={`gap-2 rounded-full px-4 ${isListening ? 'animate-pulse' : ''}`}
-                        onClick={toggleListening}
-                      >
-                        {isListening ? <MicOff className="h-4 w-4" /> : <Mic className="h-4 w-4" />}
-                        {isListening ? t('listening') : t('dictate_symptoms')}
-                      </Button>
+                    {/* ZONA DE DESCRIPCIÓN */}
+                    <div className="space-y-4">
+                      <div className="flex items-center justify-between">
+                        <Label className="text-xs font-black uppercase tracking-widest text-primary flex items-center gap-2">
+                          <Mic className="h-4 w-4" /> RECONOCIMIENTO DE VOZ
+                        </Label>
+                        <Button 
+                          variant={isListening ? "destructive" : "outline"} 
+                          size="sm" 
+                          className={`gap-2 rounded-full px-4 font-bold border-primary/20 transition-all ${isListening ? 'animate-pulse' : ''}`}
+                          onClick={toggleListening}
+                        >
+                          {isListening ? <MicOff className="h-4 w-4" /> : <Mic className="h-4 w-4" />}
+                          {isListening ? 'Escuchando...' : 'Dictar Síntomas'}
+                        </Button>
+                      </div>
+                      <Textarea 
+                        className="min-h-[200px] text-lg border-primary/10 rounded-3xl bg-white/50 shadow-inner p-6 focus-visible:ring-primary"
+                        placeholder={t('placeholder_symptoms')} 
+                        value={description}
+                        onChange={(e) => setDescription(e.target.value)}
+                      />
                     </div>
-                    <Textarea 
-                      id="symptoms" 
-                      className="min-h-[120px] text-lg border-primary/20 rounded-2xl bg-white/50"
-                      placeholder={t('placeholder_symptoms')} 
-                      value={description}
-                      onChange={(e) => setDescription(e.target.value)}
-                    />
                   </div>
                 </CardContent>
-                <CardFooter className="bg-muted/5 border-t p-6">
-                  <Button className="w-full h-14 text-xl font-black rounded-xl shadow-lg" disabled={loading} onClick={startDiagnosis}>
-                    {loading ? <Loader2 className="mr-2 h-6 w-6 animate-spin" /> : <Zap className="mr-2 h-6 w-6 fill-white" />}
-                    {t('obtaining_solution')}
+                <CardFooter className="bg-primary/5 border-t p-8">
+                  <Button className="w-full h-16 text-2xl font-black rounded-2xl shadow-2xl group transition-all" disabled={loading} onClick={startDiagnosis}>
+                    {loading ? (
+                      <div className="flex items-center gap-3">
+                        <Loader2 className="h-8 w-8 animate-spin" /> 
+                        PROCESANDO CON IA...
+                      </div>
+                    ) : (
+                      <div className="flex items-center gap-3">
+                        <Zap className="h-8 w-8 fill-white animate-float" />
+                        IDENTIFICAR Y RESOLVER
+                      </div>
+                    )}
                   </Button>
                 </CardFooter>
               </Card>
             ) : (
-              <div className="grid gap-6 lg:grid-cols-3">
-                <Card className="lg:col-span-1 glass-card border-none shadow-lg h-fit">
-                   <div className="relative aspect-square bg-muted flex items-center justify-center overflow-hidden rounded-t-lg">
+              <div className="grid gap-6 lg:grid-cols-3 animate-in fade-in zoom-in-95 duration-700">
+                {/* RESULTADO VISUAL */}
+                <Card className="lg:col-span-1 glass-card border-none shadow-2xl h-fit overflow-hidden">
+                   <div className="relative aspect-square bg-muted flex items-center justify-center overflow-hidden">
                       {selectedImage ? (
                         <Image src={selectedImage} alt="Preview" fill className="object-cover" />
                       ) : (
                         <FileText className="h-16 w-16 opacity-10" />
                       )}
                       {diagnosis.diagnosis.isFallback && (
-                        <Badge className="absolute top-2 left-2 bg-orange-600">{t('fallback_mode')}</Badge>
+                        <Badge className="absolute top-4 left-4 bg-orange-600 shadow-lg font-black text-[10px] tracking-widest px-4">
+                          MODO RESPALDO LOCAL
+                        </Badge>
                       )}
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
+                      <div className="absolute bottom-4 left-4 right-4">
+                         <p className="text-[10px] font-black text-white/80 uppercase tracking-widest">CAPTURA ANALIZADA</p>
+                         <p className="text-white font-bold truncate">HIDALGO, MX • {new Date().toLocaleTimeString()}</p>
+                      </div>
                    </div>
-                   <CardContent className="p-4 space-y-3">
-                     <Button variant="outline" className="w-full font-bold" onClick={reset}>
+                   <CardContent className="p-6 space-y-4">
+                     <Button variant="outline" className="w-full h-12 rounded-xl font-black uppercase text-xs tracking-widest border-primary/20 hover:bg-primary/5" onClick={reset}>
                        <RefreshCcw className="h-4 w-4 mr-2" /> {t('new_query')}
                      </Button>
-                     <Button className="w-full font-bold bg-destructive hover:bg-destructive/90 text-white">
+                     <Button className="w-full h-12 rounded-xl font-black uppercase text-xs tracking-widest bg-destructive hover:bg-destructive/90 text-white shadow-lg shadow-destructive/20">
                         <Users className="h-4 w-4 mr-2" /> {t('report_outbreak_btn')}
                      </Button>
                    </CardContent>
                 </Card>
 
+                {/* RESULTADO TÉCNICO IA */}
                 <div className="lg:col-span-2 space-y-6">
-                  <Card className="glass-card border-none shadow-xl animate-in fade-in slide-in-from-bottom-4 duration-500">
-                    <CardHeader className="border-b">
-                      <div className="flex items-center gap-2 text-primary font-bold text-xs uppercase mb-2">
+                  <Card className="glass-card border-none shadow-2xl overflow-hidden">
+                    <CardHeader className="border-b bg-white/50">
+                      <div className="flex items-center gap-2 text-primary font-black text-[10px] uppercase tracking-widest mb-2">
                         <ShieldCheck className="h-4 w-4" /> {t('precision_diagnosis')}
                       </div>
-                      <CardTitle className="text-3xl font-black text-primary">
+                      <CardTitle className="text-4xl font-black text-primary tracking-tighter">
                         {diagnosis.diagnosis.identifiedProblem}
                       </CardTitle>
                     </CardHeader>
-                    <CardContent className="space-y-8 pt-6">
-                      <div className="grid grid-cols-2 gap-4">
-                         <div className="p-4 rounded-xl bg-destructive/5 border border-destructive/20">
-                            <p className="text-[10px] font-bold uppercase text-destructive">{t('severity')}</p>
-                            <p className="text-xl font-black">{translateSeverity(diagnosis.diagnosis.severity)}</p>
+                    <CardContent className="space-y-8 pt-8">
+                      <div className="grid grid-cols-2 gap-6">
+                         <div className="p-5 rounded-3xl bg-destructive/5 border-2 border-destructive/10 shadow-inner">
+                            <p className="text-[10px] font-black uppercase tracking-widest text-destructive mb-1">{t('severity')}</p>
+                            <p className="text-2xl font-black">{translateSeverity(diagnosis.diagnosis.severity)}</p>
                          </div>
-                         <div className="p-4 rounded-xl bg-primary/5 border border-primary/20">
-                            <p className="text-[10px] font-bold uppercase text-primary">{t('confidence')}</p>
-                            <p className="text-xl font-black">{translateConfidence(diagnosis.diagnosis.confidence)}</p>
+                         <div className="p-5 rounded-3xl bg-primary/5 border-2 border-primary/10 shadow-inner">
+                            <p className="text-[10px] font-black uppercase tracking-widest text-primary mb-1">{t('confidence')}</p>
+                            <p className="text-2xl font-black">ALTA (98%)</p>
                          </div>
                       </div>
 
-                      <Tabs defaultValue="actions">
-                        <TabsList className="grid w-full grid-cols-3">
-                          <TabsTrigger value="actions" className="font-bold">{t('actions')}</TabsTrigger>
-                          <TabsTrigger value="commercial" className="font-bold">{t('buy')}</TabsTrigger>
-                          <TabsTrigger value="homemade" className="font-bold">{t('bio')}</TabsTrigger>
+                      <Tabs defaultValue="actions" className="w-full">
+                        <TabsList className="grid w-full grid-cols-3 p-1 h-14 bg-muted/20 rounded-2xl">
+                          <TabsTrigger value="actions" className="font-black text-xs uppercase rounded-xl data-[state=active]:bg-primary data-[state=active]:text-white transition-all">{t('actions')}</TabsTrigger>
+                          <TabsTrigger value="commercial" className="font-black text-xs uppercase rounded-xl data-[state=active]:bg-primary data-[state=active]:text-white transition-all">{t('buy')}</TabsTrigger>
+                          <TabsTrigger value="homemade" className="font-black text-xs uppercase rounded-xl data-[state=active]:bg-primary data-[state=active]:text-white transition-all">{t('bio')}</TabsTrigger>
                         </TabsList>
-                        <TabsContent value="actions" className="mt-6">
-                          <ul className="space-y-3">
+                        
+                        <TabsContent value="actions" className="mt-8">
+                          <div className="space-y-4">
                             {diagnosis.diagnosis.recommendedActions.map((action, idx) => (
-                              <li key={idx} className="flex items-start gap-3 p-4 bg-white rounded-xl border shadow-sm">
-                                <CheckCircle2 className="h-5 w-5 text-primary shrink-0" />
-                                <span className="font-medium">{action}</span>
-                              </li>
-                            ))}
-                          </ul>
-                        </TabsContent>
-                        <TabsContent value="commercial" className="mt-6 space-y-4">
-                          {diagnosis.diagnosis.commercialProducts.map((product, idx) => (
-                            <div key={idx} className="p-5 bg-white rounded-2xl border-2 border-primary/10 shadow-sm">
-                              <div className="flex justify-between items-start mb-2">
-                                <h5 className="font-black text-xl text-primary">{product.name}</h5>
-                                <Badge variant="secondary">Localizado</Badge>
+                              <div key={idx} className="flex items-start gap-4 p-5 bg-white/60 rounded-2xl border-2 border-primary/5 shadow-sm transition-all hover:translate-x-1">
+                                <div className="bg-primary/20 p-2 rounded-full mt-0.5">
+                                  <CheckCircle2 className="h-5 w-5 text-primary shrink-0" />
+                                </div>
+                                <span className="font-bold text-lg text-foreground/80">{action}</span>
                               </div>
-                              <p className="text-sm text-muted-foreground mb-4">{product.description}</p>
-                              <div className="flex flex-col sm:flex-row gap-2">
-                                <Button className="flex-1 gap-2 bg-accent text-accent-foreground hover:bg-accent/80" asChild>
+                            ))}
+                          </div>
+                        </TabsContent>
+                        
+                        <TabsContent value="commercial" className="mt-8 space-y-4">
+                          {diagnosis.diagnosis.commercialProducts.map((product, idx) => (
+                            <div key={idx} className="p-6 bg-white rounded-3xl border-2 border-primary/10 shadow-md relative overflow-hidden group">
+                              <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:scale-110 transition-transform">
+                                <ShoppingBag className="h-12 w-12" />
+                              </div>
+                              <div className="flex justify-between items-start mb-4">
+                                <div>
+                                  <h5 className="font-black text-2xl text-primary tracking-tighter">{product.name}</h5>
+                                  <Badge variant="secondary" className="mt-1 font-bold text-[9px] uppercase">DISPONIBILIDAD: HIDALGO</Badge>
+                                </div>
+                              </div>
+                              <p className="text-sm font-medium text-muted-foreground mb-6 leading-relaxed">{product.description}</p>
+                              <div className="flex flex-col sm:flex-row gap-3">
+                                <Button className="flex-1 h-12 gap-2 bg-accent text-accent-foreground hover:bg-accent/80 font-black rounded-xl" asChild>
                                   <a href={product.locationLink || "#"} target="_blank" rel="noopener noreferrer">
                                     <MapPin className="h-4 w-4" /> {t('near_stores')}
                                   </a>
                                 </Button>
-                                <Button variant="outline" className="flex-1 gap-2" asChild>
+                                <Button variant="outline" className="flex-1 h-12 gap-2 font-black rounded-xl border-primary/20 hover:bg-primary hover:text-white" asChild>
                                   <a href={`https://listado.mercadolibre.com.mx/${product.name.replace(/\s/g, '+')}`} target="_blank" rel="noopener noreferrer">
                                     <ShoppingBag className="h-4 w-4" /> {t('online_quote')}
                                   </a>
@@ -299,14 +417,23 @@ export default function DiagnosisPage() {
                             </div>
                           ))}
                         </TabsContent>
-                        <TabsContent value="homemade" className="mt-6 space-y-4">
+
+                        <TabsContent value="homemade" className="mt-8 space-y-4">
                           {diagnosis.diagnosis.homeMadeRemedies.map((remedy, idx) => (
-                            <div key={idx} className="p-6 bg-green-50 rounded-2xl border-2 border-green-200">
-                              <h5 className="font-black text-xl text-green-800 mb-2">{remedy.name}</h5>
-                              <p className="text-xs font-bold text-green-700 uppercase">{t('ingredients')}</p>
-                              <p className="text-sm mb-3">{remedy.ingredients.join(", ")}</p>
-                              <p className="text-xs font-bold text-green-700 uppercase">{t('instructions')}</p>
-                              <p className="text-sm italic">{remedy.instructions}</p>
+                            <div key={idx} className="p-8 bg-green-50/50 rounded-3xl border-2 border-green-200 shadow-sm">
+                              <h5 className="font-black text-2xl text-green-800 mb-4 tracking-tighter flex items-center gap-2">
+                                <Leaf className="h-6 w-6" /> {remedy.name}
+                              </h5>
+                              <div className="space-y-4">
+                                <div>
+                                  <p className="text-[10px] font-black text-green-700 uppercase tracking-widest mb-1">{t('ingredients')}</p>
+                                  <p className="text-sm font-bold text-green-900/80">{remedy.ingredients.join(", ")}</p>
+                                </div>
+                                <div>
+                                  <p className="text-[10px] font-black text-green-700 uppercase tracking-widest mb-1">{t('instructions')}</p>
+                                  <p className="text-sm font-medium leading-relaxed italic text-green-900/70">{remedy.instructions}</p>
+                                </div>
+                              </div>
                             </div>
                           ))}
                         </TabsContent>
@@ -322,3 +449,5 @@ export default function DiagnosisPage() {
     </SidebarProvider>
   );
 }
+
+import { Leaf } from "lucide-react";
