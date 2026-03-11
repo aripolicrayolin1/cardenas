@@ -14,7 +14,8 @@ import {
   CheckCircle2,
   Navigation,
   Activity,
-  Send
+  Send,
+  MessageCircle
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -64,8 +65,8 @@ const initialAlerts: Alert[] = [
     id: "2",
     region: "Tulancingo",
     crop: "Hortalizas",
-    problem: "Plaga de Hoja con Bicho",
-    description: "Manchas necróticas y presencia de insectos masticadores.",
+    problem: "Pulgón de la Col",
+    description: "Colonias densas en el envés de las hojas.",
     severity: "Media",
     distance: "Región Tulancingo",
     date: "Hace 4h",
@@ -151,7 +152,6 @@ export function CommunityAlerts() {
       lng: userCoords?.lng || (-98.5 - (Math.random() * 0.4))
     };
 
-    // Intentamos enviar a Telegram
     try {
       const telegramResult = await sendTelegramAlert({
         problem: alert.problem,
@@ -212,9 +212,12 @@ export function CommunityAlerts() {
               <h4 className="font-black text-sm text-foreground/80">{alert.problem}</h4>
               <div className="flex items-center justify-between mt-3">
                 <span className="text-[9px] font-bold text-muted-foreground uppercase">{alert.date}</span>
-                <Button variant="ghost" size="sm" className="h-7 text-[10px] px-2 gap-1 font-black text-primary group-hover:bg-primary group-hover:text-white rounded-lg">
-                  VER RADAR <ArrowRight className="h-3 w-3" />
-                </Button>
+                <div className="flex items-center gap-2">
+                  <MessageCircle className="h-3 w-3 text-primary opacity-50" />
+                  <Button variant="ghost" size="sm" className="h-7 text-[10px] px-2 gap-1 font-black text-primary group-hover:bg-primary group-hover:text-white rounded-lg">
+                    VER RADAR <ArrowRight className="h-3 w-3" />
+                  </Button>
+                </div>
               </div>
             </div>
           ))}
@@ -227,7 +230,6 @@ export function CommunityAlerts() {
         </Button>
       </div>
 
-      {/* DIÁLOGO DEL RADAR */}
       <Dialog open={isRadarOpen} onOpenChange={setIsRadarOpen}>
         <DialogContent className="max-w-[95vw] sm:max-w-6xl p-0 overflow-hidden border-none bg-background/95 backdrop-blur-xl">
           <div className="flex flex-col lg:flex-row h-[85vh] lg:h-[700px]">
@@ -280,9 +282,12 @@ export function CommunityAlerts() {
                   src={`https://maps.google.com/maps?q=${selectedAlert.lat},${selectedAlert.lng}&z=12&t=m&output=embed`}
                 />
               )}
-              <div className="absolute top-4 left-4 z-10 pointer-events-none">
-                <Badge className="bg-destructive/90 text-white font-black text-[10px] px-4 py-2 shadow-2xl animate-pulse rounded-full">
-                  <Activity className="h-3.5 w-3.5 mr-2" /> RADAR ACTIVO & TELEGRAM SYNC
+              <div className="absolute top-4 left-4 z-10 pointer-events-none flex flex-col gap-2">
+                <Badge className="bg-destructive/90 text-white font-black text-[10px] px-4 py-2 shadow-2xl animate-pulse rounded-full w-fit">
+                  <Activity className="h-3.5 w-3.5 mr-2" /> RADAR ACTIVO
+                </Badge>
+                <Badge className="bg-blue-600 text-white font-black text-[10px] px-4 py-2 shadow-2xl rounded-full w-fit">
+                  <MessageCircle className="h-3.5 w-3.5 mr-2" /> CANAL TELEGRAM SYNC
                 </Badge>
               </div>
             </div>
@@ -290,7 +295,6 @@ export function CommunityAlerts() {
         </DialogContent>
       </Dialog>
 
-      {/* DIÁLOGO DE REPORTE */}
       <Dialog open={isReportOpen} onOpenChange={setIsReportOpen}>
         <DialogContent className="max-w-[90vw] sm:max-w-md glass-card border-none">
           <DialogHeader>
