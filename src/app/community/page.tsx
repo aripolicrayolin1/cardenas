@@ -11,7 +11,12 @@ import {
   MessageSquare,
   Send,
   UserCheck,
-  Star
+  Star,
+  Instagram,
+  Heart,
+  Share2,
+  Camera,
+  MapPin
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import Image from "next/image";
@@ -54,6 +59,36 @@ const initialStores = [
     image: PlaceHolderImages.find(img => img.id === 'agro-seeds')?.imageUrl || "https://picsum.photos/seed/cornseeds/600/400",
     imageHint: PlaceHolderImages.find(img => img.id === 'agro-seeds')?.imageHint || "corn seeds",
     open: true
+  }
+];
+
+const successStories = [
+  {
+    id: 1,
+    user: "Don Pedro",
+    location: "Actopan",
+    image: "https://picsum.photos/seed/pedrocrop/800/800",
+    caption: "¡Cosecha exitosa de maíz gracias al diagnóstico temprano de AgroTech! Sin plagas este año. 🌽✨",
+    likes: 124,
+    tags: ["#Hidalgo", "#AgroTech", "#MaizSano"]
+  },
+  {
+    id: 2,
+    user: "Mariana G.",
+    location: "Pachuca",
+    image: "https://picsum.photos/seed/marianacrop/800/800",
+    caption: "Mis hortalizas nunca se vieron tan verdes. El monitoreo de humedad es la clave. 🥬🚜",
+    likes: 89,
+    tags: ["#Sustentable", "#Hidalgo", "#Hortalizas"]
+  },
+  {
+    id: 3,
+    user: "Rancho El Sol",
+    location: "Ixmiquilpan",
+    image: "https://picsum.photos/seed/rancho/800/800",
+    caption: "Sincronizando nuestras 5 fincas. La tecnología llegó al Valle del Mezquital. 🛰️🌵",
+    likes: 210,
+    tags: ["#ValleDelMezquital", "#AgroTech", "#TechField"]
   }
 ];
 
@@ -104,7 +139,7 @@ export default function CommunityPage() {
           </div>
         </header>
 
-        <main className="flex-1 p-4 md:p-8 space-y-6">
+        <main className="flex-1 p-4 md:p-8 space-y-12">
           <div className="max-w-6xl mx-auto space-y-8">
             <div className="space-y-1">
               <h2 className="text-3xl font-bold tracking-tight">{t('agro_directory')}</h2>
@@ -148,6 +183,67 @@ export default function CommunityPage() {
                   </CardFooter>
                 </Card>
               ))}
+            </div>
+
+            {/* Instagram Style Success Stories Section */}
+            <div className="space-y-6 pt-8">
+              <div className="flex items-center justify-between">
+                <div className="space-y-1">
+                  <h3 className="text-2xl font-black flex items-center gap-2 text-primary uppercase tracking-tighter">
+                    <Instagram className="h-6 w-6" /> {t('success_stories')}
+                  </h3>
+                  <p className="text-xs font-bold text-muted-foreground uppercase tracking-widest">{t('community_impact')}</p>
+                </div>
+                <Button variant="outline" size="sm" className="rounded-full gap-2 font-bold border-primary/20 text-primary">
+                  <Camera className="h-4 w-4" /> Subir Historia
+                </Button>
+              </div>
+
+              <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+                {successStories.map((story) => (
+                  <Card key={story.id} className="overflow-hidden border-none shadow-xl bg-white/50 backdrop-blur-sm group">
+                    <div className="p-3 flex items-center justify-between border-b">
+                       <div className="flex items-center gap-2">
+                         <div className="h-8 w-8 rounded-full bg-gradient-to-tr from-yellow-400 via-red-500 to-purple-600 p-[2px]">
+                           <div className="h-full w-full rounded-full bg-white flex items-center justify-center">
+                             <span className="text-[10px] font-black">{story.user.charAt(0)}</span>
+                           </div>
+                         </div>
+                         <div>
+                           <p className="text-xs font-black">{story.user}</p>
+                           <p className="text-[9px] text-muted-foreground flex items-center gap-0.5"><MapPin className="h-2 w-2" /> {story.location}</p>
+                         </div>
+                       </div>
+                       <Share2 className="h-4 w-4 text-muted-foreground cursor-pointer hover:text-primary" />
+                    </div>
+                    <div className="relative aspect-square overflow-hidden">
+                       <Image 
+                         src={story.image} 
+                         alt={story.user} 
+                         fill 
+                         className="object-cover group-hover:scale-105 transition-transform duration-700"
+                       />
+                    </div>
+                    <CardContent className="p-4 space-y-3">
+                      <div className="flex items-center gap-4">
+                        <Heart className="h-5 w-5 text-red-500 fill-red-500" />
+                        <MessageSquare className="h-5 w-5 text-muted-foreground" />
+                        <Share2 className="h-5 w-5 text-muted-foreground" />
+                      </div>
+                      <p className="text-[10px] font-black">{story.likes} me gusta</p>
+                      <p className="text-xs leading-relaxed">
+                        <span className="font-black mr-2">{story.user}</span>
+                        {story.caption}
+                      </p>
+                      <div className="flex flex-wrap gap-2">
+                        {story.tags.map(tag => (
+                          <span key={tag} className="text-[10px] font-bold text-blue-600">{tag}</span>
+                        ))}
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
             </div>
           </div>
         </main>

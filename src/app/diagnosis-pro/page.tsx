@@ -1,3 +1,4 @@
+
 "use client";
 
 import { SidebarProvider, SidebarInset, SidebarTrigger } from "@/components/ui/sidebar";
@@ -20,16 +21,21 @@ import {
   FlaskConical,
   Beaker,
   ShieldAlert,
-  Dna
+  Dna,
+  Facebook,
+  MessageCircle,
+  Share2
 } from "lucide-react";
 import { useState, useRef } from "react";
 import { diagnoseCropDiseasePro, type CropDiagnosisProOutput } from "@/ai/flows/crop-disease-photo-diagnosis-flow";
 import Image from "next/image";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
+import { useTranslation } from "@/hooks/use-translation";
 
 export default function DiagnosisProPage() {
   const { toast } = useToast();
+  const { t } = useTranslation();
   
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [diagnosis, setDiagnosis] = useState<CropDiagnosisProOutput | null>(null);
@@ -90,6 +96,20 @@ export default function DiagnosisProPage() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const shareToFacebook = () => {
+    if (!diagnosis) return;
+    const text = `AgroTech Hidalgo IA Verdict: Mi cultivo presenta ${diagnosis.diagnosis.identifiedProblem}. IA-Verified severity: ${diagnosis.diagnosis.severity}. #AgroTech #Hidalgo #Bioseguridad`;
+    const url = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(window.location.href)}&quote=${encodeURIComponent(text)}`;
+    window.open(url, '_blank');
+  };
+
+  const shareToWhatsApp = () => {
+    if (!diagnosis) return;
+    const text = `🚨 *DIAGNÓSTICO IA AGROTECH* 🚨\n\n*Problema:* ${diagnosis.diagnosis.identifiedProblem}\n*Severidad:* ${diagnosis.diagnosis.severity}\n*Recomendación:* ${diagnosis.diagnosis.expertNotes}\n\n_Validado por AgroTech Hidalgo_`;
+    const url = `https://wa.me/?text=${encodeURIComponent(text)}`;
+    window.open(url, '_blank');
   };
 
   return (
@@ -211,6 +231,22 @@ export default function DiagnosisProPage() {
                         <div className="absolute top-4 left-4 bg-primary text-white font-black text-[10px] px-3 py-1 rounded-full shadow-2xl">MUESTRA ANALIZADA</div>
                      </div>
                   </Card>
+                  
+                  {/* Share Section */}
+                  <div className="p-6 rounded-2xl bg-white/5 border border-white/10 space-y-4">
+                    <p className="text-[10px] font-black uppercase tracking-widest text-primary flex items-center gap-2">
+                       <Share2 className="h-4 w-4" /> {t('actions')}
+                    </p>
+                    <div className="grid grid-cols-2 gap-2">
+                      <Button onClick={shareToFacebook} variant="outline" className="bg-[#1877F2]/10 border-[#1877F2]/20 hover:bg-[#1877F2] text-white gap-2 font-bold text-[10px] rounded-xl">
+                        <Facebook className="h-4 w-4" /> FACEBOOK
+                      </Button>
+                      <Button onClick={shareToWhatsApp} variant="outline" className="bg-[#25D366]/10 border-[#25D366]/20 hover:bg-[#25D366] text-white gap-2 font-bold text-[10px] rounded-xl">
+                        <MessageCircle className="h-4 w-4" /> WHATSAPP
+                      </Button>
+                    </div>
+                  </div>
+
                   <Button variant="outline" className="w-full border-white/10 text-white hover:bg-white/5" onClick={() => setDiagnosis(null)}>
                      <RefreshCcw className="h-4 w-4 mr-2" /> Nueva Captura
                   </Button>

@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -114,7 +115,11 @@ const translations = {
     sev_medium: "Media",
     sev_high: "Alta",
     sev_na: "No Aplica",
-    radar_map_desc: "Ar RADAR munthe geolocaliza ya n’u. N’a hñä ma̱ alerti tdu’u ya vecinos, hño escudo preventivo pa hñeti ya b’o̱za ja munthe."
+    radar_map_desc: "Ar RADAR munthe geolocaliza ya n’u. N’a hñä ma̱ alerti tdu’u ya vecinos, hño escudo preventivo pa hñeti ya b’o̱za ja munthe.",
+    share_facebook: "Compartir en Facebook",
+    share_whatsapp: "Enviar por WhatsApp",
+    success_stories: "Agro-Éxitos (Instagram Hub)",
+    community_impact: "Impacto Visual del Campo"
   },
   hn: {
     dashboard: "Ñut’i Ja’i",
@@ -225,7 +230,11 @@ const translations = {
     sev_medium: "Mäni",
     sev_high: "Dä",
     sev_na: "Hotho",
-    radar_map_desc: "Ar RADAR munthe geolocaliza ya n’u. N’a hñä ma̱ alerti tdu’u ya vecinos, hño escudo preventivo pa hñeti ya b’o̱za ja munthe."
+    radar_map_desc: "Ar RADAR munthe geolocaliza ya n’u. N’a hñä ma̱ alerti tdu’u ya vecinos, hño escudo preventivo pa hñeti ya b’o̱za ja munthe.",
+    share_facebook: "Xo̱fo ja Facebook",
+    share_whatsapp: "Xo̱fo ja WhatsApp",
+    success_stories: "Agro-Éxitos (Instagram Hub)",
+    community_impact: "M’u̱i Munthe"
   }
 };
 
