@@ -1,3 +1,4 @@
+
 "use client";
 
 import { SidebarProvider, SidebarInset, SidebarTrigger } from "@/components/ui/sidebar";
@@ -23,7 +24,8 @@ import {
   Users,
   ScanSearch,
   BrainCircuit,
-  Eye
+  Eye,
+  Leaf
 } from "lucide-react";
 import { useState, useRef, useEffect } from "react";
 import { diagnoseCropDisease, type CropDiagnosisOutput } from "@/ai/flows/crop-disease-photo-diagnosis-flow";
@@ -449,5 +451,3 @@ export default function DiagnosisPage() {
     </SidebarProvider>
   );
 }
-
-import { Leaf } from "lucide-react";
