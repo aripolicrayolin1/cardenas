@@ -1,9 +1,10 @@
 'use server';
 /**
  * @fileOverview Alertas predictivas basadas en datos de sensores.
+ * Corregido error de sintaxis y optimizado para el concurso.
  */
 
-import { aiInstances } from '@/ai/genkit';
+import { ai } from '@/ai/genkit';
 import { z } from 'genkit';
 
 const PredictiveAlertOutputSchema = z.object({
@@ -34,24 +35,21 @@ export async function predictivePestDiseaseAlerts(input: PredictiveAlertInput): 
   Determina si existe un riesgo inmediato de plagas, hongos o estrés hídrico. 
   Proporciona un mensaje de alerta claro y una recomendación técnica específica para el agricultor.`;
 
-  for (let i = 0; i < aiInstances.length; i++) {
-    try {
-      const currentAi = aiInstances[i];
-      
-      const { output } = await currentAi.generate({
-        model: 'googleai/gemini-1.5-flash',
-        prompt: promptText,
-        output: { schema: PredictiveAlertOutputSchema },
-      });
+  try {
+    const { output } = await ai.generate({
+      model: 'googleai/gemini-1.5-flash',
+      prompt: promptText,
+      output: { schema: PredictiveAlertOutputSchema },
+    });
 
-      if (output) {
-        return { ...output, isFallback: false };
-      }
-    } catch (e: any) {
-      console.error(`[ERROR-IA] Intento con llave ${i + 1} falló: ${e.message}`);
+    if (output) {
+      return { ...output, isFallback: false };
     }
+  } catch (e: any) {
+    console.error(`[ERROR-IA-PREDICTIVA] ${e.message}`);
   }
 
+  // Fallback inteligente si la API falla
   return {
     alertNeeded: input.soilHumidity > 80 || input.temperature > 35,
     alertMessage: "Aviso: Sensores detectan niveles de alerta. (Análisis Local de Respaldo por saturación de red)",

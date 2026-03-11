@@ -1,10 +1,10 @@
 'use server';
 /**
  * @fileOverview Diagnóstico avanzado de enfermedades y plagas (IA Visual).
- * Optimizado para el contexto de Hidalgo, México.
+ * Optimizado para el contexto de Hidalgo y corregido para evitar fallbacks constantes.
  */
 
-import { aiInstances, ai } from '@/ai/genkit';
+import { ai } from '@/ai/genkit';
 import { z } from 'genkit';
 
 const CropDiagnosisOutputSchema = z.object({
@@ -45,46 +45,37 @@ function getMimeType(dataUri: string): string {
 
 export async function diagnoseCropDisease(input: CropDiagnosisInput): Promise<CropDiagnosisOutput> {
   const promptText = `Eres el Agente Experto en Fitopatología de AgroTech Hidalgo. 
-  Tu misión es analizar la imagen y/o descripción proporcionada por el agricultor para identificar plagas o enfermedades comunes en el estado de Hidalgo (Valle del Mezquital, Altiplano, Sierra).
+  Tu misión es analizar la imagen y/o descripción proporcionada por el agricultor para identificar plagas o enfermedades comunes en el estado de Hidalgo.
   
   SÍNTOMAS REPORTADOS: ${input.description || 'Analizar visualmente la imagen proporcionada.'}
   
-  Debes ser extremadamente preciso. Si es una plaga común en Hidalgo como el "Gusano Cogollero", "Piojo Blanco" o "Roya", menciónalo específicamente. 
   Proporciona soluciones que incluyan productos comerciales disponibles en tiendas agropecuarias locales y remedios biológicos/caseros (biopreparados).`;
 
-  const instancesToTry = aiInstances.length > 0 ? aiInstances : [ai];
-
-  for (let i = 0; i < instancesToTry.length; i++) {
-    try {
-      const currentAi = instancesToTry[i];
-      
-      const parts: any[] = [{ text: promptText }];
-      if (input.photoDataUri) {
-        parts.push({ 
-          media: { 
-            url: input.photoDataUri, 
-            contentType: getMimeType(input.photoDataUri) 
-          } 
-        });
-      }
-
-      const { output } = await currentAi.generate({
-        model: 'googleai/gemini-1.5-flash',
-        prompt: parts,
-        output: { schema: CropDiagnosisOutputSchema },
+  try {
+    const parts: any[] = [{ text: promptText }];
+    if (input.photoDataUri) {
+      parts.push({ 
+        media: { 
+          url: input.photoDataUri, 
+          contentType: getMimeType(input.photoDataUri) 
+        } 
       });
-
-      if (output && output.diagnosis) {
-        console.log(`[EXITO-IA-VISUAL] Análisis generado con éxito.`);
-        return { diagnosis: { ...output.diagnosis, isFallback: false } };
-      }
-    } catch (e: any) {
-      console.error(`[ERROR-IA-VISUAL] Intento ${i + 1} falló: ${e.message}`);
     }
+
+    const { output } = await ai.generate({
+      model: 'googleai/gemini-1.5-flash',
+      prompt: parts,
+      output: { schema: CropDiagnosisOutputSchema },
+    });
+
+    if (output && output.diagnosis) {
+      return { diagnosis: { ...output.diagnosis, isFallback: false } };
+    }
+  } catch (e: any) {
+    console.error(`[ERROR-IA-VISUAL] ${e.message}`);
   }
 
-  // FALLBACK ESTRATÉGICO PARA EL CONCURSO
-  console.log(`[IA-VISUAL-FALLBACK] Activando respuesta experta de respaldo.`);
+  // FALLBACK ESTRATÉGICO
   return {
     diagnosis: {
       isProblemDetected: true,
