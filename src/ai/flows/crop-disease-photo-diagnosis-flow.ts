@@ -1,7 +1,7 @@
 'use server';
 /**
  * @fileOverview Diagnóstico avanzado de enfermedades y plagas (IA Visual Pura).
- * Sin modo de respaldo. Utiliza Gemini 1.5 Flash para análisis real.
+ * Procesa imágenes reales utilizando Gemini 1.5 Flash.
  */
 
 import { ai } from '@/ai/genkit';
@@ -74,7 +74,7 @@ export async function diagnoseCropDisease(input: CropDiagnosisInput): Promise<Cr
   });
 
   if (!output || !output.diagnosis) {
-    throw new Error('La IA no pudo procesar la imagen. Verifica tu conexión.');
+    throw new Error('La IA no pudo procesar la muestra. Verifica la imagen o la API Key.');
   }
   
   return { diagnosis: output.diagnosis };
