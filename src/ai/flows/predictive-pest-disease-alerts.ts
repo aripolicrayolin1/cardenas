@@ -1,7 +1,7 @@
 'use server';
 /**
- * @fileOverview Alertas predictivas basadas en datos de sensores.
- * Determina riesgos de plagas o enfermedades analizando variables IoT.
+ * @fileOverview Alertas predictivas basadas en datos de sensores (IA Pura).
+ * Sin modo de respaldo. Analiza variables IoT en tiempo real.
  */
 
 import { ai } from '@/ai/genkit';
@@ -23,7 +23,7 @@ export type PredictiveAlertInput = {
   region: string;
 };
 
-export type PredictiveAlertOutput = z.infer<typeof PredictiveAlertOutputSchema> & { isFallback?: boolean };
+export type PredictiveAlertOutput = z.infer<typeof PredictiveAlertOutputSchema>;
 
 export async function predictivePestDiseaseAlerts(input: PredictiveAlertInput): Promise<PredictiveAlertOutput> {
   const promptText = `Eres un experto agrónomo en el Valle del Mezquital, Hidalgo.
@@ -35,28 +35,15 @@ export async function predictivePestDiseaseAlerts(input: PredictiveAlertInput): 
   Determina si existe un riesgo inmediato de plagas, hongos o estrés hídrico. 
   Proporciona un mensaje de alerta claro y una recomendación técnica específica para el agricultor.`;
 
-  try {
-    const { output } = await ai.generate({
-      model: 'googleai/gemini-1.5-flash',
-      prompt: promptText,
-      output: { schema: PredictiveAlertOutputSchema },
-    });
+  const { output } = await ai.generate({
+    model: 'googleai/gemini-1.5-flash',
+    prompt: promptText,
+    output: { schema: PredictiveAlertOutputSchema },
+  });
 
-    if (output) {
-      return { ...output, isFallback: false };
-    }
-    
-    throw new Error('No output from AI');
-  } catch (e: any) {
-    console.error(`[ERROR-IA-PREDICTIVA] ${e.message}`);
-    
-    return {
-      alertNeeded: input.soilHumidity > 80 || input.temperature > 35,
-      alertMessage: "Aviso: Sensores detectan niveles de alerta. Se recomienda inspección física preventiva. (Modo de Respaldo Local)",
-      predictedRisk: input.soilHumidity > 80 ? "High" : "Medium",
-      potentialProblem: "Estrés Ambiental Detectado",
-      recommendation: "Verificar el estado del drenaje y la temperatura foliar directamente en la parcela.",
-      isFallback: true
-    };
+  if (!output) {
+    throw new Error('La IA predictiva no respondió. Verifica la API Key.');
   }
+  
+  return output;
 }

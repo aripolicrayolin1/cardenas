@@ -1,4 +1,3 @@
-
 "use client";
 
 import { SidebarProvider, SidebarInset, SidebarTrigger } from "@/components/ui/sidebar";
@@ -44,13 +43,10 @@ export default function DiagnosisPage() {
   const [loading, setLoading] = useState(false);
   const [description, setDescription] = useState("");
   
-  // Estados para Cámara
   const [showCamera, setShowCamera] = useState(false);
-  const [hasCameraPermission, setHasCameraPermission] = useState<boolean | null>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
-  // Estados para Voz
   const [isListening, setIsListening] = useState(false);
   const recognitionRef = useRef<any>(null);
 
@@ -81,18 +77,17 @@ export default function DiagnosisPage() {
     setShowCamera(true);
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } });
-      setHasCameraPermission(true);
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
       }
     } catch (error) {
       console.error('Error accessing camera:', error);
-      setHasCameraPermission(false);
       toast({
         variant: 'destructive',
         title: 'Acceso Denegado',
         description: 'Por favor permite el uso de la cámara en tu navegador.',
       });
+      setShowCamera(false);
     }
   };
 
@@ -167,8 +162,12 @@ export default function DiagnosisPage() {
         description: description
       });
       setDiagnosis(result);
-    } catch (error) {
-      toast({ title: "Error", description: "No se pudo realizar el diagnóstico.", variant: "destructive" });
+    } catch (error: any) {
+      toast({ 
+        title: "Error de IA", 
+        description: error.message || "No se pudo realizar el diagnóstico.", 
+        variant: "destructive" 
+      });
     } finally {
       setLoading(false);
     }
@@ -197,7 +196,7 @@ export default function DiagnosisPage() {
         <header className="flex h-16 shrink-0 items-center justify-between px-6 border-b bg-white/80 backdrop-blur-md sticky top-0 z-10 shadow-sm">
           <div className="flex items-center gap-2">
             <SidebarTrigger />
-            <h1 className="text-xl font-black text-primary tracking-tight" suppressHydrationWarning>{t('digital_diagnosis')}</h1>
+            <h1 className="text-xl font-black text-primary tracking-tight">{t('digital_diagnosis')}</h1>
           </div>
           <Badge variant="outline" className="font-black text-[10px] tracking-widest bg-primary/10 text-primary border-primary/20 px-3">
             <BrainCircuit className="h-3 w-3 mr-2" /> IA VISUAL ACTIVA
@@ -222,7 +221,6 @@ export default function DiagnosisPage() {
                 </CardHeader>
                 <CardContent className="space-y-8 pt-8">
                   <div className="grid md:grid-cols-2 gap-8">
-                    {/* ZONA DE CAPTURA */}
                     <div className="space-y-4">
                       <Label className="text-xs font-black uppercase tracking-widest text-primary flex items-center gap-2">
                         <Eye className="h-4 w-4" /> ENTRADA VISUAL
@@ -276,7 +274,6 @@ export default function DiagnosisPage() {
                       <canvas ref={canvasRef} className="hidden" />
                     </div>
 
-                    {/* ZONA DE DESCRIPCIÓN */}
                     <div className="space-y-4">
                       <div className="flex items-center justify-between">
                         <Label className="text-xs font-black uppercase tracking-widest text-primary flex items-center gap-2">
@@ -319,18 +316,12 @@ export default function DiagnosisPage() {
               </Card>
             ) : (
               <div className="grid gap-6 lg:grid-cols-3 animate-in fade-in zoom-in-95 duration-700">
-                {/* RESULTADO VISUAL */}
                 <Card className="lg:col-span-1 glass-card border-none shadow-2xl h-fit overflow-hidden">
                    <div className="relative aspect-square bg-muted flex items-center justify-center overflow-hidden">
                       {selectedImage ? (
                         <Image src={selectedImage} alt="Preview" fill className="object-cover" />
                       ) : (
                         <FileText className="h-16 w-16 opacity-10" />
-                      )}
-                      {diagnosis.diagnosis.isFallback && (
-                        <Badge className="absolute top-4 left-4 bg-orange-600 shadow-lg font-black text-[10px] tracking-widest px-4">
-                          MODO RESPALDO LOCAL
-                        </Badge>
                       )}
                       <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
                       <div className="absolute bottom-4 left-4 right-4">
@@ -348,7 +339,6 @@ export default function DiagnosisPage() {
                    </CardContent>
                 </Card>
 
-                {/* RESULTADO TÉCNICO IA */}
                 <div className="lg:col-span-2 space-y-6">
                   <Card className="glass-card border-none shadow-2xl overflow-hidden">
                     <CardHeader className="border-b bg-white/50">
@@ -367,7 +357,7 @@ export default function DiagnosisPage() {
                          </div>
                          <div className="p-5 rounded-3xl bg-primary/5 border-2 border-primary/10 shadow-inner">
                             <p className="text-[10px] font-black uppercase tracking-widest text-primary mb-1">{t('confidence')}</p>
-                            <p className="text-2xl font-black">ALTA (98%)</p>
+                            <p className="text-2xl font-black">{diagnosis.diagnosis.confidence === 'High' ? 'ALTA' : diagnosis.diagnosis.confidence === 'Medium' ? 'MEDIA' : 'BAJA'}</p>
                          </div>
                       </div>
 

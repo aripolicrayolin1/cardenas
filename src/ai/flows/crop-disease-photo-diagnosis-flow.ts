@@ -1,7 +1,7 @@
 'use server';
 /**
- * @fileOverview Diagnóstico avanzado de enfermedades y plagas (IA Visual).
- * Utiliza Gemini 1.5 Flash para analizar imágenes y descripciones técnicas.
+ * @fileOverview Diagnóstico avanzado de enfermedades y plagas (IA Visual Pura).
+ * Sin modo de respaldo. Utiliza Gemini 1.5 Flash para análisis real.
  */
 
 import { ai } from '@/ai/genkit';
@@ -35,7 +35,7 @@ export type CropDiagnosisInput = {
 };
 
 export type CropDiagnosisOutput = {
-  diagnosis: z.infer<typeof CropDiagnosisOutputSchema>['diagnosis'] & { isFallback?: boolean };
+  diagnosis: z.infer<typeof CropDiagnosisOutputSchema>['diagnosis'];
 };
 
 function getMimeType(dataUri: string): string {
@@ -56,57 +56,26 @@ export async function diagnoseCropDisease(input: CropDiagnosisInput): Promise<Cr
   4. Productos comerciales recomendados.
   5. Remedios biológicos (bio-preparados) tradicionales de la región.`;
 
-  try {
-    const promptParts: any[] = [{ text: promptText }];
-    
-    if (input.photoDataUri) {
-      promptParts.push({ 
-        media: { 
-          url: input.photoDataUri, 
-          contentType: getMimeType(input.photoDataUri) 
-        } 
-      });
-    }
-
-    const { output } = await ai.generate({
-      model: 'googleai/gemini-1.5-flash',
-      prompt: promptParts,
-      output: { schema: CropDiagnosisOutputSchema },
+  const promptParts: any[] = [{ text: promptText }];
+  
+  if (input.photoDataUri) {
+    promptParts.push({ 
+      media: { 
+        url: input.photoDataUri, 
+        contentType: getMimeType(input.photoDataUri) 
+      } 
     });
-
-    if (output && output.diagnosis) {
-      return { diagnosis: { ...output.diagnosis, isFallback: false } };
-    }
-    
-    throw new Error('No output from AI');
-  } catch (e: any) {
-    console.error(`[ERROR-IA-VISUAL] ${e.message}`);
-    
-    // Solo devolvemos el fallback si la API falla realmente (ej: cuota excedida)
-    return {
-      diagnosis: {
-        isProblemDetected: true,
-        identifiedProblem: "Posible Gusano Cogollero (Análisis de Respaldo Local)",
-        severity: "High",
-        confidence: "Medium",
-        recommendedActions: [
-          "Inspeccionar el envés de las hojas.",
-          "Verificar si hay perforaciones en el cogollo.",
-          "Evitar humedad excesiva en el centro de la planta."
-        ],
-        commercialProducts: [{
-          name: "Coragen 20 SC",
-          description: "Insecticida especializado para larvas de lepidópteros.",
-          localStores: "Tiendas agropecuarias en Actopan/Ixmiquilpan",
-          locationLink: "https://www.google.com/maps/search/tiendas+agropecuarias+hidalgo"
-        }],
-        homeMadeRemedies: [{
-          name: "Solución de Jabón Potásico y Ajo",
-          ingredients: ["50g Jabón", "3 cabezas de Ajo", "5L Agua"],
-          instructions: "Moler el ajo, mezclar con jabón y agua. Dejar reposar y aplicar al atardecer."
-        }],
-        isFallback: true
-      }
-    };
   }
+
+  const { output } = await ai.generate({
+    model: 'googleai/gemini-1.5-flash',
+    prompt: promptParts,
+    output: { schema: CropDiagnosisOutputSchema },
+  });
+
+  if (!output || !output.diagnosis) {
+    throw new Error('La IA no pudo procesar la imagen. Verifica tu conexión.');
+  }
+  
+  return { diagnosis: output.diagnosis };
 }
