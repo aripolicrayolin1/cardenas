@@ -1,4 +1,3 @@
-
 "use client";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -144,9 +143,9 @@ export function CommunityAlerts() {
       region: userCoords ? "Mi Parcela (GPS)" : newAlert.region || "Hidalgo",
       crop: newAlert.crop || "Maíz",
       problem: newAlert.problem,
-      description: newAlert.description || "Reporte preventivo detectado por AgroTech.",
+      description: newAlert.description || "Reporte preventivo detectado por AgroTech Hidalgo.",
       severity: "Alta",
-      distance: "Aquí mismo",
+      distance: "Coordenadas Sincronizadas",
       date: "Recién reportado",
       lat: userCoords?.lat || (20.1 + (Math.random() * 0.4)),
       lng: userCoords?.lng || (-98.5 - (Math.random() * 0.4))
@@ -161,26 +160,26 @@ export function CommunityAlerts() {
         description: alert.description
       });
 
+      toast({
+        title: telegramResult.success ? "Alerta Real Enviada" : "Error de Conexión",
+        description: telegramResult.message,
+        variant: telegramResult.success ? "default" : "destructive"
+      });
+
       if (telegramResult.success) {
-        toast({
-          title: "Sincronización Social",
-          description: telegramResult.message,
-        });
+        const updated = [alert, ...alerts];
+        setAlerts(updated);
+        localStorage.setItem("community_alerts", JSON.stringify(updated));
+        setIsReportOpen(false);
+        setNewAlert({ region: "", crop: "", problem: "", description: "" });
+        setUserCoords(null);
       }
-    } catch (e) {
+    } catch (e: any) {
       console.error("Error disparando Telegram:", e);
+      toast({ title: "Error Crítico", description: e.message, variant: "destructive" });
     } finally {
       setSendingTelegram(false);
     }
-
-    const updated = [alert, ...alerts];
-    setAlerts(updated);
-    localStorage.setItem("community_alerts", JSON.stringify(updated));
-    
-    setIsReportOpen(false);
-    setNewAlert({ region: "", crop: "", problem: "", description: "" });
-    setUserCoords(null);
-    toast({ title: "Alerta Activada", description: "Tu reporte ya es visible en el radar y enviado a Telegram." });
   };
 
   return (
@@ -345,7 +344,7 @@ export function CommunityAlerts() {
             <Button variant="ghost" className="rounded-xl font-bold" onClick={() => setIsReportOpen(false)}>Cancelar</Button>
             <Button variant="destructive" className="rounded-xl font-black uppercase h-12 px-8 shadow-lg shadow-destructive/20" onClick={handleReport} disabled={sendingTelegram}>
               {sendingTelegram ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Send className="h-4 w-4 mr-2" />}
-              {sendingTelegram ? 'ACTIVANDO...' : 'REPORTAR A TELEGRAM'}
+              {sendingTelegram ? 'ENVIANDO ALERTA...' : 'REPORTAR A TELEGRAM'}
             </Button>
           </DialogFooter>
         </DialogContent>

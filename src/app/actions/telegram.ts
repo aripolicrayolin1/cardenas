@@ -1,12 +1,12 @@
-
 'use server';
 
 /**
- * @fileOverview Acción de servidor para enviar alertas a Telegram.
- * Permite notificar a una comunidad de agricultores en tiempo real.
+ * @fileOverview Acción de servidor para enviar alertas REALES a Telegram.
+ * Conecta con la API de Telegram para notificar a la comunidad de agricultores.
  */
 
-const TELEGRAM_BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN || '7854632145:AAH_DEMO_TOKEN_NOT_REAL';
+// NOTA: Debes configurar estas variables en tu archivo .env para producción.
+const TELEGRAM_BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN || '7854632145:AAH_DEMO_TOKEN_NOT_REAL'; 
 const TELEGRAM_CHAT_ID = process.env.TELEGRAM_CHAT_ID || '-1001234567890';
 
 export async function sendTelegramAlert(data: {
@@ -16,31 +16,31 @@ export async function sendTelegramAlert(data: {
   distance: string;
   description: string;
 }) {
-  console.log(`[TELEGRAM] Preparando alerta para: ${data.problem} en ${data.region}`);
+  console.log(`[TELEGRAM REAL] Enviando alerta: ${data.problem} en ${data.region}`);
 
-  // Mensaje formateado para Telegram (Soporta HTML básico)
   const message = `
-🚨 <b>ALERTA DE RIESGO AGRÍCOLA</b> 🚨
+🚨 <b>ALERTA DE RIESGO AGRÍCOLA (HIDALGO)</b> 🚨
 -------------------------------------
 <b>⚠️ Problema:</b> ${data.problem.toUpperCase()}
 <b>📍 Región:</b> ${data.region}
-<b>🔥 Severidad:</b> ${data.severity}
-<b>📏 Distancia:</b> ${data.distance}
+<b>🔥 Severidad:</b> ${data.severity.toUpperCase()}
+<b>📏 Ubicación:</b> ${data.distance}
 
-<b>📝 Descripción:</b> 
+<b>📝 Descripción Técnica:</b> 
 <i>"${data.description}"</i>
 
 -------------------------------------
-🛰️ <i>Enviado automáticamente por AgroTech Hidalgo Radar</i>
+🛰️ <i>Mensaje generado por AgroTech Hidalgo AI Radar</i>
   `.trim();
 
   try {
-    // Si no hay token real, simulamos éxito para la demo del hackathon
+    // Si el token es el de demo, avisamos pero no fallamos
     if (TELEGRAM_BOT_TOKEN.includes('DEMO_TOKEN')) {
-      await new Promise(r => setTimeout(r, 1500));
+      console.warn("⚠️ Usando TOKEN DE DEMO en Telegram. Configura el .env para envío real.");
+      await new Promise(r => setTimeout(r, 1000));
       return { 
         success: true, 
-        message: 'Simulación de Telegram exitosa (Token no configurado en .env)' 
+        message: 'Simulación exitosa. Configura TELEGRAM_BOT_TOKEN para envío real.' 
       };
     }
 
@@ -60,9 +60,15 @@ export async function sendTelegramAlert(data: {
       throw new Error(result.description || 'Error en la API de Telegram');
     }
 
-    return { success: true, message: 'Alerta enviada correctamente a la comunidad en Telegram.' };
+    return { 
+      success: true, 
+      message: 'Alerta enviada correctamente al canal de Telegram de la comunidad.' 
+    };
   } catch (error: any) {
     console.error('Error enviando a Telegram:', error);
-    return { success: false, message: error.message || 'Error de conexión con Telegram' };
+    return { 
+      success: false, 
+      message: `Error de conexión: ${error.message}. Verifica el Token.` 
+    };
   }
 }
