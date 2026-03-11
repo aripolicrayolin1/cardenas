@@ -1,7 +1,7 @@
 'use server';
 /**
  * @fileOverview Alertas predictivas basadas en datos de sensores.
- * Corregido error de sintaxis y optimizado para el concurso.
+ * Determina riesgos de plagas o enfermedades analizando variables IoT.
  */
 
 import { ai } from '@/ai/genkit';
@@ -45,17 +45,18 @@ export async function predictivePestDiseaseAlerts(input: PredictiveAlertInput): 
     if (output) {
       return { ...output, isFallback: false };
     }
+    
+    throw new Error('No output from AI');
   } catch (e: any) {
     console.error(`[ERROR-IA-PREDICTIVA] ${e.message}`);
+    
+    return {
+      alertNeeded: input.soilHumidity > 80 || input.temperature > 35,
+      alertMessage: "Aviso: Sensores detectan niveles de alerta. Se recomienda inspección física preventiva. (Modo de Respaldo Local)",
+      predictedRisk: input.soilHumidity > 80 ? "High" : "Medium",
+      potentialProblem: "Estrés Ambiental Detectado",
+      recommendation: "Verificar el estado del drenaje y la temperatura foliar directamente en la parcela.",
+      isFallback: true
+    };
   }
-
-  // Fallback inteligente si la API falla
-  return {
-    alertNeeded: input.soilHumidity > 80 || input.temperature > 35,
-    alertMessage: "Aviso: Sensores detectan niveles de alerta. (Análisis Local de Respaldo por saturación de red)",
-    predictedRisk: input.soilHumidity > 80 ? "High" : "Medium",
-    potentialProblem: "Posible Estrés Térmico o Humedad Excesiva",
-    recommendation: "Realiza una inspección manual de la parcela y verifica el drenaje.",
-    isFallback: true
-  };
 }
