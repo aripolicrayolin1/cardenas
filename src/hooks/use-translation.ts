@@ -118,7 +118,7 @@ const translations = {
     radar_map_desc: "Ar RADAR munthe geolocaliza ya n’u. N’a hñä ma̱ alerti tdu’u ya vecinos, hño escudo preventivo pa hñeti ya b’o̱za ja munthe.",
     share_facebook: "Compartir en Facebook",
     share_whatsapp: "Enviar por WhatsApp",
-    success_stories: "Agro-Éxitos (Instagram Hub)",
+    success_stories: "Éxitos Comunitarios",
     community_impact: "Impacto Visual del Campo"
   },
   hn: {
@@ -233,7 +233,7 @@ const translations = {
     radar_map_desc: "Ar RADAR munthe geolocaliza ya n’u. N’a hñä ma̱ alerti tdu’u ya vecinos, hño escudo preventivo pa hñeti ya b’o̱za ja munthe.",
     share_facebook: "Xo̱fo ja Facebook",
     share_whatsapp: "Xo̱fo ja WhatsApp",
-    success_stories: "Agro-Éxitos (Instagram Hub)",
+    success_stories: "Éxitos Comunitarios",
     community_impact: "M’u̱i Munthe"
   }
 };

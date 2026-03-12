@@ -12,7 +12,7 @@ import {
   Send,
   UserCheck,
   Star,
-  Instagram,
+  Activity,
   Heart,
   Share2,
   Camera,
@@ -185,12 +185,12 @@ export default function CommunityPage() {
               ))}
             </div>
 
-            {/* Instagram Style Success Stories Section */}
+            {/* Success Stories Section */}
             <div className="space-y-6 pt-8">
               <div className="flex items-center justify-between">
                 <div className="space-y-1">
                   <h3 className="text-2xl font-black flex items-center gap-2 text-primary uppercase tracking-tighter">
-                    <Instagram className="h-6 w-6" /> {t('success_stories')}
+                    <Activity className="h-6 w-6" /> {t('success_stories')}
                   </h3>
                   <p className="text-xs font-bold text-muted-foreground uppercase tracking-widest">{t('community_impact')}</p>
                 </div>
@@ -204,7 +204,7 @@ export default function CommunityPage() {
                   <Card key={story.id} className="overflow-hidden border-none shadow-xl bg-white/50 backdrop-blur-sm group">
                     <div className="p-3 flex items-center justify-between border-b">
                        <div className="flex items-center gap-2">
-                         <div className="h-8 w-8 rounded-full bg-gradient-to-tr from-yellow-400 via-red-500 to-purple-600 p-[2px]">
+                         <div className="h-8 w-8 rounded-full bg-primary/10 p-[2px]">
                            <div className="h-full w-full rounded-full bg-white flex items-center justify-center">
                              <span className="text-[10px] font-black">{story.user.charAt(0)}</span>
                            </div>
@@ -226,7 +226,7 @@ export default function CommunityPage() {
                     </div>
                     <CardContent className="p-4 space-y-3">
                       <div className="flex items-center gap-4">
-                        <Heart className="h-5 w-5 text-red-500 fill-red-500" />
+                        <Heart className="h-5 w-5 text-primary fill-primary/20" />
                         <MessageSquare className="h-5 w-5 text-muted-foreground" />
                         <Share2 className="h-5 w-5 text-muted-foreground" />
                       </div>
@@ -237,7 +237,7 @@ export default function CommunityPage() {
                       </p>
                       <div className="flex flex-wrap gap-2">
                         {story.tags.map(tag => (
-                          <span key={tag} className="text-[10px] font-bold text-blue-600">{tag}</span>
+                          <span key={tag} className="text-[10px] font-bold text-primary">{tag}</span>
                         ))}
                       </div>
                     </CardContent>
