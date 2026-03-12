@@ -6,7 +6,7 @@ import { googleAI } from '@genkit-ai/google-genai';
  * Optimizado para Gemini 1.5 Flash en AgroTech Hidalgo.
  */
 
-// Clave API de Gemini definitiva
+// Clave API de Gemini definitiva de Leslie Arianna
 const API_KEY = 'AIzaSyDaCIrKjEp7VudNePBRNSQvMbxCpAs4lUU';
 
 /**
