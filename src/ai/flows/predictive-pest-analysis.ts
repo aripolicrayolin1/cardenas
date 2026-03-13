@@ -47,6 +47,7 @@ export async function analyzePestRisk(input: PredictivePestAnalysisInput): Promi
 
 const predictivePestAnalysisPrompt = ai.definePrompt({
   name: 'predictivePestAnalysisPrompt',
+  model: 'googleai/gemini-1.5-flash',
   input: { schema: PredictivePestAnalysisInputSchema },
   output: { schema: PredictivePestAnalysisOutputSchema },
   prompt: `Eres un experto asistente agrícola de IA especializado en predicción de plagas y protección de cultivos. Tu tarea es analizar datos de sensores y proporcionar información detallada y recomendaciones a los agricultores.

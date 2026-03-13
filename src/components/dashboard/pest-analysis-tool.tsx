@@ -35,11 +35,16 @@ export function PestAnalysisTool() {
     
     setLoading(true);
     try {
+      // Mapeo exacto basado en la lógica de sensores enviada
       const input = {
-        humidity: Number(sensorData.humedad_aire || 0),
-        temperature: Number(sensorData.temperatura || 0),
-        dewPoint: Number(sensorData.punto_rocio || 0),
-        evapotranspiration: Number(sensorData.et || 0)
+        // Buscamos "Hum. Aire" o variantes comunes de humedad
+        humidity: Number(sensorData["Hum. Aire"] || sensorData["Humedad Aire"] || sensorData.humedad_aire || sensorData.humedad || sensorData.humidity || 0),
+        // Buscamos "Temperatura" o variantes
+        temperature: Number(sensorData.Temperatura || sensorData.temperatura || sensorData.temperature || 0),
+        // Buscamos "Punto Rocío" o variantes
+        dewPoint: Number(sensorData["Punto Rocío"] || sensorData["Punto Rocio"] || sensorData.punto_rocio || sensorData.dew_point || 0),
+        // Buscamos "Evapotranspiración" o variantes
+        evapotranspiration: Number(sensorData["Evapotranspiración"] || sensorData.Evapotranspiracion || sensorData.evapotranspiracion || sensorData.et || sensorData.evapotranspiration || 0)
       };
       
       const response = await analyzePestRisk(input);
@@ -61,7 +66,7 @@ export function PestAnalysisTool() {
               <div className="absolute inset-0 flex flex-col items-center justify-center bg-white/60 backdrop-blur-md">
                 <BrainCircuit className="h-16 w-16 animate-pulse text-primary mb-4" />
                 <p className="text-sm font-black uppercase tracking-widest text-primary animate-bounce">
-                  Sincronizando con Gemini IA...
+                  Consultando con Gemini IA...
                 </p>
               </div>
             </div>
@@ -84,21 +89,21 @@ export function PestAnalysisTool() {
           
           <CardContent className="space-y-6">
             <p className="text-sm font-medium text-muted-foreground leading-relaxed">
-              Utilice el motor de inteligencia artificial para analizar los 4 parámetros críticos de sus sensores y predecir brotes antes de que sean visibles.
+              Utilice la Inteligencia Artificial de Gemini para analizar los datos reales de sus sensores (**Hum. Aire, Temperatura, Punto Rocío y Evapotranspiración**).
             </p>
             
             {!sensorData ? (
               <div className="flex items-center justify-center py-10 gap-3 text-amber-600 bg-amber-50 rounded-2xl border border-amber-100">
                 <Loader2 className="h-5 w-5 animate-spin" />
-                <p className="text-xs font-black uppercase tracking-tighter">Esperando datos de la estación IoT...</p>
+                <p className="text-xs font-black uppercase tracking-tighter">Conectando con los sensores de tu finca...</p>
               </div>
             ) : (
               <div className="space-y-6">
                 <div className="grid grid-cols-2 gap-3">
-                  <BadgeInfo label="Ndähi" value={sensorData.humedad_aire || "--"} unit="%" />
-                  <BadgeInfo label="Pa" value={sensorData.temperatura || "--"} unit="°C" />
-                  <BadgeInfo label="N'yu" value={sensorData.punto_rocio || "--"} unit="°C" />
-                  <BadgeInfo label="ET" value={sensorData.et || "--"} unit=" mm" />
+                  <BadgeInfo label="Hum. Aire" value={sensorData["Hum. Aire"] || sensorData.humedad_aire || "--"} unit="%" />
+                  <BadgeInfo label="Temp." value={sensorData.Temperatura || sensorData.temperatura || "--"} unit="°C" />
+                  <BadgeInfo label="N'yu" value={sensorData["Punto Rocío"] || sensorData.punto_rocio || "--"} unit="°C" />
+                  <BadgeInfo label="ET" value={sensorData["Evapotranspiración"] || sensorData.et || "--"} unit=" mm" />
                 </div>
                 
                 <Button 
@@ -108,11 +113,11 @@ export function PestAnalysisTool() {
                 >
                   {loading ? (
                     <div className="flex items-center gap-3">
-                      <Loader2 className="h-5 w-5 animate-spin" /> CONSULTANDO...
+                      <Loader2 className="h-5 w-5 animate-spin" /> CONSULTANDO IA...
                     </div>
                   ) : (
                     <div className="flex items-center gap-3">
-                      <Sparkles className="h-5 w-5 fill-white" /> ANALIZAR RIESGO
+                      <Sparkles className="h-5 w-5 fill-white" /> ANALIZAR RIESGO DE PLAGAS
                     </div>
                   )}
                 </Button>
@@ -125,7 +130,7 @@ export function PestAnalysisTool() {
           <div className="flex justify-between items-center px-2">
             <div className="flex items-center gap-2">
               <div className="h-8 w-8 rounded-full bg-primary flex items-center justify-center text-white font-black text-xs shadow-lg">IA</div>
-              <h2 className="text-lg font-black text-foreground/80 tracking-tighter uppercase">Análisis Finalizado</h2>
+              <h2 className="text-lg font-black text-foreground/80 tracking-tighter uppercase">Resultados del Análisis IA</h2>
             </div>
             <Button variant="ghost" size="sm" onClick={() => setResult(null)} className="font-black text-[10px] uppercase tracking-widest text-muted-foreground hover:text-primary">
               <RefreshCw className="h-3 w-3 mr-2" /> Nuevo Análisis
