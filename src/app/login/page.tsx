@@ -41,7 +41,6 @@ export default function LoginPage() {
         router.push("/");
       }
     } catch (error: any) {
-      // Ignorar errores de cancelación para no molestar al usuario con alertas innecesarias
       if (error.code === 'auth/cancelled-popup-request' || error.code === 'auth/popup-closed-by-user') {
         return;
       }
@@ -49,10 +48,10 @@ export default function LoginPage() {
       console.error("Google Login Error:", error);
       let message = "Error al conectar con Google.";
       
-      if (error.code === 'auth/popup-blocked') {
+      if (error.code === 'auth/unauthorized-domain') {
+        message = "Dominio no autorizado. Debes añadir el dominio actual en la consola de Firebase (Authentication > Settings > Authorized domains).";
+      } else if (error.code === 'auth/popup-blocked') {
         message = "El navegador bloqueó la ventana. Por favor, actívala.";
-      } else if (error.code === 'auth/unauthorized-domain') {
-        message = "Dominio no autorizado. Asegúrate de añadir el dominio actual en la consola de Firebase.";
       }
       
       setError(message);
