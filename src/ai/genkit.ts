@@ -11,9 +11,13 @@ const API_KEY = 'AIzaSyDaCIrKjEp7VudNePBRNSQvMbxCpAs4lUU';
 
 /**
  * Instancia principal de Genkit configurada con el plugin de Google AI.
+ * Se fuerza el uso de apiVersion 'v1' para evitar el error 404 de v1beta que reportaba el usuario.
  */
 export const ai = genkit({
   plugins: [
-    googleAI({ apiKey: API_KEY })
+    googleAI({ 
+      apiKey: API_KEY,
+      apiVersion: 'v1'
+    })
   ],
 });
