@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { analyzePestRisk, type PredictivePestAnalysisOutput } from '@/ai/flows/predictive-pest-analysis';
 import { Sparkles, Loader2, AlertCircle, BrainCircuit, RefreshCw, Zap } from 'lucide-react';
 import { PestAnalysisResult } from './pest-analysis-result';
-import { rtdb } from "@/firebase";
+import { useDatabase } from "@/firebase";
 import { ref, onValue } from "firebase/database";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 
@@ -13,12 +13,13 @@ export function PestAnalysisTool() {
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<PredictivePestAnalysisOutput | null>(null);
   const [sensorData, setSensorData] = useState<any>(null);
+  const database = useDatabase();
 
   // Escuchar los datos reales de los sensores para que la IA los use
   useEffect(() => {
-    if (!rtdb) return;
+    if (!database) return;
 
-    const sensorsRef = ref(rtdb, "sensores");
+    const sensorsRef = ref(database, "sensores");
 
     const unsubscribe = onValue(sensorsRef, (snapshot) => {
       const data = snapshot.val();
@@ -28,22 +29,17 @@ export function PestAnalysisTool() {
     });
 
     return () => unsubscribe();
-  }, []);
+  }, [database]);
 
   const handleAnalysis = async () => {
     if (!sensorData) return;
     
     setLoading(true);
     try {
-      // Mapeo exacto basado en la lógica de sensores enviada
       const input = {
-        // Buscamos "Hum. Aire" o variantes comunes de humedad
         humidity: Number(sensorData["Hum. Aire"] || sensorData["Humedad Aire"] || sensorData.humedad_aire || sensorData.humedad || sensorData.humidity || 0),
-        // Buscamos "Temperatura" o variantes
         temperature: Number(sensorData.Temperatura || sensorData.temperatura || sensorData.temperature || 0),
-        // Buscamos "Punto Rocío" o variantes
         dewPoint: Number(sensorData["Punto Rocío"] || sensorData["Punto Rocio"] || sensorData.punto_rocio || sensorData.dew_point || 0),
-        // Buscamos "Evapotranspiración" o variantes
         evapotranspiration: Number(sensorData["Evapotranspiración"] || sensorData.Evapotranspiracion || sensorData.evapotranspiracion || sensorData.et || sensorData.evapotranspiration || 0)
       };
       

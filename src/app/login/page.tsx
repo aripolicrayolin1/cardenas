@@ -5,8 +5,8 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Leaf, Mail, AlertCircle, ShieldCheck } from "lucide-react";
-import { auth } from "@/firebase/config";
+import { Leaf, AlertCircle, ShieldCheck } from "lucide-react";
+import { useAuth } from "@/firebase/provider";
 import { 
   signInWithPopup, 
   GoogleAuthProvider, 
@@ -25,6 +25,7 @@ export default function LoginPage() {
   const [error, setError] = useState<string | null>(null);
   const router = useRouter();
   const { toast } = useToast();
+  const auth = useAuth();
 
   const handleGoogleLogin = async () => {
     setError(null);

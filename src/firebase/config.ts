@@ -1,9 +1,8 @@
-import { initializeApp, getApps, getApp } from "firebase/app";
-import { getAuth } from "firebase/auth";
-import { getFirestore } from "firebase/firestore";
-import { getDatabase } from "firebase/database";
+import { initializeApp, getApps, getApp, FirebaseApp } from "firebase/app";
+import { getAuth, Auth } from "firebase/auth";
+import { getFirestore, Firestore } from "firebase/firestore";
+import { getDatabase, Database } from "firebase/database";
 
-// Configuración unificada con Realtime Database
 const firebaseConfig = {
   apiKey: "AIzaSyBWD6WwCUJLiKlbSgr0NYGppQtL3HnHpoM",
   authDomain: "studio-3066950614-ac5b0.firebaseapp.com",
@@ -14,9 +13,12 @@ const firebaseConfig = {
   appId: "1:72338853613:web:5be71eb7d0c5685f8d46e4"
 };
 
-const app = getApps().length > 0 ? getApp() : initializeApp(firebaseConfig);
-const auth = getAuth(app);
-const db = getFirestore(app);
-const rtdb = getDatabase(app);
+// Inicialización única de la App
+const app: FirebaseApp = getApps().length > 0 ? getApp() : initializeApp(firebaseConfig);
+
+// Inicialización única de los servicios para evitar errores de duplicidad o promesas pendientes
+const auth: Auth = getAuth(app);
+const db: Firestore = getFirestore(app);
+const rtdb: Database = getDatabase(app);
 
 export { app, auth, db, rtdb };
