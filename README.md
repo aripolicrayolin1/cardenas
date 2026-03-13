@@ -6,7 +6,7 @@ Sistema inteligente de monitoreo y diagnóstico agrícola diseñado específicam
 
 - **🛰️ Monitoreo IoT en Tiempo Real**: Visualización de temperatura, humedad del suelo, humedad del aire, punto de rocío y evapotranspiración (ET) mediante sensores conectados.
 - **🌍 Inclusión Cultural (Hñähñu)**: Interfaz bilingüe completa en **Español y Otomí**, diseñada para agricultores del Valle del Mezquital.
-- **🧠 Diagnóstico Híbrido con IA**: Identificación de plagas y enfermedades mediante descripciones de voz, texto o fotografías, utilizando Gemini 1.5 Flash.
+- **🧠 Diagnóstico Híbrido con IA**: Identificación de plagas y enfermedades mediante descripciones de voz, texto o cfotografías, utilizando Gemini 1.5 Flash.
 - **🛡️ Red de Prevención Local (RADAR)**: Sistema de reportes comunitarios con geolocalización para alertar sobre brotes de plagas en tiempo real.
 - **📊 Gestión de Fincas**: Organización y seguimiento de múltiples terrenos sincronizados con la nube de Firebase.
 - **📄 Reportes Profesionales**: Generación de informes en formatos CSV y Word para trámites agrícolas y certificaciones.

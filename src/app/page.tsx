@@ -3,7 +3,7 @@
 import { SidebarProvider, SidebarInset, SidebarTrigger } from "@/components/ui/sidebar";
 import { SidebarNav } from "@/components/layout/sidebar-nav";
 import { SensorStats } from "@/components/dashboard/sensor-stats";
-import { AIRiskAlert } from "@/components/dashboard/ai-risk-alert";
+import { PestAnalysisTool } from "@/components/dashboard/pest-analysis-tool";
 import { CommunityAlerts } from "@/components/dashboard/community-alerts";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Activity, Bell, Info, TrendingUp, Radio, Zap, X, User } from "lucide-react";
@@ -181,7 +181,7 @@ export default function Home() {
 
           <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
             <div className="lg:col-span-2 space-y-6 animate-in fade-in slide-in-from-bottom-12 duration-1000">
-              <AIRiskAlert sensorValues={sensorValues} />
+              <PestAnalysisTool />
               
               <Card className="glass-card overflow-hidden">
                 <CardHeader>
