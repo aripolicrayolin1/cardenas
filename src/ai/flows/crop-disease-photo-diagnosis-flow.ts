@@ -2,6 +2,7 @@
 /**
  * @fileOverview Diagnóstico avanzado de enfermedades y plagas (IA Visual Pura).
  * Procesa imágenes reales utilizando Gemini 1.5 Flash de forma dinámica.
+ * Optimizado para Genkit v1.x con esquemas de salida estructurados.
  */
 
 import { ai } from '@/ai/genkit';
@@ -22,52 +23,72 @@ const CropDiagnosisProOutputSchema = z.object({
   }),
 });
 
-export type CropDiagnosisProInput = {
-  photoDataUri?: string;
-  description?: string;
-};
+const CropDiagnosisProInputSchema = z.object({
+  photoDataUri: z.string().optional().describe("Foto en formato Data URI base64"),
+  description: z.string().optional().describe("Descripción de síntomas dictada o escrita"),
+});
 
-export type CropDiagnosisProOutput = {
-  diagnosis: z.infer<typeof CropDiagnosisProOutputSchema>['diagnosis'];
-};
+export type CropDiagnosisProInput = z.infer<typeof CropDiagnosisProInputSchema>;
+export type CropDiagnosisProOutput = z.infer<typeof CropDiagnosisProOutputSchema>;
 
-function getMimeType(dataUri: string): string {
-  const match = dataUri.match(/^data:([^;]+);base64,/);
-  return match ? match[1] : 'image/jpeg';
-}
-
+/**
+ * Función exportada para Next.js Server Actions
+ */
 export async function diagnoseCropDiseasePro(input: CropDiagnosisProInput): Promise<CropDiagnosisProOutput> {
-  const promptText = `Eres el Agente de Diagnóstico Científico Pro de AgroTech Hidalgo. 
-  Tu misión es analizar la imagen y descripción proporcionada para identificar con precisión científica la plaga o enfermedad.
-  
-  SÍNTOMAS: ${input.description || 'Analizar visualmente la imagen.'}
-  
-  Debes proporcionar:
-  1. Identificación técnica.
-  2. Explicación del ciclo biológico de la plaga.
-  3. Estrategias de control divididas en: Mecánicas, Biológicas y Químicas.
-  4. Consejos de prevención a largo plazo.`;
-
-  const promptParts: any[] = [{ text: promptText }];
-  
-  if (input.photoDataUri) {
-    promptParts.push({ 
-      media: { 
-        url: input.photoDataUri, 
-        contentType: getMimeType(input.photoDataUri) 
-      } 
-    });
-  }
-
-  const { output } = await ai.generate({
-    model: 'googleai/gemini-1.5-flash',
-    prompt: promptParts,
-    output: { schema: CropDiagnosisProOutputSchema },
-  });
-
-  if (!output || !output.diagnosis) {
-    throw new Error('La IA Pro no pudo procesar la muestra.');
-  }
-  
-  return { diagnosis: output.diagnosis };
+  return diagnoseCropDiseaseFlow(input);
 }
+
+/**
+ * Flujo centralizado de diagnóstico Genkit
+ */
+const diagnoseCropDiseaseFlow = ai.defineFlow(
+  {
+    name: 'diagnoseCropDiseaseFlow',
+    inputSchema: CropDiagnosisProInputSchema,
+    outputSchema: CropDiagnosisProOutputSchema,
+  },
+  async (input) => {
+    const promptText = `Eres el Agente de Diagnóstico Científico Pro de AgroTech Hidalgo. 
+    Tu misión es analizar la imagen y descripción proporcionada para identificar con precisión científica la plaga o enfermedad.
+    
+    SÍNTOMAS REPORTADOS: ${input.description || 'Analizar visualmente la muestra para detectar anomalías.'}
+    
+    Debes proporcionar un veredicto técnico que incluya:
+    1. Identificación técnica del patógeno.
+    2. Ciclo biológico detallado.
+    3. Estrategias de control (Mecánicas, Biológicas y Químicas).
+    4. Consejos de prevención de bioseguridad.`;
+
+    const promptParts: any[] = [{ text: promptText }];
+    
+    if (input.photoDataUri) {
+      const mimeType = input.photoDataUri.match(/^data:([^;]+);base64,/)?.[1] || 'image/jpeg';
+      promptParts.push({ 
+        media: { 
+          url: input.photoDataUri, 
+          contentType: mimeType 
+        } 
+      });
+    }
+
+    try {
+      const { output } = await ai.generate({
+        model: 'googleai/gemini-1.5-flash',
+        prompt: promptParts,
+        output: { 
+          schema: CropDiagnosisProOutputSchema,
+          format: 'json' 
+        },
+      });
+
+      if (!output) {
+        throw new Error('La IA Pro no pudo generar un veredicto estructurado.');
+      }
+      
+      return output;
+    } catch (error: any) {
+      console.error("Error en flujo Genkit:", error);
+      throw new Error(`Error en el Laboratorio IA: ${error.message}`);
+    }
+  }
+);
