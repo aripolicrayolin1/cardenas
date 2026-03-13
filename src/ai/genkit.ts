@@ -6,12 +6,12 @@ import { googleAI } from '@genkit-ai/google-genai';
  * Optimizado para Gemini 1.5 Flash en AgroTech Hidalgo.
  */
 
-// Clave API de Gemini definitiva de Leslie Arianna
-const API_KEY = 'AIzaSyDaCIrKjEp7VudNePBRNSQvMbxCpAs4lUU';
+// Nueva clave API de Gemini proporcionada por el usuario
+const API_KEY = 'AIzaSyD4VAZALewzs5Tj1S17JaUUIFv9-u1loH0';
 
 /**
  * Instancia principal de Genkit configurada con el plugin de Google AI.
- * Se fuerza el uso de apiVersion 'v1' para evitar el error 404 de v1beta que reportaba el usuario.
+ * Se fuerza el uso de apiVersion 'v1' para evitar errores 404 de versiones beta.
  */
 export const ai = genkit({
   plugins: [
