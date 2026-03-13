@@ -1,4 +1,3 @@
-
 "use client";
 
 import { SidebarProvider, SidebarInset, SidebarTrigger } from "@/components/ui/sidebar";
@@ -11,17 +10,12 @@ import {
   MessageSquare,
   Send,
   UserCheck,
-  Star,
-  Activity,
-  Heart,
-  Share2,
-  Camera,
-  MapPin
+  Star
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import Image from "next/image";
 import { useState } from "react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { PlaceHolderImages } from "@/lib/placeholder-images";
 import { useTranslation } from "@/hooks/use-translation";
 
@@ -59,36 +53,6 @@ const initialStores = [
     image: PlaceHolderImages.find(img => img.id === 'agro-seeds')?.imageUrl || "https://picsum.photos/seed/cornseeds/600/400",
     imageHint: PlaceHolderImages.find(img => img.id === 'agro-seeds')?.imageHint || "corn seeds",
     open: true
-  }
-];
-
-const successStories = [
-  {
-    id: 1,
-    user: "Don Pedro",
-    location: "Actopan",
-    image: "https://picsum.photos/seed/pedrocrop/800/800",
-    caption: "¡Cosecha exitosa de maíz gracias al diagnóstico temprano de AgroTech! Sin plagas este año. 🌽✨",
-    likes: 124,
-    tags: ["#Hidalgo", "#AgroTech", "#MaizSano"]
-  },
-  {
-    id: 2,
-    user: "Mariana G.",
-    location: "Pachuca",
-    image: "https://picsum.photos/seed/marianacrop/800/800",
-    caption: "Mis hortalizas nunca se vieron tan verdes. El monitoreo de humedad es la clave. 🥬🚜",
-    likes: 89,
-    tags: ["#Sustentable", "#Hidalgo", "#Hortalizas"]
-  },
-  {
-    id: 3,
-    user: "Rancho El Sol",
-    location: "Ixmiquilpan",
-    image: "https://picsum.photos/seed/rancho/800/800",
-    caption: "Sincronizando nuestras 5 fincas. La tecnología llegó al Valle del Mezquital. 🛰️🌵",
-    likes: 210,
-    tags: ["#ValleDelMezquital", "#AgroTech", "#TechField"]
   }
 ];
 
@@ -184,67 +148,6 @@ export default function CommunityPage() {
                 </Card>
               ))}
             </div>
-
-            {/* Success Stories Section */}
-            <div className="space-y-6 pt-8">
-              <div className="flex items-center justify-between">
-                <div className="space-y-1">
-                  <h3 className="text-2xl font-black flex items-center gap-2 text-primary uppercase tracking-tighter">
-                    <Activity className="h-6 w-6" /> {t('success_stories')}
-                  </h3>
-                  <p className="text-xs font-bold text-muted-foreground uppercase tracking-widest">{t('community_impact')}</p>
-                </div>
-                <Button variant="outline" size="sm" className="rounded-full gap-2 font-bold border-primary/20 text-primary">
-                  <Camera className="h-4 w-4" /> Subir Historia
-                </Button>
-              </div>
-
-              <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-                {successStories.map((story) => (
-                  <Card key={story.id} className="overflow-hidden border-none shadow-xl bg-white/50 backdrop-blur-sm group">
-                    <div className="p-3 flex items-center justify-between border-b">
-                       <div className="flex items-center gap-2">
-                         <div className="h-8 w-8 rounded-full bg-primary/10 p-[2px]">
-                           <div className="h-full w-full rounded-full bg-white flex items-center justify-center">
-                             <span className="text-[10px] font-black">{story.user.charAt(0)}</span>
-                           </div>
-                         </div>
-                         <div>
-                           <p className="text-xs font-black">{story.user}</p>
-                           <p className="text-[9px] text-muted-foreground flex items-center gap-0.5"><MapPin className="h-2 w-2" /> {story.location}</p>
-                         </div>
-                       </div>
-                       <Share2 className="h-4 w-4 text-muted-foreground cursor-pointer hover:text-primary" />
-                    </div>
-                    <div className="relative aspect-square overflow-hidden">
-                       <Image 
-                         src={story.image} 
-                         alt={story.user} 
-                         fill 
-                         className="object-cover group-hover:scale-105 transition-transform duration-700"
-                       />
-                    </div>
-                    <CardContent className="p-4 space-y-3">
-                      <div className="flex items-center gap-4">
-                        <Heart className="h-5 w-5 text-primary fill-primary/20" />
-                        <MessageSquare className="h-5 w-5 text-muted-foreground" />
-                        <Share2 className="h-5 w-5 text-muted-foreground" />
-                      </div>
-                      <p className="text-[10px] font-black">{story.likes} me gusta</p>
-                      <p className="text-xs leading-relaxed">
-                        <span className="font-black mr-2">{story.user}</span>
-                        {story.caption}
-                      </p>
-                      <div className="flex flex-wrap gap-2">
-                        {story.tags.map(tag => (
-                          <span key={tag} className="text-[10px] font-bold text-primary">{tag}</span>
-                        ))}
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
-            </div>
           </div>
         </main>
 
@@ -255,6 +158,9 @@ export default function CommunityPage() {
                 {selectedStore?.isExpert ? <UserCheck className="h-5 w-5 text-primary" /> : <Store className="h-5 w-5 text-primary" />}
                 {t('chat_with')} {selectedStore?.name}
               </DialogTitle>
+              <DialogDescription>
+                {t('direct_message_to')} {selectedStore?.name} {t('about_your_needs')}
+              </DialogDescription>
             </DialogHeader>
             <div className="flex flex-col h-[400px]">
               <div className="flex-1 overflow-y-auto space-y-4 p-2 border rounded-md bg-muted/10">
