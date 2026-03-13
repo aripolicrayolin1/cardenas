@@ -99,18 +99,61 @@ export default function DiagnosisProPage() {
   };
 
   const shareToFacebook = () => {
-    if (!diagnosis) return;
-    const text = `AgroTech Hidalgo IA Verdict: Mi cultivo presenta ${diagnosis.diagnosis.identifiedProblem}. IA-Verified severity: ${diagnosis.diagnosis.severity}. #AgroTech #Hidalgo #Bioseguridad`;
-    const url = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(window.location.href)}&quote=${encodeURIComponent(text)}`;
-    window.open(url, '_blank');
+    try {
+      if (!diagnosis?.diagnosis?.identifiedProblem) {
+        toast({ title: 'Error', description: 'No hay datos de diagnóstico para compartir.', variant: 'destructive' });
+        console.error("Share Error: Diagnosis data is incomplete.", diagnosis);
+        return;
+      }
+      const textToShare = `AgroTech Hidalgo IA Verdict: Mi cultivo presenta ${diagnosis.diagnosis.identifiedProblem}. IA-Verified severity: ${diagnosis.diagnosis.severity}. #AgroTech #Hidalgo #Bioseguridad`;
+      const encodedText = encodeURIComponent(textToShare);
+      const shareUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(window.location.href)}&quote=${encodedText}`;
+      
+      console.log("Facebook Share URL:", shareUrl);
+
+      const newWindow = window.open(shareUrl, '_blank');
+      if (!newWindow) {
+        toast({ title: 'Error', description: 'No se pudo abrir la ventana para compartir. Revisa si tu navegador está bloqueando las ventanas emergentes.', variant: 'destructive' });
+      }
+    } catch (error: any) {
+      console.error("Failed to share to Facebook:", error);
+      toast({ title: 'Error al compartir en Facebook', description: error.message, variant: 'destructive' });
+    }
   };
 
   const shareToWhatsApp = () => {
-    if (!diagnosis) return;
-    const text = `🚨 *DIAGNÓSTICO IA AGROTECH* 🚨\n\n*Problema:* ${diagnosis.diagnosis.identifiedProblem}\n*Severidad:* ${diagnosis.diagnosis.severity}\n*Recomendación:* ${diagnosis.diagnosis.expertNotes}\n\n_Validado por AgroTech Hidalgo_`;
-    const url = `https://wa.me/?text=${encodeURIComponent(text)}`;
-    window.open(url, '_blank');
+    try {
+      if (!diagnosis?.diagnosis?.identifiedProblem || !diagnosis?.diagnosis?.severity || !diagnosis?.diagnosis?.expertNotes) {
+        toast({ title: 'Error', description: 'Los datos del diagnóstico están incompletos para compartir.', variant: 'destructive' });
+        console.error("Share Error: Diagnosis data is incomplete.", diagnosis);
+        return;
+      }
+
+      const textParts = [
+        '🚨 *DIAGNÓSTICO IA AGROTECH* 🚨',
+        '',
+        `*Problema:* ${diagnosis.diagnosis.identifiedProblem}`,
+        `*Severidad:* ${diagnosis.diagnosis.severity}`,
+        `*Recomendación:* ${diagnosis.diagnosis.expertNotes}`,
+        '',
+        '_Validado por AgroTech Hidalgo_'
+      ];
+      const textToShare = textParts.join('\n');
+      const encodedText = encodeURIComponent(textToShare);
+      const shareUrl = `https://wa.me/?text=${encodedText}`;
+      
+      console.log("WhatsApp Share URL:", shareUrl);
+
+      const newWindow = window.open(shareUrl, '_blank');
+      if (!newWindow) {
+        toast({ title: 'Error', description: 'No se pudo abrir la ventana para compartir. Revisa si tu navegador está bloqueando las ventanas emergentes.', variant: 'destructive' });
+      }
+    } catch (error: any) {
+      console.error("Failed to share to WhatsApp:", error);
+      toast({ title: 'Error al compartir en WhatsApp', description: error.message, variant: 'destructive' });
+    }
   };
+
 
   return (
     <SidebarProvider>

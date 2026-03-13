@@ -119,7 +119,8 @@ const translations = {
     share_facebook: "Compartir en Facebook",
     share_whatsapp: "Enviar por WhatsApp",
     success_stories: "Éxitos Comunitarios",
-    community_impact: "Impacto Visual del Campo"
+    community_impact: "Impacto Visual del Campo",
+    toggle_sidebar: "Activar o desactivar la barra lateral"
   },
   hn: {
     dashboard: "Ñut’i Ja’i",
@@ -234,7 +235,8 @@ const translations = {
     share_facebook: "Xo̱fo ja Facebook",
     share_whatsapp: "Xo̱fo ja WhatsApp",
     success_stories: "Éxitos Comunitarios",
-    community_impact: "M’u̱i Munthe"
+    community_impact: "M’u̱i Munthe",
+    toggle_sidebar: "Activar o desactivar la barra lateral"
   }
 };
 

@@ -21,7 +21,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import Image from "next/image";
 import { useState } from "react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { PlaceHolderImages } from "@/lib/placeholder-images";
 import { useTranslation } from "@/hooks/use-translation";
 
@@ -255,6 +255,9 @@ export default function CommunityPage() {
                 {selectedStore?.isExpert ? <UserCheck className="h-5 w-5 text-primary" /> : <Store className="h-5 w-5 text-primary" />}
                 {t('chat_with')} {selectedStore?.name}
               </DialogTitle>
+              <DialogDescription>
+                {t('direct_message_to')} {selectedStore?.name} {t('about_your_needs')}
+              </DialogDescription>
             </DialogHeader>
             <div className="flex flex-col h-[400px]">
               <div className="flex-1 overflow-y-auto space-y-4 p-2 border rounded-md bg-muted/10">

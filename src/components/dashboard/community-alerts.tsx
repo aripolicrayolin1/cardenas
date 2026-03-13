@@ -300,6 +300,9 @@ export function CommunityAlerts() {
             <DialogTitle className="flex items-center gap-2 text-destructive font-black tracking-tighter uppercase text-xl">
               <AlertTriangle className="h-6 w-6" /> REPORTAR AMENAZA
             </DialogTitle>
+            <DialogDescription className="text-xs font-bold text-muted-foreground pt-2">
+              Tu reporte ayuda a proteger las parcelas de toda la comunidad. La alerta será enviada por Telegram.
+            </DialogDescription>
           </DialogHeader>
           
           <div className="space-y-5 py-4">

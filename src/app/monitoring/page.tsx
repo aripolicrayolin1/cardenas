@@ -340,10 +340,10 @@ function ChartCard({ title, description, data, dataKey, color, unit, type, confi
         </div>
       </CardHeader>
       <CardContent className="pt-4">
-        <div className="h-[200px] w-full">
+        <div className="w-full">
           {data && data.length > 0 ? (
-            <ChartContainer config={config} className="h-full w-full">
-              <ResponsiveContainer width="100%" height="100%">
+            <ChartContainer config={config} className="w-full">
+              <ResponsiveContainer width="100%" height={200}>
                 {type === 'area' ? (
                   <AreaChart data={data} margin={{ top: 5, right: 5, left: -20, bottom: 0 }}>
                     <defs>
@@ -370,7 +370,7 @@ function ChartCard({ title, description, data, dataKey, color, unit, type, confi
               </ResponsiveContainer>
             </ChartContainer>
           ) : (
-            <div className="h-full flex items-center justify-center bg-white/20 rounded-2xl">
+            <div className="h-[200px] flex items-center justify-center bg-white/20 rounded-2xl">
               <RefreshCw className="h-6 w-6 animate-spin text-primary/30" />
             </div>
           )}
