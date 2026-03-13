@@ -57,7 +57,9 @@ const diagnoseCropDiseaseFlow = ai.defineFlow(
     1. Identificación técnica del patógeno.
     2. Ciclo biológico detallado.
     3. Estrategias de control (Mecánicas, Biológicas y Químicas).
-    4. Consejos de prevención de bioseguridad.`;
+    4. Consejos de prevención de bioseguridad.
+    
+    Responde estrictamente en formato JSON siguiendo el esquema proporcionado.`;
 
     const promptParts: any[] = [{ text: promptText }];
     
@@ -77,7 +79,7 @@ const diagnoseCropDiseaseFlow = ai.defineFlow(
         prompt: promptParts,
         output: { 
           schema: CropDiagnosisProOutputSchema,
-          format: 'json' 
+          // Eliminamos format: 'json' para evitar el error de responseMimeType en v1
         },
       });
 

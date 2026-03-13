@@ -49,7 +49,7 @@ const predictivePestAnalysisPrompt = ai.definePrompt({
   input: { schema: PredictivePestAnalysisInputSchema },
   output: { 
     schema: PredictivePestAnalysisOutputSchema,
-    format: 'json'
+    // Eliminamos format: 'json' para evitar el error de responseMimeType en v1
   },
   prompt: `Eres un experto asistente agrícola de IA especializado en predicción de plagas y protección de cultivos en Hidalgo, México.
   
@@ -59,7 +59,8 @@ const predictivePestAnalysisPrompt = ai.definePrompt({
   - Punto de Rocío: {{dewPoint}}°C
   - Evapotranspiración: {{evapotranspiration}} mm/día
 
-  Basándote en estos datos, determina el riesgo de plagas (como Pulgones, Araña Roja o Gusano Cogollero) y proporciona recomendaciones técnicas específicas. Responde siempre en español.`,
+  Basándote en estos datos, determina el riesgo de plagas (como Pulgones, Araña Roja o Gusano Cogollero) y proporciona recomendaciones técnicas específicas. 
+  Responde estrictamente en formato JSON siguiendo el esquema proporcionado.`,
 });
 
 const predictivePestAnalysisFlow = ai.defineFlow(
