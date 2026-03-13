@@ -119,7 +119,16 @@ const translations = {
     share_facebook: "Compartir en Facebook",
     share_whatsapp: "Enviar por WhatsApp",
     success_stories: "Éxitos Comunitarios",
-    community_impact: "Impacto Visual del Campo"
+    community_impact: "Impacto Visual del Campo",
+    marketplace: "Mercado Agrícola",
+    jobs: "Bolsa de Trabajo",
+    post_product: "Publicar Producto",
+    post_job: "Publicar Empleo",
+    price: "Precio",
+    salary: "Sueldo",
+    employer: "Empleador",
+    category: "Categoría",
+    toggle_sidebar: "Activar o desactivar la barra lateral"
   },
   hn: {
     dashboard: "Ñut’i Ja’i",
@@ -234,7 +243,16 @@ const translations = {
     share_facebook: "Xo̱fo ja Facebook",
     share_whatsapp: "Xo̱fo ja WhatsApp",
     success_stories: "Éxitos Comunitarios",
-    community_impact: "M’u̱i Munthe"
+    community_impact: "M’u̱i Munthe",
+    marketplace: "Pa̱ ja nthe",
+    jobs: "B’o̱za ja’i",
+    post_product: "Hño Pa̱",
+    post_job: "Hño B’o̱za",
+    price: "Pa̱",
+    salary: "Pa̱",
+    employer: "Ja’i",
+    category: "Thuhu",
+    toggle_sidebar: "Activar o desactivar la barra lateral"
   }
 };
 

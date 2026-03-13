@@ -30,6 +30,37 @@
         "lastUpdate": { "type": "string" }
       },
       "required": ["name", "userId"]
+    },
+    "MarketplaceProduct": {
+      "title": "Producto de Mercado",
+      "description": "Insumos, herramientas o cosechas a la venta en la comunidad.",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "price": { "type": "number" },
+        "description": { "type": "string" },
+        "sellerName": { "type": "string" },
+        "category": { "type": "string" },
+        "imageUrl": { "type": "string" },
+        "userId": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["name", "price", "userId"]
+    },
+    "JobPosting": {
+      "title": "Oferta de Empleo",
+      "description": "Vacantes para trabajo en el campo o soporte técnico agrícola.",
+      "type": "object",
+      "properties": {
+        "title": { "type": "string" },
+        "description": { "type": "string" },
+        "location": { "type": "string" },
+        "salary": { "type": "string" },
+        "employerName": { "type": "string" },
+        "userId": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["title", "userId"]
     }
   },
   "auth": {
@@ -38,11 +69,19 @@
   "firestore": {
     "/users/{userId}": {
       "schema": "UserProfile",
-      "description": "Datos privados de perfil. Solo el usuario dueño ({userId}) tiene acceso total."
+      "description": "Datos privados de perfil."
     },
     "/users/{userId}/farms/{farmId}": {
       "schema": "Farm",
-      "description": "Colección de fincas privadas. Solo el usuario autenticado que coincida con {userId} puede listar, leer y escribir."
+      "description": "Fincas del usuario."
+    },
+    "/marketplace_products/{productId}": {
+      "schema": "MarketplaceProduct",
+      "description": "Productos compartidos entre apps."
+    },
+    "/job_postings/{jobId}": {
+      "schema": "JobPosting",
+      "description": "Empleos compartidos entre apps."
     }
   }
 }
