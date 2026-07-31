@@ -2,37 +2,65 @@
 @tailwind components;
 @tailwind utilities;
 
+/**
+ * Sistema visual de AgroTech.
+ *
+ * La paleta se apoya en tres capas: un verde profundo para la navegación y las
+ * superficies de énfasis, un verde vivo como color primario de acción, y un
+ * lima de alto contraste para destacar lo importante. El lima sustituyó a un
+ * dorado que competía con el verde en lugar de complementarlo: al ser un
+ * análogo del primario, resalta sin ensuciar.
+ *
+ * Todo lo que se ve en pantalla lee de estos tokens, así que un cambio aquí
+ * recorre la aplicación entera.
+ */
+
 @layer base {
   :root {
-    --background: 120 25% 97%;
-    --foreground: 120 40% 10%;
-    --card: 0 0% 100% / 0.6;
-    --card-foreground: 120 40% 10%;
-    --popover: 0 0% 100% / 0.9;
-    --popover-foreground: 120 40% 10%;
-    --primary: 142 76% 36%;
+    --background: 130 30% 97%;
+    --foreground: 155 45% 9%;
+
+    --card: 0 0% 100% / 0.65;
+    --card-foreground: 155 45% 9%;
+    --popover: 0 0% 100% / 0.92;
+    --popover-foreground: 155 45% 9%;
+
+    --primary: 142 72% 32%;
     --primary-foreground: 0 0% 100%;
-    --secondary: 120 20% 90% / 0.5;
-    --secondary-foreground: 120 50% 30%;
-    --muted: 120 10% 90% / 0.5;
-    --muted-foreground: 120 20% 40%;
-    --accent: 48 100% 50%;
-    --accent-foreground: 120 50% 10%;
-    --destructive: 0 84% 60%;
+
+    --secondary: 140 25% 92% / 0.6;
+    --secondary-foreground: 150 45% 22%;
+
+    --muted: 140 15% 92% / 0.5;
+    --muted-foreground: 150 12% 42%;
+
+    /* Lima. Es muy claro: su texto siempre va oscuro. */
+    --accent: 74 85% 55%;
+    --accent-foreground: 155 60% 12%;
+
+    --destructive: 0 80% 58%;
     --destructive-foreground: 0 0% 98%;
-    --border: 120 20% 85% / 0.4;
-    --input: 120 20% 85% / 0.4;
-    --ring: 142 76% 36%;
-    --radius: 1.25rem;
-    
-    --sidebar-background: 120 20% 95% / 0.8;
-    --sidebar-foreground: 120 40% 10%;
-    --sidebar-primary: 142 76% 36%;
+
+    --border: 145 20% 84% / 0.5;
+    --input: 145 20% 84% / 0.5;
+    --ring: 142 72% 32%;
+
+    /* Radio base generoso: las tarjetas grandes suben a 1.75rem con rounded-3xl. */
+    --radius: 1.5rem;
+
+    /* Verde profundo para superficies de énfasis (hero, navegación). */
+    --deep: 158 52% 11%;
+    --deep-soft: 156 38% 18%;
+    --deep-foreground: 140 40% 96%;
+
+    --sidebar-background: 140 25% 96% / 0.85;
+    --sidebar-foreground: 155 45% 9%;
+    --sidebar-primary: 142 72% 32%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 120 20% 90%;
-    --sidebar-accent-foreground: 142 76% 36%;
-    --sidebar-border: 120 20% 85% / 0.4;
-    --sidebar-ring: 142 76% 36%;
+    --sidebar-accent: 140 25% 90%;
+    --sidebar-accent-foreground: 142 72% 32%;
+    --sidebar-border: 145 20% 84% / 0.4;
+    --sidebar-ring: 142 72% 32%;
   }
 }
 
@@ -40,32 +68,86 @@
   * {
     @apply border-border;
   }
+
   body {
     @apply bg-background text-foreground font-body antialiased;
-    background-image: 
-      radial-gradient(at 0% 0%, hsla(142, 76%, 36%, 0.1) 0px, transparent 50%),
-      radial-gradient(at 100% 100%, hsla(48, 100%, 50%, 0.1) 0px, transparent 50%);
+    /* Tres focos de luz muy tenues: dan profundidad sin que se lea como degradado. */
+    background-image:
+      radial-gradient(at 0% 0%, hsla(142, 72%, 32%, 0.09) 0px, transparent 55%),
+      radial-gradient(at 100% 0%, hsla(74, 85%, 55%, 0.08) 0px, transparent 45%),
+      radial-gradient(at 50% 100%, hsla(158, 52%, 11%, 0.05) 0px, transparent 60%);
     background-attachment: fixed;
   }
 }
 
+/* =============================================================================
+   Superficies
+   ========================================================================== */
+
 .glass-card {
-  @apply bg-white/40 backdrop-blur-xl border border-white/60 shadow-[0_8px_32px_0_rgba(31,38,135,0.07)];
+  @apply bg-white/50 backdrop-blur-2xl border border-white/70;
+  /* Sombra en dos niveles: un halo amplio y difuso más un contacto cercano.
+     Una sola sombra plana es lo que hacía ver las tarjetas pegadas al fondo. */
+  box-shadow:
+    0 1px 2px 0 hsla(158, 52%, 11%, 0.04),
+    0 12px 32px -8px hsla(158, 52%, 11%, 0.10);
 }
 
 .glass-nav {
-  @apply bg-white/20 backdrop-blur-md border-r border-white/20;
+  @apply bg-white/30 backdrop-blur-xl border-r border-white/30;
 }
 
+/** Superficie oscura de énfasis: hero, bloques destacados. */
+.surface-deep {
+  background:
+    radial-gradient(at 85% 0%, hsla(74, 85%, 55%, 0.16) 0px, transparent 50%),
+    radial-gradient(at 0% 100%, hsla(142, 72%, 32%, 0.22) 0px, transparent 55%),
+    hsl(var(--deep));
+  color: hsl(var(--deep-foreground));
+  box-shadow:
+    0 1px 2px 0 hsla(158, 52%, 11%, 0.12),
+    0 24px 48px -12px hsla(158, 52%, 11%, 0.35);
+}
+
+/** Tarjeta de dato: números grandes, borde suave, elevación al pasar el cursor. */
+.stat-tile {
+  @apply bg-white/60 backdrop-blur-xl border border-white/70 rounded-3xl;
+  box-shadow:
+    0 1px 2px 0 hsla(158, 52%, 11%, 0.04),
+    0 8px 24px -8px hsla(158, 52%, 11%, 0.10);
+  transition: transform 0.3s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.3s ease;
+}
+
+.stat-tile:hover {
+  transform: translateY(-3px);
+  box-shadow:
+    0 1px 2px 0 hsla(158, 52%, 11%, 0.05),
+    0 20px 40px -10px hsla(158, 52%, 11%, 0.18);
+}
+
+/** Píldora de etiqueta. Es la forma que más se repite en la interfaz. */
+.pill {
+  @apply inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[10px] font-black uppercase tracking-widest;
+}
+
+/* =============================================================================
+   Animaciones
+   ========================================================================== */
+
 @keyframes float {
-  0% { transform: translateY(0px); }
+  0%, 100% { transform: translateY(0px); }
   50% { transform: translateY(-10px); }
-  100% { transform: translateY(0px); }
 }
 
 @keyframes scan {
   0% { top: 0; }
   100% { top: 100%; }
+}
+
+@keyframes pulse-ring {
+  0% { transform: scale(0.9); opacity: 0.7; }
+  70% { transform: scale(1.6); opacity: 0; }
+  100% { transform: scale(1.6); opacity: 0; }
 }
 
 .animate-float {
@@ -79,4 +161,18 @@
 
 .animate-spin-slow {
   animation: spin 8s linear infinite;
+}
+
+/** Onda que se expande desde un punto: indica transmisión en vivo. */
+.animate-pulse-ring {
+  animation: pulse-ring 2.5s cubic-bezier(0.22, 1, 0.36, 1) infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-float,
+  .animate-scan,
+  .animate-spin-slow,
+  .animate-pulse-ring {
+    animation: none;
+  }
 }

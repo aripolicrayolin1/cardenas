@@ -12,10 +12,10 @@ import {
   AlertCircle,
   TrendingUp
 } from "lucide-react";
-import { type PredictivePestAnalysisOutput } from "@/ai/flows/predictive-pest-analysis";
+import { type AnalisisLegado } from "@/lib/plagas";
 
 interface PestAnalysisResultProps {
-  data: PredictivePestAnalysisOutput;
+  data: AnalisisLegado;
 }
 
 export function PestAnalysisResult({ data }: PestAnalysisResultProps) {
@@ -56,8 +56,8 @@ export function PestAnalysisResult({ data }: PestAnalysisResultProps) {
           </div>
         </CardHeader>
         <CardContent>
-          <p className="text-sm font-medium leading-relaxed italic text-foreground/80 border-l-4 border-primary/20 pl-4 py-1">
-            "{data.pestSuitability.summary}"
+          <p className="text-sm font-medium leading-relaxed italic text-foreground/80 border-l-4 border-primary/20 pl-4 py-1 whitespace-pre-line">
+            {data.pestSuitability.summary}
           </p>
         </CardContent>
       </Card>
@@ -81,7 +81,7 @@ export function PestAnalysisResult({ data }: PestAnalysisResultProps) {
                 </div>
               </CardHeader>
               <CardContent>
-                <p className="text-xs font-medium text-muted-foreground leading-relaxed">
+                <p className="text-xs font-medium text-muted-foreground leading-relaxed whitespace-pre-line">
                   {pest.description}
                 </p>
               </CardContent>

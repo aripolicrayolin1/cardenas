@@ -1,0 +1,140 @@
+rules_version = '2';
+
+// =============================================================================
+// AgroTech Hidalgo — Reglas de Firestore
+// =============================================================================
+// Principio: TODO esta denegado salvo lo que se permite explicitamente.
+// Estas reglas son la unica barrera real: ocultar un boton en la UI no protege
+// nada, porque cualquiera puede llamar al SDK directamente.
+//
+// Desplegar con:  firebase deploy --only firestore:rules
+// =============================================================================
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ---------- Helpers ----------
+
+    function autenticado() {
+      return request.auth != null;
+    }
+
+    // El documento entrante declara como dueño al usuario que hace la peticion.
+    function esAutorDelDoc() {
+      return autenticado() && request.resource.data.userId == request.auth.uid;
+    }
+
+    // El documento YA existente pertenece al usuario que hace la peticion.
+    function esDuenoDelDoc() {
+      return autenticado() && resource.data.userId == request.auth.uid;
+    }
+
+    // Impide que un update cambie el dueño del documento.
+    function noCambiaDueno() {
+      return request.resource.data.userId == resource.data.userId;
+    }
+
+    // ---------- Fincas: privadas, anidadas bajo el usuario ----------
+
+    match /users/{userId} {
+      allow read, write: if autenticado() && request.auth.uid == userId;
+
+      match /farms/{farmId} {
+        allow read: if autenticado() && request.auth.uid == userId;
+
+        allow create: if autenticado()
+                      && request.auth.uid == userId
+                      && request.resource.data.name is string
+                      && request.resource.data.name.size() > 0
+                      && request.resource.data.name.size() <= 120;
+
+        allow update: if autenticado() && request.auth.uid == userId;
+        allow delete: if autenticado() && request.auth.uid == userId;
+      }
+
+      // Bitácora de la parcela: diario privado del agricultor. Las reglas NO
+      // cascadean a subcolecciones, así que necesita su propio match.
+      // Observaciones de campo con las que el motor calibra sus umbrales para
+      // cada parcela. Privadas: son el historial agronómico del agricultor.
+      match /observaciones/{obsId} {
+        allow read: if autenticado() && request.auth.uid == userId;
+
+        allow create: if autenticado()
+                      && request.auth.uid == userId
+                      && request.resource.data.plagaId is string
+                      && request.resource.data.plagaId.size() > 0
+                      && request.resource.data.plagaId.size() <= 60
+                      && request.resource.data.presente is bool
+                      && request.resource.data.temperatura is number
+                      && request.resource.data.humedadAire is number;
+
+        allow update, delete: if autenticado() && request.auth.uid == userId;
+      }
+
+      match /bitacora/{entryId} {
+        allow read: if autenticado() && request.auth.uid == userId;
+
+        allow create: if autenticado()
+                      && request.auth.uid == userId
+                      && request.resource.data.texto is string
+                      && request.resource.data.texto.size() > 0
+                      && request.resource.data.texto.size() <= 500;
+
+        allow update, delete: if autenticado() && request.auth.uid == userId;
+      }
+    }
+
+    // ---------- Marketplace: lectura publica, escritura del dueño ----------
+    // Compartido con la otra app del mismo proyecto Firebase.
+
+    match /marketplace_products/{productId} {
+      allow read: if true;
+
+      allow create: if esAutorDelDoc()
+                    && request.resource.data.name is string
+                    && request.resource.data.name.size() > 0
+                    && request.resource.data.name.size() <= 120
+                    && request.resource.data.price is number
+                    && request.resource.data.price >= 0
+                    && request.resource.data.price <= 1000000;
+
+      allow update: if esDuenoDelDoc() && noCambiaDueno();
+      allow delete: if esDuenoDelDoc();
+    }
+
+    // ---------- Bolsa de empleo ----------
+
+    match /job_postings/{jobId} {
+      allow read: if true;
+
+      allow create: if esAutorDelDoc()
+                    && request.resource.data.title is string
+                    && request.resource.data.title.size() > 0
+                    && request.resource.data.title.size() <= 160;
+
+      allow update: if esDuenoDelDoc() && noCambiaDueno();
+      allow delete: if esDuenoDelDoc();
+    }
+
+    // ---------- Alertas comunitarias (preparado para Fase 3) ----------
+    // Hoy viven en localStorage. Cuando se migren a Firestore, ya hay regla.
+
+    match /community_alerts/{alertId} {
+      allow read: if true;
+
+      allow create: if esAutorDelDoc()
+                    && request.resource.data.problem is string
+                    && request.resource.data.problem.size() > 0
+                    && request.resource.data.problem.size() <= 200;
+
+      allow update: if esDuenoDelDoc() && noCambiaDueno();
+      allow delete: if esDuenoDelDoc();
+    }
+
+    // ---------- Denegado por defecto ----------
+
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

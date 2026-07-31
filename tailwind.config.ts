@@ -42,6 +42,12 @@ export default {
           DEFAULT: 'hsl(var(--accent))',
           foreground: 'hsl(var(--accent-foreground))',
         },
+        // Verde profundo de las superficies de énfasis (`.surface-deep`).
+        deep: {
+          DEFAULT: 'hsl(var(--deep))',
+          soft: 'hsl(var(--deep-soft))',
+          foreground: 'hsl(var(--deep-foreground))',
+        },
         destructive: {
           DEFAULT: 'hsl(var(--destructive))',
           foreground: 'hsl(var(--destructive-foreground))',

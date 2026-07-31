@@ -34,8 +34,6 @@ import {
   FileEdit
 } from "lucide-react";
 import { useState, useEffect, useRef, useMemo } from "react";
-import { rtdb } from "@/firebase/config";
-import { ref, onValue } from "firebase/database";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { 
@@ -45,6 +43,11 @@ import {
   DropdownMenuTrigger 
 } from "@/components/ui/dropdown-menu";
 import { useTranslation } from "@/hooks/use-translation";
+import { LIVE_HISTORY_POINTS, TEMP } from "@/config/constants";
+import { useSensores } from "@/hooks/sensores/use-sensores";
+import { useHistorico } from "@/hooks/sensores/use-historico";
+import { submuestrear, type RangoHistorico } from "@/services/sensores";
+import type { PuntoHistorico } from "@/config/sensor-schema";
 
 interface SensorPoint {
   time: string;
@@ -55,22 +58,38 @@ interface SensorPoint {
   dewPoint: number;
 }
 
+/** Convierte un punto de `/historico` al formato que consumen las gráficas. */
+function aPuntoGrafica(punto: PuntoHistorico, formato: RangoHistorico): SensorPoint {
+  const fecha = new Date(punto.ts);
+
+  return {
+    time:
+      formato === 'hoy'
+        ? fecha.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+        : fecha.toLocaleDateString([], { weekday: 'short', day: 'numeric' }),
+    temp: punto.temperatura,
+    humiditySoil: punto.humedadSuelo,
+    humidityAir: punto.humedadAire,
+    et: punto.evapotranspiracion,
+    dewPoint: punto.puntoRocio,
+  };
+}
+
 export default function MonitoringPage() {
   const { toast } = useToast();
   const { t } = useTranslation();
   const [activeTab, setActiveTab] = useState("live");
   const [history, setHistory] = useState<SensorPoint[]>([]);
-  const [isMounted, setIsMounted] = useState(false);
-  const [currentValues, setCurrentValues] = useState<Omit<SensorPoint, 'time'>>({
-    temp: 20,
-    humiditySoil: 50,
-    humidityAir: 40,
-    et: 2.5,
-    dewPoint: 10
-  });
-  const [isOnline, setIsOnline] = useState(false);
   const [events, setEvents] = useState<{time: string, event: string, status: string}[]>([]);
   const lastTimeRef = useRef<string>("");
+
+  const { lectura, conectado: isOnline } = useSensores();
+
+  // Series REALES leídas de /historico. Antes estas dos pestañas se rellenaban
+  // con Math.sin() y Math.random() aplicados al valor actual del sensor, y se
+  // presentaban al agricultor como "Historial de Cultivo".
+  const historicoHoy = useHistorico('hoy');
+  const historicoSemana = useHistorico('semana');
 
   const chartConfig = {
     temp: { label: t('air_temp'), color: "#f97316" },
@@ -80,92 +99,48 @@ export default function MonitoringPage() {
     dewPoint: { label: t('dew_point'), color: "#06b6d4" },
   };
 
+  const currentValues = useMemo(
+    () => ({
+      temp: lectura.temperatura,
+      humiditySoil: lectura.humedadSuelo,
+      humidityAir: lectura.humedadAire,
+      et: lectura.evapotranspiracion,
+      dewPoint: lectura.puntoRocio,
+    }),
+    [lectura]
+  );
+
+  // Acumula la traza "en vivo" en memoria, un punto por segundo distinto.
   useEffect(() => {
-    setIsMounted(true);
-    if (!rtdb) return;
+    if (!isOnline) return;
 
-    const sensorsRef = ref(rtdb, 'sensores');
-    const unsubscribe = onValue(sensorsRef, (snapshot) => {
-      const data = snapshot.val();
-      if (data) {
-        const now = new Date();
-        const timeStr = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
-        
-        if (timeStr === lastTimeRef.current) return;
-        lastTimeRef.current = timeStr;
+    const timeStr = lectura.recibidaEn.toLocaleTimeString([], {
+      hour: '2-digit', minute: '2-digit', second: '2-digit'
+    });
 
-        const rawTemp = Number(data.temperatura ?? 0);
-        const rawSoil = Number(data.humedad_suelo ?? 0);
-        const rawAir = Number(data.humedad_aire ?? 0);
-        const rawEt = Number(data.et ?? 0);
-        const rawDew = Number(data.punto_rocio ?? 0);
+    if (timeStr === lastTimeRef.current) return;
+    lastTimeRef.current = timeStr;
 
-        const normSoil = rawSoil > 100 ? (rawSoil / 4095) * 100 : rawSoil;
+    setHistory(prev => [...prev, { time: timeStr, ...currentValues }].slice(-LIVE_HISTORY_POINTS));
 
-        const newPoint = {
-          time: timeStr,
-          temp: rawTemp,
-          humiditySoil: normSoil,
-          humidityAir: rawAir,
-          et: rawEt,
-          dewPoint: rawDew
-        };
-
-        setCurrentValues({
-          temp: rawTemp,
-          humiditySoil: normSoil,
-          humidityAir: rawAir,
-          et: rawEt,
-          dewPoint: rawDew
-        });
-
-        setHistory(prev => [...prev, newPoint].slice(-15));
-        setIsOnline(true);
-
-        if (rawTemp > 35) {
-          setEvents(prev => [{ 
-            time: timeStr, 
-            event: `Calor extremo (${rawTemp.toFixed(1)}°C)`, 
-            status: "CRÍTICO" 
-          }, ...prev].slice(0, 5));
-        }
-      }
-    }, () => setIsOnline(false));
-
-    return () => unsubscribe();
-  }, []);
-
-  const hourlyData = useMemo(() => {
-    if (!isMounted) return [];
-    const data = [];
-    const currentHour = new Date().getHours();
-    for (let i = 8; i >= 0; i--) {
-      const h = (currentHour - i + 24) % 24;
-      data.push({
-        time: `${h.toString().padStart(2, '0')}:00`,
-        temp: currentValues.temp + (Math.sin(i) * 3),
-        humiditySoil: Math.max(0, Math.min(100, currentValues.humiditySoil + (Math.cos(i) * 5))),
-        humidityAir: Math.max(0, Math.min(100, currentValues.humidityAir + (Math.sin(i) * 4))),
-        et: Math.max(0, currentValues.et + (Math.cos(i) * 0.5)),
-        dewPoint: currentValues.dewPoint + (Math.sin(i) * 2)
-      });
+    if (lectura.temperatura > TEMP.CALOR_EXTREMO) {
+      setEvents(prev => [{
+        time: timeStr,
+        event: `Calor extremo (${lectura.temperatura.toFixed(1)}°C)`,
+        status: "CRÍTICO"
+      }, ...prev].slice(0, 5));
     }
-    return data;
-  }, [currentValues, isMounted]);
+  }, [lectura, currentValues, isOnline]);
 
-  const weeklyData = useMemo(() => {
-    if (!isMounted) return [];
-    const days = ["Lun", "Mar", "Mie", "Jue", "Vie", "Sab", "Dom"];
-    const todayIndex = (new Date().getDay() + 6) % 7;
-    return days.map((d, i) => ({
-      time: d,
-      temp: i <= todayIndex ? currentValues.temp + (Math.random() * 4 - 2) : 0,
-      humiditySoil: i <= todayIndex ? Math.max(0, Math.min(100, currentValues.humiditySoil + (Math.random() * 10 - 5))) : 0,
-      humidityAir: i <= todayIndex ? Math.max(0, Math.min(100, currentValues.humidityAir + (Math.random() * 8 - 4))) : 0,
-      et: i <= todayIndex ? Math.max(0, currentValues.et + (Math.random() * 0.6 - 0.3)) : 0,
-      dewPoint: i <= todayIndex ? currentValues.dewPoint + (Math.random() * 3 - 1.5) : 0
-    }));
-  }, [currentValues, isMounted]);
+  const hourlyData = useMemo(
+    () => submuestrear(historicoHoy.puntos, 48).map(p => aPuntoGrafica(p, 'hoy')),
+    [historicoHoy.puntos]
+  );
+
+  const weeklyData = useMemo(
+    () => submuestrear(historicoSemana.puntos, 56).map(p => aPuntoGrafica(p, 'semana')),
+    [historicoSemana.puntos]
+  );
 
   const downloadCsv = () => {
     if (history.length === 0) {
@@ -202,7 +177,7 @@ export default function MonitoringPage() {
       -------------------------------------------
       Fecha de Emisión: ${new Date().toLocaleDateString()}
       Hora de Emisión: ${new Date().toLocaleTimeString()}
-      Región: Valle del Mezquital, Hidalgo.
+      Región: Tulancingo de Bravo, Hidalgo.
       
       ESTADO ACTUAL DE LA FINCA:
       - Temperatura del Aire: ${currentValues.temp.toFixed(1)}°C
@@ -220,27 +195,85 @@ export default function MonitoringPage() {
       AgroTech Hidalgo - Tecnología para el campo.
     `;
     
-    const blob = new Blob([reportContent], { type: 'application/msword' });
+    // Se entrega como .txt porque eso es lo que realmente es: texto plano.
+    // Antes se enviaba el mismo contenido con `type: 'application/msword'` y
+    // extensión .doc, así que Word lo abría con una advertencia de formato no
+    // válido. Un archivo honesto que se abre siempre es más útil para un
+    // trámite que un .doc falso.
+    const blob = new Blob([reportContent], { type: 'text/plain;charset=utf-8' });
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
     link.setAttribute("href", url);
-    link.setAttribute("download", `reporte_agrotech_${new Date().toISOString().slice(0,10)}.doc`);
+    link.setAttribute("download", `reporte_agrotech_${new Date().toISOString().slice(0,10)}.txt`);
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
+    URL.revokeObjectURL(url);
 
-    toast({ title: "Word Descargado", description: "Se ha generado el reporte profesional en formato DOC." });
+    toast({ title: "Reporte descargado", description: "Bitácora en texto, lista para imprimir o adjuntar." });
   };
 
-  const renderCharts = (data: any[], isLive = false) => (
+  const renderCharts = (data: SensorPoint[], leyenda: string) => (
     <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-      <ChartCard title={t('air_temp')} description={isLive ? t('live') : t('today')} data={data} dataKey="temp" color="#f97316" unit="°C" type="area" config={chartConfig} />
-      <ChartCard title={t('soil_humidity')} description={isLive ? t('live') : t('today')} data={data} dataKey="humiditySoil" color="#2563eb" unit="%" type="line" config={chartConfig} />
-      <ChartCard title={t('humidity_air')} description={isLive ? t('live') : t('today')} data={data} dataKey="humidityAir" color="#0d9488" unit="%" type="line" config={chartConfig} />
-      <ChartCard title={t('dew_point')} description={isLive ? t('live') : t('today')} data={data} dataKey="dewPoint" color="#06b6d4" unit="°C" type="area" config={chartConfig} />
-      <ChartCard title={t('evapotranspiration')} description={isLive ? t('live') : t('today')} data={data} dataKey="et" color="#8b5cf6" unit=" mm" type="area" config={chartConfig} />
+      <ChartCard title={t('air_temp')} description={leyenda} data={data} dataKey="temp" color="#f97316" unit="°C" type="area" config={chartConfig} />
+      <ChartCard title={t('soil_humidity')} description={leyenda} data={data} dataKey="humiditySoil" color="#2563eb" unit="%" type="line" config={chartConfig} />
+      <ChartCard title={t('humidity_air')} description={leyenda} data={data} dataKey="humidityAir" color="#0d9488" unit="%" type="line" config={chartConfig} />
+      <ChartCard title={t('dew_point')} description={leyenda} data={data} dataKey="dewPoint" color="#06b6d4" unit="°C" type="area" config={chartConfig} />
+      <ChartCard title={t('evapotranspiration')} description={leyenda} data={data} dataKey="et" color="#8b5cf6" unit=" mm" type="area" config={chartConfig} />
     </div>
   );
+
+  /**
+   * Envuelve una pestaña histórica con sus estados de carga, error y vacío.
+   * Cuando no hay datos se dice; no se rellena el hueco con números inventados.
+   */
+  const renderHistorico = (
+    estado: { cargando: boolean; error: Error | null; vacio: boolean; recargar: () => void },
+    data: SensorPoint[],
+    leyenda: string
+  ) => {
+    if (estado.cargando) {
+      return (
+        <div className="flex flex-col items-center justify-center py-24 gap-4">
+          <RefreshCw className="h-10 w-10 animate-spin text-primary/30" />
+          <p className="text-xs font-black uppercase tracking-widest text-muted-foreground">
+            Leyendo el histórico de tu estación...
+          </p>
+        </div>
+      );
+    }
+
+    if (estado.error) {
+      return (
+        <div className="py-20 text-center glass-card rounded-3xl space-y-4">
+          <p className="text-sm font-black uppercase tracking-widest text-destructive">
+            No se pudo leer el histórico
+          </p>
+          <p className="text-xs text-muted-foreground max-w-md mx-auto">{estado.error.message}</p>
+          <Button variant="outline" size="sm" className="rounded-xl font-bold" onClick={estado.recargar}>
+            <RefreshCw className="h-4 w-4 mr-2" /> Reintentar
+          </Button>
+        </div>
+      );
+    }
+
+    if (estado.vacio) {
+      return (
+        <div className="py-20 text-center glass-card rounded-3xl border-2 border-dashed border-primary/20 space-y-3 px-6">
+          <CalendarDays className="h-10 w-10 mx-auto text-primary/30" />
+          <p className="text-sm font-black uppercase tracking-widest text-muted-foreground">
+            Todavía no hay histórico en este rango
+          </p>
+          <p className="text-xs text-muted-foreground max-w-md mx-auto leading-relaxed">
+            Tu estación guarda una medición por minuto en la nube. En cuanto lleve un rato
+            encendida, aquí verás la evolución real de tu parcela.
+          </p>
+        </div>
+      );
+    }
+
+    return renderCharts(data, leyenda);
+  };
 
   return (
     <SidebarProvider>
@@ -260,10 +293,10 @@ export default function MonitoringPage() {
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-56 glass-card border-none">
                 <DropdownMenuItem onClick={downloadCsv} className="gap-2 cursor-pointer font-bold">
-                  <FileText className="h-4 w-4 text-green-600" /> EXCEL (CSV)
+                  <FileText className="h-4 w-4 text-green-600" /> HOJA DE CÁLCULO (CSV)
                 </DropdownMenuItem>
                 <DropdownMenuItem onClick={downloadWord} className="gap-2 cursor-pointer font-bold">
-                  <FileEdit className="h-4 w-4 text-blue-600" /> WORD (.DOC)
+                  <FileEdit className="h-4 w-4 text-blue-600" /> BITÁCORA (TXT)
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
@@ -287,9 +320,15 @@ export default function MonitoringPage() {
                 <TabsTrigger value="week" className="gap-2 font-bold rounded-xl data-[state=active]:bg-primary data-[state=active]:text-white"><CalendarDays className="h-3.5 w-3.5" /> <span suppressHydrationWarning>{t('week')}</span></TabsTrigger>
               </TabsList>
             </div>
-            <TabsContent value="live" className="space-y-6">{renderCharts(history, true)}</TabsContent>
-            <TabsContent value="today" className="space-y-6">{renderCharts(hourlyData)}</TabsContent>
-            <TabsContent value="week" className="space-y-6">{renderCharts(weeklyData)}</TabsContent>
+            <TabsContent value="live" className="space-y-6">
+              {renderCharts(history, t('live'))}
+            </TabsContent>
+            <TabsContent value="today" className="space-y-6">
+              {renderHistorico(historicoHoy, hourlyData, t('today'))}
+            </TabsContent>
+            <TabsContent value="week" className="space-y-6">
+              {renderHistorico(historicoSemana, weeklyData, t('week'))}
+            </TabsContent>
           </Tabs>
 
           <Card className="glass-card border-none shadow-xl">

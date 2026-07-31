@@ -75,7 +75,10 @@ const diagnoseCropDiseaseFlow = ai.defineFlow(
 
     try {
       const { output } = await ai.generate({
-        model: 'googleai/gemini-1.5-flash',
+        // gemini-1.5-flash fue retirado (404). gemini-2.0-flash existe pero en
+        // este proyecto tiene cuota gratuita en cero (429 limit: 0). gemini-2.5-flash
+        // sí responde en el free tier con la misma clave — verificado contra la API.
+        model: 'googleai/gemini-2.5-flash',
         prompt: promptParts,
         output: { 
           schema: CropDiagnosisProOutputSchema,

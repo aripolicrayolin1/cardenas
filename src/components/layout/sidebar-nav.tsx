@@ -11,7 +11,12 @@ import {
   LogIn,
   User,
   Languages,
-  Microscope
+  Cpu,
+  BookOpen,
+  Radar,
+  TrendingUp,
+  GraduationCap,
+  AudioWaveform
 } from "lucide-react";
 import {
   Sidebar,
@@ -49,9 +54,16 @@ export function SidebarNav() {
     { title: 'dashboard', icon: LayoutDashboard, href: "/" },
     { title: 'monitoring', icon: Activity, href: "/monitoring" },
     { title: 'diagnosis', icon: Camera, href: "/diagnosis" },
-    { title: 'diagnosis_pro', icon: Microscope, href: "/diagnosis-pro" },
+    // "Análisis IA Pro" se retiró: era la misma llamada a Gemini que
+    // /diagnosis, con otra piel y estadísticas inventadas.
     { title: 'community', icon: Users, href: "/community" },
     { title: 'farms', icon: Leaf, href: "/farms" },
+    { title: 'outbreaks', icon: TrendingUp, href: "/brotes" },
+    { title: 'acoustic', icon: AudioWaveform, href: "/escucha" },
+    { title: 'learning', icon: GraduationCap, href: "/aprendizaje" },
+    { title: 'surveillance', icon: Radar, href: "/vigilancia" },
+    { title: 'logbook', icon: BookOpen, href: "/bitacora" },
+    { title: 'technology', icon: Cpu, href: "/tecnologia" },
   ];
 
   const handleSignOut = async () => {

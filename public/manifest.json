@@ -1,0 +1,20 @@
+{
+  "name": "AgroTech Hidalgo",
+  "short_name": "AgroTech",
+  "description": "Monitoreo y diagnóstico agrícola para el valle de Tulancingo. Funciona sin conexión.",
+  "start_url": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#f4faf6",
+  "theme_color": "#16a34a",
+  "lang": "es-MX",
+  "categories": ["agriculture", "productivity", "utilities"],
+  "icons": [
+    {
+      "src": "/icono.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

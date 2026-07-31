@@ -5,3 +5,53 @@ runConfig:
   # Increase this value if you'd like to automatically spin up
   # more instances in response to increased traffic.
   maxInstances: 1
+
+# Configuracion publica de Firebase.
+# Estos valores viajan al navegador en cualquier app web Firebase, asi que no
+# son secretos y van en texto plano. Se necesitan en BUILD porque Next.js
+# incrusta las variables NEXT_PUBLIC_* al compilar.
+env:
+  - variable: NEXT_PUBLIC_FIREBASE_API_KEY
+    value: AIzaSyBWD6WwCUJLiKlbSgr0NYGppQtL3HnHpoM
+    availability: [BUILD, RUNTIME]
+  - variable: NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN
+    value: studio-3066950614-ac5b0.firebaseapp.com
+    availability: [BUILD, RUNTIME]
+  - variable: NEXT_PUBLIC_FIREBASE_DATABASE_URL
+    value: https://studio-3066950614-ac5b0-default-rtdb.firebaseio.com
+    availability: [BUILD, RUNTIME]
+  - variable: NEXT_PUBLIC_FIREBASE_PROJECT_ID
+    value: studio-3066950614-ac5b0
+    availability: [BUILD, RUNTIME]
+  - variable: NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET
+    value: studio-3066950614-ac5b0.firebasestorage.app
+    availability: [BUILD, RUNTIME]
+  - variable: NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID
+    value: "72338853613"
+    availability: [BUILD, RUNTIME]
+  - variable: NEXT_PUBLIC_FIREBASE_APP_ID
+    value: "1:72338853613:web:5be71eb7d0c5685f8d46e4"
+    availability: [BUILD, RUNTIME]
+
+# Secretos del servidor.
+#
+# Los secretos NO se escriben aqui: se guardan en Cloud Secret Manager y se
+# referencian por nombre. Para crearlos:
+#
+#   firebase apphosting:secrets:set gemini-api-key
+#   firebase apphosting:secrets:set telegram-bot-token
+#   firebase apphosting:secrets:set telegram-chat-id
+#
+# Cuando los secretos existan, añade estas entradas al bloque `env:` de arriba
+# (no crees un segundo `env:`). Si se referencia un secreto que no ha sido
+# creado, el despliegue falla.
+#
+#   - variable: GEMINI_API_KEY
+#     secret: gemini-api-key
+#     availability: [RUNTIME]
+#   - variable: TELEGRAM_BOT_TOKEN
+#     secret: telegram-bot-token
+#     availability: [RUNTIME]
+#   - variable: TELEGRAM_CHAT_ID
+#     secret: telegram-chat-id
+#     availability: [RUNTIME]

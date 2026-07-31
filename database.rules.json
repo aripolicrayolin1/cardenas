@@ -1,0 +1,79 @@
+{
+  "rules": {
+    ".read": false,
+    ".write": false,
+
+    "sensores": {
+      ".read": true,
+
+      ".write": true,
+
+      "temperatura":       { ".validate": "newData.isNumber() && newData.val() >= -50 && newData.val() <= 80" },
+      "humedad_aire":      { ".validate": "newData.isNumber() && newData.val() >= 0   && newData.val() <= 100" },
+      "humedad_suelo":     { ".validate": "newData.isNumber() && newData.val() >= 0   && newData.val() <= 4095" },
+      "humedad_suelo_pct": { ".validate": "newData.isNumber() && newData.val() >= 0   && newData.val() <= 100" },
+      "luz":               { ".validate": "newData.isNumber() && newData.val() >= 0   && newData.val() <= 100" },
+      "punto_rocio":       { ".validate": "newData.isNumber() && newData.val() >= -50 && newData.val() <= 80" },
+      "et":                { ".validate": "newData.isNumber() && newData.val() >= -20 && newData.val() <= 50" },
+      "movimiento":        { ".validate": "newData.isBoolean()" },
+      "estado":            { ".validate": "newData.isString() && newData.val().length <= 60" },
+
+      "$otro": { ".validate": false }
+    },
+
+    "historico": {
+      ".read": true,
+
+      ".write": true,
+      ".indexOn": ["ts"],
+
+      "$lectura": {
+        ".validate": "newData.hasChildren(['ts', 't', 'h', 'suelo_pct'])",
+        "ts":        { ".validate": "newData.isNumber()" },
+        "t":         { ".validate": "newData.isNumber()" },
+        "h":         { ".validate": "newData.isNumber()" },
+        "suelo_pct": { ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= 100" },
+        "td":        { ".validate": "newData.isNumber()" },
+        "et":        { ".validate": "newData.isNumber()" },
+        "$otro":     { ".validate": false }
+      }
+    },
+
+    "dispositivos": {
+      ".read": true,
+
+      "$deviceId": {
+        "sensores": {
+          ".write": true,
+
+          "temperatura":       { ".validate": "newData.isNumber() && newData.val() >= -50 && newData.val() <= 80" },
+          "humedad_aire":      { ".validate": "newData.isNumber() && newData.val() >= 0   && newData.val() <= 100" },
+          "humedad_suelo":     { ".validate": "newData.isNumber() && newData.val() >= 0   && newData.val() <= 4095" },
+          "humedad_suelo_pct": { ".validate": "newData.isNumber() && newData.val() >= 0   && newData.val() <= 100" },
+          "luz":               { ".validate": "newData.isNumber() && newData.val() >= 0   && newData.val() <= 100" },
+          "punto_rocio":       { ".validate": "newData.isNumber() && newData.val() >= -50 && newData.val() <= 80" },
+          "et":                { ".validate": "newData.isNumber() && newData.val() >= -20 && newData.val() <= 50" },
+          "movimiento":        { ".validate": "newData.isBoolean()" },
+          "estado":            { ".validate": "newData.isString() && newData.val().length <= 60" },
+          "$otro":             { ".validate": false }
+        },
+
+        "historico": {
+          ".write": true,
+          ".indexOn": ["ts"],
+
+          "$lectura": {
+            ".validate": "newData.hasChildren(['ts', 't', 'h', 'suelo_pct'])",
+            "ts":        { ".validate": "newData.isNumber()" },
+            "t":         { ".validate": "newData.isNumber()" },
+            "h":         { ".validate": "newData.isNumber()" },
+            "suelo_pct": { ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= 100" },
+            "td":        { ".validate": "newData.isNumber()" },
+            "et":        { ".validate": "newData.isNumber()" },
+            "$otro":     { ".validate": false }
+          }
+        }
+      }
+    }
+  }
+}

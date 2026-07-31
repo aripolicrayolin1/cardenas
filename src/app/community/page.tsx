@@ -6,12 +6,11 @@ import { SidebarNav } from "@/components/layout/sidebar-nav";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { 
-  Store, 
-  MessageSquare,
+import {
+  Store,
   Send,
   UserCheck,
-  Star,
+  ExternalLink,
   Briefcase,
   ShoppingBag,
   Plus,
@@ -21,113 +20,138 @@ import {
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import Image from "next/image";
-import { useState, useMemo } from "react";
+import { useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useTranslation } from "@/hooks/use-translation";
-import { useFirestore, useUser, useCollection } from "@/firebase";
-import { collection, addDoc, deleteDoc, doc, serverTimestamp } from "firebase/firestore";
+import { useComunidad } from "@/hooks/comunidad/use-comunidad";
+import type { Producto } from "@/services/comunidad";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 
-const staticExperts = [
+/**
+ * Instituciones agrícolas públicas REALES que atienden a Hidalgo.
+ *
+ * Antes aquí había tres negocios ficticios con calificaciones inventadas
+ * ("Ing. Ricardo" 5.0 estrellas, etc.). Se sustituyen por organismos que
+ * existen de verdad y ofrecen servicios oficiales al agricultor. No se
+ * inventan teléfonos ni calificaciones: el botón abre una búsqueda web para
+ * que el productor encuentre el contacto oficial vigente de cada institución.
+ */
+const institucionesAgricolas = [
   {
-    id: "exp1",
-    name: "Ing. Ricardo (Agrónomo)",
-    location: "Soporte Especializado",
-    specialty: "Asesoría en Plagas y Cultivos",
-    rating: 5.0,
-    isExpert: true
+    id: "cesaveh",
+    name: "Comité Estatal de Sanidad Vegetal de Hidalgo",
+    sigla: "CESAVEH",
+    specialty: "Vigilancia y manejo fitosanitario de plagas y enfermedades",
+    oficial: true,
   },
   {
-    id: "store1",
-    name: "Agropecuaria El Valle",
-    location: "Actopan, Centro",
-    specialty: "Fertilizantes y Control de Plagas",
-    rating: 4.8,
+    id: "senasica",
+    name: "SENASICA",
+    sigla: "Federal",
+    specialty: "Sanidad e inocuidad agroalimentaria (alertas fitosanitarias)",
+    oficial: true,
   },
   {
-    id: "store2",
-    name: "Semillas e Insumos Hidalgo",
-    location: "Pachuca, Centro",
-    specialty: "Semillas e Implementos",
-    rating: 4.5,
-  }
+    id: "sader-hidalgo",
+    name: "SADER / Secretaría de Agricultura de Hidalgo",
+    sigla: "Gobierno",
+    specialty: "Apoyos, programas y asesoría técnica al productor",
+    oficial: true,
+  },
+  {
+    id: "inifap",
+    name: "INIFAP",
+    sigla: "Investigación",
+    specialty: "Investigación agrícola, paquetes tecnológicos por cultivo",
+    oficial: false,
+  },
 ];
 
 export default function CommunityPage() {
   const { t } = useTranslation();
   const { toast } = useToast();
-  const db = useFirestore();
-  const { user } = useUser();
 
   const [activeTab, setActiveTab] = useState("directory");
   const [isNewProductOpen, setIsNewProductOpen] = useState(false);
   const [isNewJobOpen, setIsNewJobOpen] = useState(false);
-  const [loading, setLoading] = useState(false);
 
-  // Firestore Collections (Shared with the other app)
-  const productsRef = useMemo(() => db ? collection(db, "marketplace_products") : null, [db]);
-  const jobsRef = useMemo(() => db ? collection(db, "job_postings") : null, [db]);
-
-  const { data: products, loading: productsLoading } = useCollection(productsRef);
-  const { data: jobs, loading: jobsLoading } = useCollection(jobsRef);
+  const {
+    productos: products,
+    empleos: jobs,
+    cargandoProductos: productsLoading,
+    cargandoEmpleos: jobsLoading,
+    guardando: loading,
+    errorMutacion,
+    publicarProducto,
+    publicarEmpleo,
+    eliminar,
+    puedePublicar,
+    uid,
+  } = useComunidad();
 
   // Form states
-  const [productForm, setProductProductForm] = useState({ name: "", price: "", description: "", category: "" });
-  const [jobForm, setJobForm] = useState({ title: "", employer: "", salary: "", description: "", location: "" });
+  const [productForm, setProductProductForm] = useState({ name: "", price: "", description: "", category: "", contact: "" });
+  const [jobForm, setJobForm] = useState({ title: "", employer: "", salary: "", description: "", location: "", contact: "" });
+
+  // Producto abierto en el diálogo de detalle ("Ver más").
+  const [detalleProducto, setDetalleProducto] = useState<Producto | null>(null);
+
+  /** Abre WhatsApp con un mensaje prellenado, o avisa si no hay contacto. */
+  const contactar = (contact: string | undefined, mensaje: string) => {
+    if (!contact) {
+      toast({
+        title: "Sin contacto",
+        description: "Quien publicó no dejó un número. Revisa de nuevo más tarde.",
+      });
+      return;
+    }
+    window.open(
+      `https://wa.me/52${contact}?text=${encodeURIComponent(mensaje)}`,
+      "_blank",
+      "noopener,noreferrer"
+    );
+  };
 
   const handleCreateProduct = async () => {
-    if (!productsRef || !user) return;
-    setLoading(true);
-    try {
-      await addDoc(productsRef, {
-        ...productForm,
-        price: Number(productForm.price),
-        userId: user.uid,
-        sellerName: user.displayName || "Agricultor de Hidalgo",
-        createdAt: serverTimestamp(),
-        imageUrl: "https://picsum.photos/seed/product/400/300"
-      });
-      setIsNewProductOpen(false);
-      setProductProductForm({ name: "", price: "", description: "", category: "" });
-      toast({ title: "Producto Publicado", description: "Ya es visible en ambas aplicaciones." });
-    } catch (e) {
-      toast({ variant: "destructive", title: "Error", description: "No se pudo publicar." });
-    } finally {
-      setLoading(false);
+    // El motivo llega en el resultado. Leer `errorMutacion` tras el `await`
+    // devolvía el valor del render anterior: normalmente `null`, así que el
+    // aviso salía sin explicación.
+    const { valor: id, error } = await publicarProducto(productForm);
+
+    if (!id) {
+      toast({ variant: "destructive", title: "No se pudo publicar", description: error ?? undefined });
+      return;
     }
+
+    setIsNewProductOpen(false);
+    setProductProductForm({ name: "", price: "", description: "", category: "", contact: "" });
+    toast({ title: "Producto Publicado", description: "Ya es visible en ambas aplicaciones." });
   };
 
   const handleCreateJob = async () => {
-    if (!jobsRef || !user) return;
-    setLoading(true);
-    try {
-      await addDoc(jobsRef, {
-        ...jobForm,
-        userId: user.uid,
-        employerName: jobForm.employer || user.displayName || "Rancho Local",
-        createdAt: serverTimestamp()
-      });
-      setIsNewJobOpen(false);
-      setJobForm({ title: "", employer: "", salary: "", description: "", location: "" });
-      toast({ title: "Empleo Publicado", description: "Ya es visible en ambas aplicaciones." });
-    } catch (e) {
-      toast({ variant: "destructive", title: "Error", description: "No se pudo publicar." });
-    } finally {
-      setLoading(false);
+    const { valor: id, error } = await publicarEmpleo(jobForm);
+
+    if (!id) {
+      toast({ variant: "destructive", title: "No se pudo publicar", description: error ?? undefined });
+      return;
     }
+
+    setIsNewJobOpen(false);
+    setJobForm({ title: "", employer: "", salary: "", description: "", location: "", contact: "" });
+    toast({ title: "Empleo Publicado", description: "Ya es visible en ambas aplicaciones." });
   };
 
-  const handleDelete = async (coll: string, id: string) => {
-    if (!db) return;
-    try {
-      await deleteDoc(doc(db, coll, id));
-      toast({ title: "Eliminado", description: "El registro ha sido borrado." });
-    } catch (e) {
-      toast({ variant: "destructive", title: "Error" });
-    }
+  const handleDelete = async (coll: 'marketplace_products' | 'job_postings', id: string) => {
+    const { valor: ok, error } = await eliminar(coll, id);
+
+    toast({
+      title: ok ? "Eliminado" : "No se pudo eliminar",
+      description: ok ? "El registro ha sido borrado." : error ?? undefined,
+      variant: ok ? "default" : "destructive",
+    });
   };
 
   return (
@@ -156,12 +180,12 @@ export default function CommunityPage() {
                 </TabsTrigger>
               </TabsList>
 
-              {activeTab === 'marketplace' && user && (
+              {activeTab === 'marketplace' && puedePublicar && (
                 <Button onClick={() => setIsNewProductOpen(true)} className="rounded-xl gap-2 font-black uppercase tracking-widest shadow-lg shadow-primary/20">
                   <Plus className="h-4 w-4" /> {t('post_product')}
                 </Button>
               )}
-              {activeTab === 'jobs' && user && (
+              {activeTab === 'jobs' && puedePublicar && (
                 <Button onClick={() => setIsNewJobOpen(true)} className="rounded-xl gap-2 font-black uppercase tracking-widest shadow-lg shadow-primary/20">
                   <Plus className="h-4 w-4" /> {t('post_job')}
                 </Button>
@@ -169,27 +193,38 @@ export default function CommunityPage() {
             </div>
 
             <TabsContent value="directory" className="animate-in fade-in duration-500">
+              <p className="text-xs text-muted-foreground mb-6 max-w-2xl leading-relaxed">
+                {t('directory_intro')}
+              </p>
               <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-                {staticExperts.map((store) => (
-                  <Card key={store.id} className="overflow-hidden border-none shadow-lg group">
+                {institucionesAgricolas.map((inst) => (
+                  <Card key={inst.id} className="overflow-hidden border-none shadow-lg group">
                     <CardHeader className="pb-2">
-                      <CardTitle className="text-lg flex items-center gap-2">
-                        {store.isExpert ? <UserCheck className="h-5 w-5 text-primary" /> : <Store className="h-5 w-5 text-primary" />}
-                        {store.name}
+                      <CardTitle className="text-base flex items-start gap-2 leading-tight">
+                        {inst.oficial ? <UserCheck className="h-5 w-5 text-primary shrink-0 mt-0.5" /> : <Store className="h-5 w-5 text-primary shrink-0 mt-0.5" />}
+                        {inst.name}
                       </CardTitle>
-                      <CardDescription>{store.location}</CardDescription>
+                      <CardDescription className="text-[10px] font-black uppercase tracking-widest text-primary/70">
+                        {inst.sigla}
+                      </CardDescription>
                     </CardHeader>
                     <CardContent className="pb-2">
-                      <p className="text-sm font-medium text-primary mb-2">{store.specialty}</p>
-                      <div className="flex items-center gap-1">
-                        <Star className="h-3 w-3 fill-accent text-accent" />
-                        <span className="text-xs font-bold">{store.rating} (Hidalgo)</span>
-                      </div>
+                      <p className="text-sm font-medium text-muted-foreground">{inst.specialty}</p>
                     </CardContent>
                     <CardFooter>
-                      <Button className="w-full" variant={store.isExpert ? "default" : "outline"}>
-                        <MessageSquare className="h-4 w-4 mr-2" /> 
-                        {store.isExpert ? t('consult_expert') : t('send_message')}
+                      <Button
+                        className="w-full"
+                        variant="outline"
+                        onClick={() =>
+                          window.open(
+                            `https://www.google.com/search?q=${encodeURIComponent(inst.name + ' Hidalgo contacto')}`,
+                            '_blank',
+                            'noopener,noreferrer'
+                          )
+                        }
+                      >
+                        <ExternalLink className="h-4 w-4 mr-2" />
+                        {t('find_official_contact')}
                       </Button>
                     </CardFooter>
                   </Card>
@@ -202,7 +237,7 @@ export default function CommunityPage() {
                 <div className="flex justify-center py-20"><Loader2 className="h-10 w-10 animate-spin text-primary opacity-20" /></div>
               ) : (
                 <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
-                  {products.map((product: any) => (
+                  {products.map((product) => (
                     <Card key={product.id} className="overflow-hidden border-none shadow-md group">
                       <div className="relative aspect-[4/3] overflow-hidden">
                         <Image src={product.imageUrl} alt={product.name} fill className="object-cover group-hover:scale-105 transition-transform" />
@@ -220,8 +255,10 @@ export default function CommunityPage() {
                         <p className="text-xs text-muted-foreground line-clamp-2 h-8">{product.description}</p>
                       </CardContent>
                       <CardFooter className="p-4 pt-0 flex gap-2">
-                        <Button size="sm" className="flex-1 font-bold text-xs h-8">Ver más</Button>
-                        {user?.uid === product.userId && (
+                        <Button size="sm" className="flex-1 font-bold text-xs h-8" onClick={() => setDetalleProducto(product)}>
+                          {t('see_more')}
+                        </Button>
+                        {uid === product.userId && (
                           <Button size="icon" variant="ghost" className="h-8 w-8 text-destructive" onClick={() => handleDelete('marketplace_products', product.id)}>
                             <Trash2 className="h-4 w-4" />
                           </Button>
@@ -238,7 +275,7 @@ export default function CommunityPage() {
                 <div className="flex justify-center py-20"><Loader2 className="h-10 w-10 animate-spin text-primary opacity-20" /></div>
               ) : (
                 <div className="space-y-4 max-w-4xl mx-auto">
-                  {jobs.map((job: any) => (
+                  {jobs.map((job) => (
                     <Card key={job.id} className="border-none shadow-sm hover:shadow-md transition-shadow">
                       <CardHeader className="pb-2">
                         <div className="flex justify-between items-start">
@@ -255,8 +292,15 @@ export default function CommunityPage() {
                       <CardFooter className="justify-between border-t border-primary/5 pt-4">
                         <span className="text-[10px] text-muted-foreground font-bold uppercase">Sincronizado con AgroApp</span>
                         <div className="flex gap-2">
-                          <Button size="sm" variant="secondary" className="font-bold text-xs">Postularme</Button>
-                          {user?.uid === job.userId && (
+                          <Button
+                            size="sm"
+                            variant="secondary"
+                            className="font-bold text-xs gap-1.5"
+                            onClick={() => contactar(job.contact, `Hola, vi tu vacante "${job.title}" en AgroTech y me interesa postularme.`)}
+                          >
+                            <Send className="h-3.5 w-3.5" /> {t('apply_job')}
+                          </Button>
+                          {uid === job.userId && (
                             <Button size="icon" variant="ghost" className="h-8 w-8 text-destructive" onClick={() => handleDelete('job_postings', job.id)}>
                               <Trash2 className="h-4 w-4" />
                             </Button>
@@ -294,6 +338,11 @@ export default function CommunityPage() {
                 <Label>Descripción</Label>
                 <Textarea value={productForm.description} onChange={e => setProductProductForm({...productForm, description: e.target.value})} />
               </div>
+              <div className="space-y-2">
+                <Label>{t('contact_whatsapp')}</Label>
+                <Input value={productForm.contact} onChange={e => setProductProductForm({...productForm, contact: e.target.value})} placeholder="771 000 0000" />
+                <p className="text-[10px] text-muted-foreground">{t('contact_hint')}</p>
+              </div>
             </div>
             <DialogFooter>
               <Button onClick={handleCreateProduct} disabled={loading} className="w-full font-black uppercase h-12 shadow-lg">
@@ -329,12 +378,51 @@ export default function CommunityPage() {
                 <Label>Descripción de la Vacante</Label>
                 <Textarea value={jobForm.description} onChange={e => setJobForm({...jobForm, description: e.target.value})} />
               </div>
+              <div className="space-y-2">
+                <Label>{t('contact_whatsapp')}</Label>
+                <Input value={jobForm.contact} onChange={e => setJobForm({...jobForm, contact: e.target.value})} placeholder="771 000 0000" />
+                <p className="text-[10px] text-muted-foreground">{t('contact_hint')}</p>
+              </div>
             </div>
             <DialogFooter>
               <Button onClick={handleCreateJob} disabled={loading} className="w-full font-black uppercase h-12 shadow-lg">
                 {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : "Sincronizar Empleo"}
               </Button>
             </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        {/* Detalle de producto ("Ver más") */}
+        <Dialog open={detalleProducto !== null} onOpenChange={(abierto) => !abierto && setDetalleProducto(null)}>
+          <DialogContent className="glass-card border-none">
+            {detalleProducto && (
+              <>
+                <div className="relative aspect-[4/3] rounded-2xl overflow-hidden -mt-2">
+                  <Image src={detalleProducto.imageUrl} alt={detalleProducto.name} fill className="object-cover" />
+                  <div className="absolute top-3 right-3">
+                    <Badge className="bg-primary text-white font-black text-base px-3 py-1">${detalleProducto.price}</Badge>
+                  </div>
+                </div>
+                <DialogHeader>
+                  <DialogTitle className="font-black tracking-tighter text-2xl text-primary">{detalleProducto.name}</DialogTitle>
+                  <DialogDescription className="flex items-center gap-1.5 font-bold uppercase text-[10px] tracking-widest">
+                    <User className="h-3 w-3 text-primary" /> {detalleProducto.sellerName}
+                    {detalleProducto.category && <span className="text-muted-foreground">· {detalleProducto.category}</span>}
+                  </DialogDescription>
+                </DialogHeader>
+                <p className="text-sm text-foreground/80 leading-relaxed">
+                  {detalleProducto.description || t('no_description')}
+                </p>
+                <DialogFooter>
+                  <Button
+                    className="w-full font-black uppercase h-12 gap-2 shadow-lg"
+                    onClick={() => contactar(detalleProducto.contact, `Hola, me interesa tu producto "${detalleProducto.name}" que vi en AgroTech.`)}
+                  >
+                    <Send className="h-4 w-4" /> {t('contact_seller')}
+                  </Button>
+                </DialogFooter>
+              </>
+            )}
           </DialogContent>
         </Dialog>
       </SidebarInset>

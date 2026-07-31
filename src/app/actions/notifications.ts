@@ -1,30 +1,46 @@
-
 'use server';
 
 /**
- * @fileOverview Acción de servidor para gestionar el envío de notificaciones.
- * En un entorno de producción, aquí se integrarían proveedores como Twilio o Resend.
+ * @fileOverview Envío de notificaciones por SMS y correo.
+ *
+ * ⚠️ NO IMPLEMENTADO. No hay ningún proveedor conectado.
+ *
+ * Antes esta acción hacía un `console.log`, esperaba dos segundos y devolvía
+ * `success: true` con el mensaje "Correo de prueba enviado a …". La interfaz
+ * anunciaba entonces un envío que nunca ocurrió, así que un agricultor podía
+ * confiar en recibir un aviso de helada que jamás iba a llegar.
+ *
+ * Ahora devuelve `success: false` de forma explícita. Los canales que sí
+ * funcionan son las notificaciones del navegador y el canal de Telegram
+ * (`actions/telegram.ts`).
+ *
+ * Para implementarlo de verdad:
+ *   - Correo: Resend o SMTP, con la clave en `config/env.ts`.
+ *   - SMS: Twilio o similar. Ojo con el coste por mensaje en zonas rurales.
  */
 
-export async function sendTestNotification(type: 'sms' | 'email', target: string, userName: string) {
-  console.log(`[SIMULACIÓN] Iniciando envío de ${type} a: ${target}`);
-  
-  // Simulamos un retraso de red
-  await new Promise((resolve) => setTimeout(resolve, 2000));
+export type ResultadoNotificacion = {
+  success: boolean;
+  message: string;
+  /** `true` cuando el canal existe pero todavía no está conectado */
+  noImplementado?: boolean;
+};
 
-  // Lógica para Email (Ejemplo con Resend o similar)
-  if (type === 'email') {
-    console.log(`Enviando correo a ${target}...`);
-    // Aquí iría: await resend.emails.send({ ... });
-    return { success: true, message: `Correo de prueba enviado a ${target}` };
-  }
+export async function sendTestNotification(
+  type: 'sms' | 'email',
+  target: string,
+  _userName: string
+): Promise<ResultadoNotificacion> {
+  console.warn(
+    `[notificaciones] Se pidió enviar ${type} a "${target}", pero no hay proveedor configurado.`
+  );
 
-  // Lógica para SMS (Ejemplo con Twilio)
-  if (type === 'sms') {
-    console.log(`Enviando SMS al número ${target}...`);
-    // Aquí iría: await twilio.messages.create({ body: '...', to: target, from: '...' });
-    return { success: true, message: `SMS de alerta enviado a ${target}` };
-  }
-
-  return { success: false, message: 'Tipo de notificación no soportado' };
+  return {
+    success: false,
+    noImplementado: true,
+    message:
+      type === 'email'
+        ? 'El envío por correo todavía no está conectado a ningún proveedor.'
+        : 'El envío por SMS todavía no está conectado a ningún proveedor.',
+  };
 }

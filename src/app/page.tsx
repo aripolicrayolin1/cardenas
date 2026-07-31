@@ -3,6 +3,10 @@
 import { SidebarProvider, SidebarInset, SidebarTrigger } from "@/components/ui/sidebar";
 import { SidebarNav } from "@/components/layout/sidebar-nav";
 import { SensorStats } from "@/components/dashboard/sensor-stats";
+import { HeroEstado } from "@/components/dashboard/hero-estado";
+import { useHistorico } from "@/hooks/sensores/use-historico";
+import { useAlertas } from "@/hooks/comunidad/use-alertas";
+import { PronosticoClima } from "@/components/dashboard/pronostico-clima";
 import { PestAnalysisTool } from "@/components/dashboard/pest-analysis-tool";
 import { CommunityAlerts } from "@/components/dashboard/community-alerts";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -26,75 +30,93 @@ import {
 } from "@/components/ui/sheet";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useState, useEffect, useMemo } from "react";
-import { rtdb } from "@/firebase/config";
-import { ref, onValue } from "firebase/database";
 import { useUser } from "@/firebase/auth/use-user";
+import { useSensores } from "@/hooks/sensores/use-sensores";
+import { useFincas } from "@/hooks/fincas/use-fincas";
+import { esCoordenadaValida } from "@/services/fincas";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { useTranslation } from "@/hooks/use-translation";
 
 const chartConfig = {
-  health: { label: "Salud del Cultivo (%)", color: "hsl(var(--primary))" },
+  humedadSuelo: { label: "Humedad del suelo (%)", color: "hsl(var(--primary))" },
 };
 
 export default function Home() {
   const { user } = useUser();
   const { t } = useTranslation();
-  const [sensorValues, setSensorValues] = useState({
-    humidity_soil: 0, temp: 0, uv: 0, humidity_air: 0, et: 0, dew_point: 0, status_text: "Conectando..."
-  });
-  const [isOnline, setIsOnline] = useState(false);
-  const [lastUpdate, setLastUpdate] = useState<Date | null>(null);
-  const [proximityAlert, setProximityAlert] = useState<any | null>(null);
+
+  // Selección de parcela: cada finca puede tener su propio sensor. La elegida
+  // determina qué dispositivo se lee y qué coordenadas usa el pronóstico.
+  const { fincas } = useFincas();
+  const [fincaSelId, setFincaSelId] = useState<string | null>(null);
+
+  const fincaSel = useMemo(
+    () => fincas.find((f) => f.id === fincaSelId) ?? null,
+    [fincas, fincaSelId]
+  );
+  const deviceId = fincaSel?.deviceId;
+  const coordsFinca =
+    fincaSel && esCoordenadaValida(fincaSel.lat, fincaSel.lng)
+      ? { lat: fincaSel.lat as number, lng: fincaSel.lng as number }
+      : null;
+
+  // Sólo tiene sentido ofrecer el selector si hay más de un sensor: alguna finca
+  // con dispositivo propio además del principal.
+  const fincasConSensor = useMemo(() => fincas.filter((f) => f.deviceId), [fincas]);
+  const mostrarSelector = fincasConSensor.length > 0;
+
+  const { lectura, conectado: isOnline, ultimaActualizacion: lastUpdate } = useSensores(deviceId);
+
   const [showRadar, setShowRadar] = useState(true);
 
-  useEffect(() => {
-    const checkProximity = () => {
-      const savedAlerts = localStorage.getItem("community_alerts");
-      if (savedAlerts) {
-        const alerts = JSON.parse(savedAlerts);
-        const nearby = alerts.find((a: any) => a.severity === "Alta" || a.severity === "Dä");
-        if (nearby) setProximityAlert(nearby);
-      }
-    };
-    
-    checkProximity();
-    const interval = setInterval(checkProximity, 10000);
-    return () => clearInterval(interval);
-  }, []);
+  // Alertas comunitarias REALES desde Firestore. Antes esto leía localStorage,
+  // que solo contenía dos brotes ficticios sembrados, así que la alerta roja de
+  // proximidad saltaba para todos como si fuera un brote real cercano.
+  const { alertas } = useAlertas();
 
-  const performanceData = useMemo(() => [
-    { month: "Ene", health: 85 },
-    { month: "Feb", health: 88 },
-    { month: "Mar", health: 92 },
-    { month: "Abr", health: 80 },
-    { month: "May", health: 85 },
-    { month: "Jun", health: 90 },
-  ], []);
+  // El brote de mayor severidad reportado en las últimas 48 h. No se afirma una
+  // distancia: no la calculamos, y decir "a 5 km de ti" sería inventarla.
+  const proximityAlert = useMemo(() => {
+    const limite = Date.now() - 48 * 60 * 60 * 1000;
+    return (
+      alertas.find((a) => {
+        const ms = a.createdAt?.toMillis?.() ?? 0;
+        return a.severity === "alta" && ms >= limite;
+      }) ?? null
+    );
+  }, [alertas]);
 
-  useEffect(() => {
-    if (!rtdb) return;
-    
-    const sensorsRef = ref(rtdb, 'sensores');
-    const unsubscribe = onValue(sensorsRef, (snapshot) => {
-      const data = snapshot.val();
-      if (data) {
-        setSensorValues({
-          humidity_soil: Number(data.humedad_suelo ?? 0),
-          temp: Number(data.temperatura ?? 0),
-          uv: Number(data.uv ?? 0),
-          humidity_air: Number(data.humedad_aire ?? 0),
-          et: Number(data.et ?? 0),
-          dew_point: Number(data.punto_rocio ?? 0),
-          status_text: String(data.estado ?? "SISTEMA NORMAL")
-        });
-        setIsOnline(true);
-        setLastUpdate(new Date());
-      }
-    });
-    return () => unsubscribe();
-  }, []);
+  // Serie REAL de humedad de suelo de la última semana, leída de /historico.
+  // Antes aquí había seis valores de "salud del cultivo" inventados (85, 88,
+  // 92…) presentados como historial verdadero. No existe tal métrica de salud:
+  // el sensor mide humedad, temperatura y derivados, no un porcentaje de salud.
+  const historicoSemana = useHistorico('semana', deviceId);
+
+  const performanceData = useMemo(
+    () =>
+      historicoSemana.puntos.map((p) => ({
+        label: new Date(p.ts).toLocaleDateString([], { weekday: 'short', day: 'numeric' }),
+        humedadSuelo: Number(p.humedadSuelo.toFixed(1)),
+      })),
+    [historicoSemana.puntos]
+  );
+
+  // `SensorStats` sigue recibiendo la forma antigua; la traducción vive aquí
+  // en vez de repetir la suscripción a Firebase dentro de la página.
+  const sensorValues = useMemo(
+    () => ({
+      humidity_soil: lectura.humedadSuelo,
+      temp: lectura.temperatura,
+      luz: lectura.luz,
+      humidity_air: lectura.humedadAire,
+      et: lectura.evapotranspiracion,
+      dew_point: lectura.puntoRocio,
+      status_text: lectura.estado,
+    }),
+    [lectura]
+  );
 
   return (
     <SidebarProvider>
@@ -125,7 +147,7 @@ export default function Home() {
                       <div className="p-4 bg-destructive/10 border border-destructive/20 rounded-2xl shadow-inner">
                         <p className="text-[10px] font-black text-destructive uppercase tracking-widest mb-1" suppressHydrationWarning>{t('radar_active')}</p>
                         <p className="text-sm font-bold">{proximityAlert.problem}</p>
-                        <p className="text-[10px] text-muted-foreground">{proximityAlert.region} • {proximityAlert.distance}</p>
+                        <p className="text-[10px] text-muted-foreground">{proximityAlert.region}</p>
                       </div>
                     )}
                     <div className="text-center py-10 text-xs text-muted-foreground italic">No hay más avisos hoy</div>
@@ -156,8 +178,8 @@ export default function Home() {
               <AlertTitle className="font-black text-xl tracking-tighter" suppressHydrationWarning>⚠️ {t('radar_active')}</AlertTitle>
               <AlertDescription className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mt-2 pr-8">
                 <p className="font-medium text-white/90" suppressHydrationWarning>
-                  Se ha reportado <span className="font-black underline decoration-white/40">{proximityAlert.problem}</span> en <span className="font-black">{proximityAlert.region}</span>. 
-                  ¡Tu campo está en el radio de riesgo!
+                  La comunidad reportó <span className="font-black underline decoration-white/40">{proximityAlert.problem}</span> en <span className="font-black">{proximityAlert.region}</span>.
+                  Revisa tu cultivo y toma medidas preventivas.
                 </p>
                 <Link href="/diagnosis">
                   <Button variant="secondary" size="sm" className="font-bold gap-2 shadow-xl hover:scale-105 transition-all">
@@ -168,15 +190,50 @@ export default function Home() {
             </Alert>
           )}
 
-          <section className="space-y-4 animate-in fade-in slide-in-from-bottom-8 duration-700">
-            <div className="flex items-center justify-between px-2">
+          <section className="animate-in fade-in slide-in-from-bottom-4 duration-700">
+            <HeroEstado
+              lectura={lectura}
+              isOnline={isOnline}
+              nombre={user?.displayName?.split(' ')[0]}
+            />
+          </section>
+
+          <section className="space-y-4 animate-in fade-in slide-in-from-bottom-8 duration-700 delay-100">
+            <div className="flex flex-wrap items-center justify-between gap-3 px-2">
               <h2 className="text-2xl font-black tracking-tighter text-foreground/80" suppressHydrationWarning>{t('iot_station')}</h2>
-              <div className="flex items-center gap-2 bg-primary/10 px-3 py-1 rounded-full">
-                <Activity className="h-4 w-4 text-primary animate-pulse" />
-                <span className="text-[10px] font-black text-primary uppercase tracking-widest" suppressHydrationWarning>{t('live')}</span>
+              <div className="flex items-center gap-2">
+                {/* Selector de parcela: sólo aparece con múltiples sensores. */}
+                {mostrarSelector && (
+                  <select
+                    value={fincaSelId ?? ""}
+                    onChange={(e) => setFincaSelId(e.target.value || null)}
+                    className="rounded-full bg-white/60 border border-primary/20 text-primary text-[11px] font-black uppercase tracking-widest px-3 py-1.5 outline-none cursor-pointer"
+                    aria-label="Elegir parcela"
+                  >
+                    <option value="">Sensor principal</option>
+                    {fincasConSensor.map((f) => (
+                      <option key={f.id} value={f.id}>
+                        {f.name}
+                      </option>
+                    ))}
+                  </select>
+                )}
+                <div className="flex items-center gap-2 bg-primary/10 px-3 py-1 rounded-full">
+                  <Activity className="h-4 w-4 text-primary animate-pulse" />
+                  <span className="text-[10px] font-black text-primary uppercase tracking-widest" suppressHydrationWarning>{t('live')}</span>
+                </div>
               </div>
             </div>
             <SensorStats sensorValues={sensorValues} isOnline={isOnline} lastUpdate={lastUpdate} />
+          </section>
+
+          <section className="animate-in fade-in slide-in-from-bottom-8 duration-700 delay-150">
+            <PronosticoClima
+              humedadSueloActual={lectura.humedadSuelo}
+              tempActual={lectura.temperatura}
+              sensorEnLinea={isOnline}
+              coords={coordsFinca}
+            />
           </section>
 
           <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
@@ -190,23 +247,38 @@ export default function Home() {
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="h-[250px] w-full pt-4">
-                  <ChartContainer config={chartConfig} className="h-full w-full">
-                    <ResponsiveContainer width="100%" height="100%">
-                      <AreaChart data={performanceData}>
-                        <defs>
-                          <linearGradient id="colorHealth" x1="0" y1="0" x2="0" y2="1">
-                            <stop offset="5%" stopColor="hsl(var(--primary))" stopOpacity={0.4}/>
-                            <stop offset="95%" stopColor="hsl(var(--primary))" stopOpacity={0}/>
-                          </linearGradient>
-                        </defs>
-                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(0,0,0,0.05)" />
-                        <XAxis dataKey="month" axisLine={false} tickLine={false} tick={{fontSize: 10, fontWeight: 700}} />
-                        <YAxis axisLine={false} tickLine={false} domain={[0, 100]} tick={{fontSize: 10, fontWeight: 700}} />
-                        <ChartTooltip content={<ChartTooltipContent className="glass-card border-none" />} />
-                        <Area type="monotone" dataKey="health" stroke="hsl(var(--primary))" strokeWidth={4} fillOpacity={1} fill="url(#colorHealth)" />
-                      </AreaChart>
-                    </ResponsiveContainer>
-                  </ChartContainer>
+                  {historicoSemana.cargando ? (
+                    <div className="h-full flex flex-col items-center justify-center gap-3 text-muted-foreground">
+                      <Activity className="h-6 w-6 animate-pulse text-primary/40" />
+                      <p className="text-xs font-bold" suppressHydrationWarning>{t('loading_history')}</p>
+                    </div>
+                  ) : performanceData.length === 0 ? (
+                    // Estado vacío honesto: sin datos reales, no se inventa una curva.
+                    <div className="h-full flex flex-col items-center justify-center gap-3 text-center px-8">
+                      <TrendingUp className="h-8 w-8 text-primary/20" />
+                      <p className="text-xs font-medium text-muted-foreground leading-relaxed max-w-sm" suppressHydrationWarning>
+                        {t('soil_trend_empty')}
+                      </p>
+                    </div>
+                  ) : (
+                    <ChartContainer config={chartConfig} className="h-full w-full">
+                      <ResponsiveContainer width="100%" height="100%">
+                        <AreaChart data={performanceData}>
+                          <defs>
+                            <linearGradient id="colorHealth" x1="0" y1="0" x2="0" y2="1">
+                              <stop offset="5%" stopColor="hsl(var(--primary))" stopOpacity={0.4}/>
+                              <stop offset="95%" stopColor="hsl(var(--primary))" stopOpacity={0}/>
+                            </linearGradient>
+                          </defs>
+                          <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(0,0,0,0.05)" />
+                          <XAxis dataKey="label" axisLine={false} tickLine={false} tick={{fontSize: 10, fontWeight: 700}} />
+                          <YAxis axisLine={false} tickLine={false} domain={[0, 100]} tick={{fontSize: 10, fontWeight: 700}} />
+                          <ChartTooltip content={<ChartTooltipContent className="glass-card border-none" />} />
+                          <Area type="monotone" dataKey="humedadSuelo" stroke="hsl(var(--primary))" strokeWidth={4} fillOpacity={1} fill="url(#colorHealth)" />
+                        </AreaChart>
+                      </ResponsiveContainer>
+                    </ChartContainer>
+                  )}
                 </CardContent>
               </Card>
             </div>

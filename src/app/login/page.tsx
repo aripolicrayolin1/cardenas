@@ -1,31 +1,69 @@
 "use client";
 
-import { useState } from "react";
+import { Suspense, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Leaf, AlertCircle, ShieldCheck } from "lucide-react";
+import { Leaf, AlertCircle, ShieldCheck, Loader2 } from "lucide-react";
 import { useAuth } from "@/firebase/provider";
-import { 
-  signInWithPopup, 
-  GoogleAuthProvider, 
+import {
+  signInWithPopup,
+  GoogleAuthProvider,
   signInWithEmailAndPassword,
-  createUserWithEmailAndPassword 
+  createUserWithEmailAndPassword,
+  sendPasswordResetEmail
 } from "firebase/auth";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useToast } from "@/hooks/use-toast";
 import Image from "next/image";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
+/**
+ * Sólo se aceptan rutas internas. Sin esta comprobación, un enlace del tipo
+ * `/login?volverA=https://sitio-malo.example` convertiría la pantalla de acceso
+ * en un redirector abierto.
+ */
+function sanearDestino(valor: string | null): string {
+  if (!valor) return '/';
+  if (!valor.startsWith('/') || valor.startsWith('//')) return '/';
+  return valor;
+}
+
+/**
+ * `useSearchParams()` obliga a que el árbol que lo usa quede bajo un límite de
+ * Suspense: durante el prerender estático Next.js no conoce todavía la query
+ * string. Sin esto, `next build` falla al generar /login.
+ */
 export default function LoginPage() {
+  return (
+    <Suspense fallback={<PantallaCargandoLogin />}>
+      <FormularioLogin />
+    </Suspense>
+  );
+}
+
+function PantallaCargandoLogin() {
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-background">
+      <Loader2 className="h-8 w-8 animate-spin text-primary" />
+    </div>
+  );
+}
+
+function FormularioLogin() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { toast } = useToast();
   const auth = useAuth();
+
+  // `RutaPrivada` guarda aquí la página que el usuario intentaba abrir, para
+  // devolverlo a ella tras entrar en vez de dejarlo siempre en el panel.
+  const destino = sanearDestino(searchParams.get('volverA'));
 
   const handleGoogleLogin = async () => {
     setError(null);
@@ -35,11 +73,11 @@ export default function LoginPage() {
     try {
       const result = await signInWithPopup(auth, provider);
       if (result.user) {
-        toast({ 
-          title: "Acceso Exitoso", 
-          description: `Bienvenido, ${result.user.displayName}` 
+        toast({
+          title: "Acceso Exitoso",
+          description: `Bienvenido, ${result.user.displayName}`
         });
-        router.push("/");
+        router.push(destino);
       }
     } catch (error: any) {
       if (error.code === 'auth/cancelled-popup-request' || error.code === 'auth/popup-closed-by-user') {
@@ -71,18 +109,79 @@ export default function LoginPage() {
     try {
       await signInWithEmailAndPassword(auth, email, password);
       toast({ title: "Bienvenido", description: "Has iniciado sesión correctamente." });
-      router.push("/");
+      router.push(destino);
     } catch (error: any) {
-      if (error.code === 'auth/user-not-found' || error.code === 'auth/invalid-credential') {
-        try {
-          await createUserWithEmailAndPassword(auth, email, password);
-          toast({ title: "Cuenta creada", description: "Te hemos registrado exitosamente." });
-          router.push("/");
-        } catch (regError: any) {
-          setError("Error al crear cuenta: " + regError.message);
-        }
+      // Antes, un `auth/invalid-credential` creaba la cuenta automáticamente:
+      // quien se equivocaba de contraseña acababa con una cuenta nueva y vacía
+      // en lugar de un aviso. Ahora registrarse es una acción explícita.
+      if (error.code === 'auth/invalid-credential' || error.code === 'auth/wrong-password') {
+        setError("Correo o contraseña incorrectos. Si aún no tienes cuenta, pulsa \"Crear cuenta\".");
+      } else if (error.code === 'auth/user-not-found') {
+        setError("No existe una cuenta con ese correo. Pulsa \"Crear cuenta\" para registrarte.");
+      } else if (error.code === 'auth/too-many-requests') {
+        setError("Demasiados intentos. Espera unos minutos antes de volver a probar.");
       } else {
-        setError("Error: " + error.message);
+        setError("No pudimos iniciar sesión. Revisa tu conexión e inténtalo de nuevo.");
+        console.error("Login error:", error);
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handlePasswordReset = async () => {
+    if (!email) {
+      setError("Escribe tu correo arriba y vuelve a pulsar para recibir el enlace de recuperación.");
+      return;
+    }
+
+    setLoading(true);
+    setError(null);
+    try {
+      await sendPasswordResetEmail(auth, email);
+      toast({
+        title: "Correo enviado",
+        description: `Te enviamos un enlace a ${email} para restablecer tu contraseña. Revisa tu bandeja y el spam.`,
+      });
+    } catch (error: any) {
+      if (error.code === 'auth/invalid-email') {
+        setError("Ese correo no tiene un formato válido.");
+      } else if (error.code === 'auth/user-not-found') {
+        // No revelamos si el correo existe o no: es una buena práctica de
+        // seguridad. Mostramos el mismo mensaje de éxito.
+        toast({
+          title: "Correo enviado",
+          description: `Si ${email} tiene cuenta, recibirás un enlace para restablecer la contraseña.`,
+        });
+      } else {
+        setError("No pudimos enviar el correo. Revisa tu conexión e inténtalo de nuevo.");
+        console.error("Password reset error:", error);
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleRegister = async () => {
+    if (!email || password.length < 6) {
+      setError("Escribe tu correo y una contraseña de al menos 6 caracteres.");
+      return;
+    }
+
+    setLoading(true);
+    setError(null);
+    try {
+      await createUserWithEmailAndPassword(auth, email, password);
+      toast({ title: "Cuenta creada", description: "Te hemos registrado exitosamente." });
+      router.push(destino);
+    } catch (error: any) {
+      if (error.code === 'auth/email-already-in-use') {
+        setError("Ese correo ya tiene cuenta. Escribe tu contraseña y pulsa \"Acceder\".");
+      } else if (error.code === 'auth/weak-password') {
+        setError("La contraseña es demasiado corta: usa al menos 6 caracteres.");
+      } else {
+        setError("No pudimos crear la cuenta. Inténtalo de nuevo.");
+        console.error("Register error:", error);
       }
     } finally {
       setLoading(false);
@@ -110,7 +209,7 @@ export default function LoginPage() {
           </div>
           <CardTitle className="text-3xl font-black tracking-tighter text-primary">AgroTech</CardTitle>
           <CardDescription className="text-sm font-medium uppercase tracking-widest">
-            Hidalgo • Región Valle del Mezquital
+            Hidalgo • Tulancingo de Bravo
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
@@ -159,11 +258,21 @@ export default function LoginPage() {
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="password" title="password" className="text-xs font-bold uppercase text-muted-foreground">Contraseña</Label>
-              <Input 
-                id="password" 
-                type="password" 
-                required 
+              <div className="flex items-center justify-between">
+                <Label htmlFor="password" title="password" className="text-xs font-bold uppercase text-muted-foreground">Contraseña</Label>
+                <button
+                  type="button"
+                  onClick={handlePasswordReset}
+                  disabled={loading}
+                  className="text-[10px] font-bold text-primary hover:underline disabled:opacity-50"
+                >
+                  ¿Olvidaste tu contraseña?
+                </button>
+              </div>
+              <Input
+                id="password"
+                type="password"
+                required
                 className="h-11 border-primary/10"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
@@ -171,6 +280,15 @@ export default function LoginPage() {
             </div>
             <Button className="w-full font-bold h-11 shadow-lg shadow-primary/20" type="submit" disabled={loading}>
               {loading ? "Verificando..." : "Acceder al Sistema"}
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              className="w-full font-bold h-11 border-primary/20"
+              onClick={handleRegister}
+              disabled={loading}
+            >
+              Crear cuenta
             </Button>
           </form>
         </CardContent>

@@ -3,15 +3,17 @@ import { getAuth, Auth } from "firebase/auth";
 import { getFirestore, Firestore } from "firebase/firestore";
 import { getDatabase, Database } from "firebase/database";
 
-const firebaseConfig = {
-  apiKey: "AIzaSyBWD6WwCUJLiKlbSgr0NYGppQtL3HnHpoM",
-  authDomain: "studio-3066950614-ac5b0.firebaseapp.com",
-  databaseURL: "https://studio-3066950614-ac5b0-default-rtdb.firebaseio.com",
-  projectId: "studio-3066950614-ac5b0",
-  storageBucket: "studio-3066950614-ac5b0.firebasestorage.app",
-  messagingSenderId: "72338853613",
-  appId: "1:72338853613:web:5be71eb7d0c5685f8d46e4"
-};
+import { publicEnv } from "@/config/env";
+
+/**
+ * Estos valores son públicos por diseño: el SDK de Firebase los incrusta en el
+ * bundle y viajan al navegador en cualquier app web. Ocultarlos no aporta nada.
+ * La seguridad real vive en `firestore.rules` y `database.rules.json`.
+ *
+ * Se leen de `config/env` para tener un solo sitio donde cambiar de proyecto
+ * (dev / staging / producción) sin tocar código.
+ */
+const firebaseConfig = publicEnv.firebase;
 
 // Inicialización única de la App
 const app: FirebaseApp = getApps().length > 0 ? getApp() : initializeApp(firebaseConfig);
